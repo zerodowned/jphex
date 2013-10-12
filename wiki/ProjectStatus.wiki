@@ -1,0 +1,33 @@
+#summary Overview on what's done and what's missing
+
+= Server =
+Working so far:
+ * Character creation
+ * Running around
+ * Using items
+ * Wearing items
+ * Doing combant
+ * Merchant NPCs that sell items
+ * Basic monsters that attack players
+ * Stat regeneration
+ * Skill check and gain
+
+Missing:
+ * Look at the issue tracker
+
+= ViewSL =
+Working so far:
+ * Displaying actual game scenes
+ * Looking at land tiles
+ * Looking at static tiles (items)
+ * Looking at some gumps
+ * Looking at some animations
+ * Listening to sound effects
+
+Missing:
+ * Several gumps
+ * The animation frames are not correctly assigned to an animation ID
+
+
+= Client =
+Not started yet.
