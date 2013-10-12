@@ -27,36 +27,52 @@ class Skeleton
     $api.setAttribute(me, Attribute::FATIGUE, 10)
     $api.setAttribute(me, Attribute::INTELLIGENCE, 25)
 
-    $api.setAttribute(me, Attribute::MELEE, 250)
-    $api.setAttribute(me, Attribute::BATTLE_DEFENSE, 300)
+    $api.setAttribute(me, Attribute::MELEE, 500)
+    $api.setAttribute(me, Attribute::BATTLE_DEFENSE, 350)
 
     $api.refreshStats(me)
   end
   
   def onEnterArea(me, player)
+    # Focus on this player - first come, first served :)
+    return if $api.getObjectProperty(me, "ignoreIncoming")
+    $api.setObjectProperty(me, "ignoreIncoming", true)
     $api.attack(me, player)
     chase(me, player)
   end
-  
+
   def onDoubleClick(me, player)
     return false
   end
-  
+
   def onSpeech(mob, player, line)
   end
 
   def onHello(me, player)
   end
-  
+
+  def chasePlayers(me)
+    # Check if there is a player to chase
+    for player in $api.getNearbyPlayers(me)
+      onEnterArea(me, player)
+      return
+    end
+    # No more players found, wait for incoming players again
+    $api.setObjectProperty(me, "ignoreIncoming", false)
+  end
+
   def chase(me, player)
     distance = $api.getDistance(me, player)
-    return if(distance > 15 or !player.isVisible())
-
-    if distance > 1
+    if(distance > 15 or !player.isVisible())
+      # out of range, search new victims
+      chasePlayers(me)
+      return
+    elsif distance > 1
+      # player not arrived yet, run after him
       $api.runToward(me, player)
     end
-    
-    # To check if player ran away
+
+    # Check again (we might arrive the player or it ran from us, so chase again)
     $api.addTimer(500) do 
       chase(me, player)
     end

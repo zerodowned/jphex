@@ -163,6 +163,7 @@ public class Player extends Mobile {
         }
     }
 
+    // always show paperdoll to other players
     @Override
     public boolean onDoubleClick(Player player) {
         return true;

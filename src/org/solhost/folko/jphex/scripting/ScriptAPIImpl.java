@@ -19,6 +19,8 @@
 package org.solhost.folko.jphex.scripting;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.logging.Logger;
 
 import org.jruby.RubyObject;
@@ -359,5 +361,18 @@ public class ScriptAPIImpl implements ScriptAPI {
     @Override
     public void lookAt(Mobile who, SLObject what) {
         who.setFacing(who.getLocation().getDirectionTo(what.getLocation()));
+    }
+
+    @Override
+    public Collection<Player> getNearbyPlayers(Mobile who) {
+        Collection<Player> online = world.getOnlinePlayersInRange(who.getLocation(), World.VISIBLE_RANGE);
+        Iterator<Player> iter = online.iterator();
+        while(iter.hasNext()) {
+            Player p = iter.next();
+            if(!p.isVisible()) {
+                iter.remove();
+            }
+        }
+        return online;
     }
 }

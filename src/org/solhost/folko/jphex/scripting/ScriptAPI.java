@@ -18,6 +18,8 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.scripting;
 
+import java.util.Collection;
+
 import org.jruby.RubyProc;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.solhost.folko.jphex.types.Item;
@@ -74,6 +76,7 @@ public interface ScriptAPI {
     public void offerShop(Mobile mob, Player player);
     public void refreshStats(Mobile mob);
     public void lookAt(Mobile who, SLObject what);
+    public Collection<Player> getNearbyPlayers(Mobile who);
 
     public int randomHairStyle(int graphic);
     public int randomHairHue();
