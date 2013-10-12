@@ -1,4 +1,4 @@
-# Some screenshots to show the project status
+#summary Some screenshots to show the project status
 
 = Server =
 Original client with working shop gump
