@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -72,6 +72,14 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     public static final int SPEECH_RANGE = 10;
     public static final int ENTER_AREA_RANGE = 5;
     public static final int STAT_REFRESH_DELAY = 1200;
+
+    // Sweet Dreams Inn
+    public static final int NEW_CHAR_X = 553;
+    public static final int NEW_CHAR_Y = 575;
+
+    // temple in britain
+    public static final int RESURRECT_POSITION_X = 507;
+    public static final int RESURRECT_POSITION_Y = 584;
 
     private static final Logger log = Logger.getLogger("jphex.world");
     private transient Map<Client, Player> onlinePlayers;
@@ -252,6 +260,8 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     }
 
     public synchronized void onCreatePlayer(Player player) {
+        player.setLocation(new Point3D(NEW_CHAR_X, NEW_CHAR_Y, 0));
+
         Item backpack = Item.createEquipped(this, player, Items.GFX_BACKPACK, 0);
         Item.createEquipped(this, player, Items.GFX_DAGGER, 0);
         Item.createEquipped(this, player, Items.GFX_TUNIC, Util.random(23, 40));
@@ -789,7 +799,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
         if(deltaZ > SLData.CHARACHTER_HEIGHT / 2) {
             return;
         }
-        if(attacker.distanceTo(defender) > 1 || attacker.isDead() || defender.isDead()) {
+        if(attacker.distanceTo(defender) > 1 || !defender.isVisible()) {
             return;
         }
         attacker.lookAt(defender);
@@ -1074,29 +1084,13 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             }
             DeathPacket packet = new DeathPacket();
             player.sendPacket(packet);
-            player.setGraphic(Mobiles.MOBTYPE_GHOST);
+
+            player.setLocation(new Point3D(RESURRECT_POSITION_X, RESURRECT_POSITION_Y, 0));
+            playSound(0xA4, mob.getLocation()); // resurrect sound
+            runRefresh(player);
+
         } else {
             mob.delete();
-        }
-    }
-
-    @Override
-    public synchronized void onResurrect(Mobile mob) {
-        if(!(mob instanceof Player)) {
-            log.warning(String.format("Resurrecting non-player %08X", mob.getSerial()));
-            return;
-        }
-        playSound(0xA4, mob.getLocation());
-        log.fine(mob.getName() + " resurrected");
-        Player player = (Player) mob;
-        player.setGraphic(player.isMale() ? 0 : 1);
-        runRefresh(player);
-
-        for(SLObject obj : getObjectsInRange(mob.getLocation(), ENTER_AREA_RANGE)) {
-            if(obj instanceof Mobile) {
-                Mobile rangeMob = (Mobile) obj;
-                rangeMob.onEnterArea(player);
-            }
         }
     }
 
@@ -1117,7 +1111,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
                 if(attacker.getOpponent() == defender) {
                     if(attacker.canFight() && defender.canFight()) {
                         doFightRound(attacker, defender);
-                        if(defender.isDead()) {
+                        if(!defender.canFight() || !attacker.canFight()) {
                             attacker.setOpponent(null);
                         }
                         TimerQueue.get().addTimer(new Timer(1500, this));

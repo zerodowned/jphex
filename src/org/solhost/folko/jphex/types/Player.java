@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -31,6 +31,7 @@ import org.solhost.folko.uosl.network.packets.LocationPacket;
 import org.solhost.folko.uosl.network.packets.SLPacket;
 import org.solhost.folko.uosl.network.packets.SendTextPacket;
 import org.solhost.folko.uosl.network.packets.SoundPacket;
+import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Items;
 import org.solhost.folko.uosl.types.Point3D;
 import org.solhost.folko.uosl.types.Spell;
@@ -38,7 +39,8 @@ import org.solhost.folko.uosl.types.Spell;
 public class Player extends Mobile {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.types");
-    public static final int ACCESS_ITEM_RANGE = 2;
+    private static final int ACCESS_ITEM_RANGE = 2;
+    private static final double DEATH_EXP_LOSS = 0.1;
     private transient Client client;
     private transient TargetLocationHandler targetLocation;
     private transient TargetObjectHandler targetObject;
@@ -168,11 +170,6 @@ public class Player extends Mobile {
     }
 
     public boolean tryAccess(Item item) {
-        if(isDead()) {
-            sendSysMessage("I am dead and cannot do that.");
-            return false;
-        }
-
         if(item.isOnGround() && !item.inRange(getLocation(), ACCESS_ITEM_RANGE)) {
             sendSysMessage("That is too far away.");
             return false;
@@ -289,6 +286,12 @@ public class Player extends Mobile {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void kill() {
+        super.kill();
+        setAttribute(Attribute.EXPERIENCE, (long) (getAttribute(Attribute.EXPERIENCE) * (1 - DEATH_EXP_LOSS)));
     }
 
     @Override

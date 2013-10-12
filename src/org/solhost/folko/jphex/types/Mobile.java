@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -36,7 +36,7 @@ import org.solhost.folko.uosl.types.Direction;
 public class Mobile extends SLObject implements SendableMobile {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.mobile");
-    private boolean dead, refreshRunning;
+    private boolean refreshRunning;
     protected Direction facing;
     protected Set<Item> equipped;
     protected Map<Attribute, Long> attributes;
@@ -202,10 +202,6 @@ public class Mobile extends SLObject implements SendableMobile {
     }
 
     public boolean checkSkill(Attribute skill, long minRequired, long maxUntilNoGain) {
-        if(isDead()) {
-            return false;
-        }
-
         long value = getAttribute(skill);
         if(value < minRequired) {
             log.fine(String.format("%s: Checking %s for %d -> failure due to no chance", getName(), skill, minRequired));
@@ -351,27 +347,12 @@ public class Mobile extends SLObject implements SendableMobile {
         return null;
     }
 
-    public boolean isDead() {
-        return dead;
-    }
-
-    @Override
-    public boolean isVisible() {
-        return super.isVisible() && !isDead();
-    }
-
     public void kill() {
         setAttribute(Attribute.HITS, 0);
         setAttribute(Attribute.MANA, 0);
         setAttribute(Attribute.FATIGUE, 0);
-        dead = true;
         setOpponent(null);
         for(ObjectObserver o : observers) o.onDeath(this);
-    }
-
-    public void resurrect() {
-        dead = false;
-        for(ObjectObserver o : observers) o.onResurrect(this);
     }
 
     public void dealDamage(int damage) {
@@ -406,17 +387,17 @@ public class Mobile extends SLObject implements SendableMobile {
     }
 
     public boolean canFight() {
-        return !isDead();
+        return !deleted;
+    }
+
+    public boolean canRefresh() {
+        return !deleted;
     }
 
     public boolean needsRefresh() {
         return  getAttribute(Attribute.HITS)    < getAttribute(Attribute.MAX_HITS) ||
                 getAttribute(Attribute.MANA)    < getAttribute(Attribute.MAX_MANA) ||
                 getAttribute(Attribute.FATIGUE) < getAttribute(Attribute.MAX_FATIGUE);
-    }
-
-    public boolean canRefresh() {
-        return !dead;
     }
 
     public void doRefreshStep() {
