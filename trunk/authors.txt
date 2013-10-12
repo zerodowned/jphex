@@ -1,0 +1,6 @@
+2003:
+Reverse engineering of the client done by Folke Will.
+Validation of discovered packets and file formats done by Maximilian Scherr.
+
+2013:
+JPhex written by Folke Will.
