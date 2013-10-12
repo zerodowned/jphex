@@ -355,4 +355,9 @@ public class ScriptAPIImpl implements ScriptAPI {
     public void kill(Mobile what) {
         what.kill();
     }
+
+    @Override
+    public void lookAt(Mobile who, SLObject what) {
+        who.setFacing(who.getLocation().getDirectionTo(what.getLocation()));
+    }
 }

@@ -33,9 +33,16 @@ class OrcCaptain
     $api.refreshStats(mob)
   end
   
-  def onEnterArea(mob, player)
+  def onDoubleClick(me, player)
+    return false
   end
   
   def onSpeech(mob, player, line)
+  end
+
+  def onHello(me, player)
+  end
+  
+  def onEnterArea(mob, player)
   end
 end

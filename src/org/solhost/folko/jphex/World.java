@@ -340,7 +340,10 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
         }
 
         if(obj instanceof Mobile) {
-            sendPaperdoll(player, (Mobile) obj);
+            Mobile mob = (Mobile) obj;
+            if(mob.onDoubleClick(player)) {
+                sendPaperdoll(player, (Mobile) obj);
+            }
         } else if (obj instanceof Item) {
             Item itm = (Item) obj;
             if(!player.tryAccess(itm)) {
@@ -551,19 +554,36 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     }
 
     public synchronized void onSpeech(Player src, String text, long color) {
-        if(!text.startsWith("#")) {
-            // normal speech -> send to players and NPCs
-            SendTextPacket packet = new SendTextPacket(src, SendTextPacket.MODE_SAY, color, text);
-            for(SLObject obj : getObjectsInRange(src.getLocation(), SPEECH_RANGE)) {
-                if(obj instanceof Player) {
-                    ((Player) obj).getClient().send(packet);
-                } else if(obj instanceof Mobile) {
+        if(text.startsWith("#")) {
+            // text command
+            scripts.handleTextCommand(src, text.substring(1));
+            return;
+        }
+
+        boolean isHello = text.toLowerCase().startsWith("hello");
+        // remember nearest NPC
+        int minDist = Integer.MAX_VALUE;
+        Mobile helloNPC = null;
+
+        // normal speech -> send to players and NPCs
+        SendTextPacket packet = new SendTextPacket(src, SendTextPacket.MODE_SAY, color, text);
+        for(SLObject obj : getObjectsInRange(src.getLocation(), SPEECH_RANGE)) {
+            if(obj instanceof Player) {
+                ((Player) obj).getClient().send(packet);
+            } else if(obj instanceof Mobile) {
+                if(isHello) {
+                    if(src.distanceTo(obj) < minDist) {
+                        minDist = src.distanceTo(obj);
+                        helloNPC = (Mobile) obj;
+                    }
+                } else {
                     ((Mobile) obj).onSpeech(src, text.toLowerCase());
                 }
             }
-        } else {
-            // text command
-            scripts.handleTextCommand(src, text.substring(1));
+        }
+
+        if(isHello && helloNPC != null && minDist < ENTER_AREA_RANGE) {
+            helloNPC.onHello(src);
         }
     }
 
