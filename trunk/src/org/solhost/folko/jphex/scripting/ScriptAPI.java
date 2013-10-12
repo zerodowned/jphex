@@ -73,6 +73,7 @@ public interface ScriptAPI {
     public void say(Mobile mob, String text);
     public void offerShop(Mobile mob, Player player);
     public void refreshStats(Mobile mob);
+    public void lookAt(Mobile who, SLObject what);
 
     public int randomHairStyle(int graphic);
     public int randomHairHue();

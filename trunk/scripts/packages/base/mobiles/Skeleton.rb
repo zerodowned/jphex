@@ -38,7 +38,14 @@ class Skeleton
     chase(me, player)
   end
   
-  def onSpeech(me, player, line)
+  def onDoubleClick(me, player)
+    return false
+  end
+  
+  def onSpeech(mob, player, line)
+  end
+
+  def onHello(me, player)
   end
   
   def chase(me, player)

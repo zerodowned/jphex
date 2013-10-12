@@ -163,6 +163,11 @@ public class Player extends Mobile {
         }
     }
 
+    @Override
+    public boolean onDoubleClick(Player player) {
+        return true;
+    }
+
     public void sendSysMessage(String text) {
         SendTextPacket packet = new SendTextPacket(null, SendTextPacket.MODE_SYSMSG,
                SendTextPacket.COLOR_SYSTEM, text);

@@ -201,6 +201,25 @@ public class Mobile extends SLObject implements SendableMobile {
         }
     }
 
+    public void onHello(Player player) {
+        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
+        try {
+            be.onHello(this, player);
+        } catch(Exception e) {
+            log.log(Level.SEVERE, "Script error in onHello: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean onDoubleClick(Player player) {
+        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
+        try {
+            return be.onDoubleClick(this, player);
+        } catch(Exception e) {
+            log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
     public boolean checkSkill(Attribute skill, long minRequired, long maxUntilNoGain) {
         long value = getAttribute(skill);
         if(value < minRequired) {

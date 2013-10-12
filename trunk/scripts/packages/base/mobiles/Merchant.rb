@@ -19,40 +19,49 @@
 class Merchant
   include MobileBehavior
   
-  def onSpawn(mob)
+  def onSpawn(me)
     if rand() < 0.5
-      $api.setGraphic(mob, 0x00)
+      $api.setGraphic(me, 0x00)
     else
-      $api.setGraphic(mob, 0x01)
+      $api.setGraphic(me, 0x01)
     end
 
-    $api.assignRandomName(mob, "")
-    $api.createClothes(mob)
+    $api.assignRandomName(me, "")
+    $api.createClothes(me)
 
-    $api.setAttribute(mob, Attribute::STRENGTH, 25)
-    $api.setAttribute(mob, Attribute::FATIGUE, 10)
-    $api.setAttribute(mob, Attribute::INTELLIGENCE, 25)
-    $api.refreshStats(mob)
+    $api.setAttribute(me, Attribute::STRENGTH, 25)
+    $api.setAttribute(me, Attribute::FATIGUE, 10)
+    $api.setAttribute(me, Attribute::INTELLIGENCE, 25)
+    $api.refreshStats(me)
     
     # Fill inventory
-    $api.createItemInBackpack(mob, 0x0011) # apple
-    $api.createItemInBackpack(mob, 0x0039) # peach
-    $api.createItemInBackpack(mob, 0x00B3) # candle stick
-    $api.createItemInBackpack(mob, 0x028E) # quarrel
+    $api.createItemInBackpack(me, 0x0011) # apple
+    $api.createItemInBackpack(me, 0x0039) # peach
+    $api.createItemInBackpack(me, 0x00B3) # candle stick
+    $api.createItemInBackpack(me, 0x028E) # quarrel
   end
 
-  def onEnterArea(mob, player)
-    $api.say(mob, "Hello, " + player.getName())
+  def onEnterArea(me, player)
+    $api.lookAt(me, player)
   end
   
-  def onSpeech(mob, player, line)
-    if line == mob.getName().downcase + " buy"
-      if player.distanceTo(mob) < 4
-        $api.say(mob, "Have a look at my wares")
-        $api.offerShop(mob, player)
-      else
-        $api.say(mob, player.getName() + ", please come a littler closer")
-      end
+  def onDoubleClick(me, player)
+    $api.lookAt(me, player)
+    if me.distanceTo(player) < 4
+      $api.say(me, "Have a look at my wares")
+      $api.offerShop(me, player)
+    else
+      $api.say(me, player.getName() + ", please come a littler closer")
     end
+    return false
+  end
+  
+  def onHello(me, player)
+    $api.lookAt(me, player)
+    $api.say(me, "Greetings, " + player.getName() + "! Dost thou want to take a look at my wares?")
+  end
+  
+  def onSpeech(me, player, line)
+    $api.lookAt(me, player)
   end
 end
