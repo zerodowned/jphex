@@ -32,6 +32,7 @@ import org.solhost.folko.uosl.data.SLTiles;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Mobiles;
 
 public class Mobile extends SLObject implements SendableMobile {
     private static final long serialVersionUID = 1L;
@@ -194,29 +195,43 @@ public class Mobile extends SLObject implements SendableMobile {
 
     public void onSpeech(Player player, String line) {
         MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        try {
-            be.onSpeech(this, player, line);
-        } catch(Exception e) {
-            log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
+        if(be != null) {
+            try {
+                be.onSpeech(this, player, line);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
+            }
         }
     }
 
     public void onHello(Player player) {
         MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        try {
-            be.onHello(this, player);
-        } catch(Exception e) {
-            log.log(Level.SEVERE, "Script error in onHello: " + e.getMessage(), e);
+        if(be != null) {
+            try {
+                be.onHello(this, player);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onHello: " + e.getMessage(), e);
+            }
         }
     }
 
+    // returns whether to send the paperdoll to the player
     public boolean onDoubleClick(Player player) {
         MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        try {
-            return be.onDoubleClick(this, player);
-        } catch(Exception e) {
-            log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
-            return false;
+        if(be != null) {
+            try {
+                return be.onDoubleClick(this, player);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
+                return false;
+            }
+        } else {
+            // default behavior: depend on graphic
+            if(getGraphic() == Mobiles.MOBTYPE_HUMAN_FEMALE || getGraphic() == Mobiles.MOBTYPE_HUMAN_MALE) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 

@@ -822,6 +822,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
         if(attacker.distanceTo(defender) > 1 || !defender.isVisible()) {
             return;
         }
+        log.finer("fight ongoing between " + attacker.getName() + " and " + defender.getName());
         attacker.lookAt(defender);
 
         int damage = 0;
@@ -862,7 +863,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
 
     public synchronized void npcPlayerSearch(Mobile mob) {
         for(SLObject obj : getObjectsInRange(mob.getLocation(), ENTER_AREA_RANGE)) {
-            if(obj instanceof Player) {
+            if(obj instanceof Player && obj.isVisible()) {
                 mob.onEnterArea((Player) obj);
             }
         }
