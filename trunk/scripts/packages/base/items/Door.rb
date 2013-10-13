@@ -20,66 +20,80 @@ class Door
   include ItemBehavior
   
   AUTO_CLOSE_TIME = 4000
+  
+  def onCreate(door)
+    # Default state: Closed
+    $api.setGraphic(door, 0x3D3)
+    $api.setObjectProperty(door, "isOpen", false)
+  end
 
-  def onInit(item)
-    $api.setObjectProperty(item, "isOpen", false)
+  def onBehaviorChange(door)
+    # Reset to default state
+    $api.setObjectProperty(door, "isOpen", false)
+  end
+
+  def onLoad(door)
+    # Close doors on server load
+    close(door)
   end
   
-  def onUse(player, item)
-    if $api.getObjectProperty(item, "isOpen")
-      close(item)
+  def onUse(player, door)
+    if $api.getObjectProperty(door, "isOpen")
+      close(door)
     else
-      open(item)
+      open(door)
     end
   end
   
-  def open(item)
-    return if $api.getObjectProperty(item, "isOpen")
-    playOpenSound(item)
-    toggleGraphic(item)
-    $api.setObjectProperty(item, "isOpen",  true)
+  def open(door)
+    return if $api.getObjectProperty(door, "isOpen")
+    toggleGraphic(door)
+    playOpenSound(door)
+    $api.setObjectProperty(door, "isOpen",  true)
+    # closeAt is used when people close and open the door while the timer is active
+    $api.setObjectProperty(door, "closeAt", $api.getTimerTicks() + AUTO_CLOSE_TIME)
     $api.addTimer(AUTO_CLOSE_TIME) do
-        close(item)
+      close(door) if $api.getObjectProperty(door, "closeAt") <= $api.getTimerTicks()
     end
   end
   
-  def close(item)
-    return if !$api.getObjectProperty(item, "isOpen")
-    playCloseSound(item)
-    toggleGraphic(item)
-    $api.setObjectProperty(item, "isOpen",  false)
+  def close(door)
+    return if !$api.getObjectProperty(door, "isOpen")
+    toggleGraphic(door)
+    playCloseSound(door)
+    $api.setObjectProperty(door, "isOpen",  false)
   end
   
-  def toggleGraphic(item)
-    newGraphic = case item.getGraphic()
+  def toggleGraphic(door)
+    newGraphic = case door.getGraphic()
       when 0x3D3 then 0x3D7
       when 0x3D4 then 0x3D8
       when 0x3D7 then 0x3D3
       when 0x3D8 then 0x3D4
-      else graphic
+      else door.getGraphic()
     end
-    $api.setGraphic(item, newGraphic)
+    $api.setGraphic(door, newGraphic)
   end
   
-  def playOpenSound(item)
-    sound = case item.getGraphic()
+  def playOpenSound(door)
+    sound = case door.getGraphic()
       when 0x3D3 then 0x42
       when 0x3D4 then 0x42
       when 0x3D7 then 0x42
       when 0x3D8 then 0x42
       else 0x42
     end
-    $api.playSoundNearObj(item, sound)
+    $api.playSoundNearObj(door, sound)
   end
 
-  def playCloseSound(item)
-    sound = case item.getGraphic()
+  def playCloseSound(door)
+    sound = case door.getGraphic()
       when 0x3D3 then 0x48
       when 0x3D4 then 0x48
       when 0x3D7 then 0x48
       when 0x3D8 then 0x48
       else 0x48
     end
-    $api.playSoundNearObj(item, sound)
+    $api.playSoundNearObj(door, sound)
   end
 end

@@ -55,11 +55,15 @@ public interface ScriptAPI {
     public boolean reloadScripts();
     public void saveWorld();
 
-    public void addTimer(long millis, RubyProc block);
+    public long getTimerTicks();
+    public void addTimer(long delayUntilRunInMillis, RubyProc block);
 
     public Item createItemInBackpack(Mobile mob, int graphic);
     public Item createItemAtMobile(Mobile mob, int graphic);
     public Item createItemAtLocation(int x, int y, int z, int graphic);
+    public Item createItemInBackpack(Mobile mob, String behavior);
+    public Item createItemAtMobile(Mobile mob, String behavior);
+    public Item createItemAtLocation(int x, int y, int z, String behavior);
     public boolean setItemBehavior(Item item, String behavior);
     public String getItemBehavior(Item item);
 
@@ -83,5 +87,4 @@ public interface ScriptAPI {
     public int randomClothColor();
 
     public void speakPowerWords(Player player, Spell spell);
-
 }

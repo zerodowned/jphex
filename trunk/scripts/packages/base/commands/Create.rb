@@ -19,15 +19,22 @@
 class Create < TextCommand
   def invoke(player, line)
     if line == ""
-      $api.sendSysMessage(player, "Usage: #create <item graphic id> [bag]")
+      $api.sendSysMessage(player, "Usage: #create <graphic|behavior> [bag]")
       return
     end
     
-    graphic, where = line.split(" ")
+    desc, where = line.split(" ")
+    # check whether first parameter is integer or string (graphic or behavior)
+    begin
+      what = Integer(desc)
+    rescue
+      what = desc
+    end
+        
     if where == nil
-      $api.createItemAtMobile(player, Integer(graphic))
+      $api.createItemAtMobile(player, what)
     else
-      $api.createItemInBackpack(player, Integer(graphic))
+      $api.createItemInBackpack(player, what)
     end
 
   end

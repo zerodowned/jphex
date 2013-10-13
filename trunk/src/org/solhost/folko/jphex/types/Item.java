@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -39,7 +39,7 @@ public class Item extends SLObject implements SendableItem {
     private boolean isContainer, isWearable, isStackable;
     private short weight, defaultLayer;
     private byte lightLevel;
-    private final List<Item> children;
+    private List<Item> children;
     private Player draggedBy;
     private int amount, price, height;
     private String behavior;
@@ -47,6 +47,26 @@ public class Item extends SLObject implements SendableItem {
     public Item(long serial, int graphic) {
         super(serial);
         this.graphic = graphic;
+        setBasicAttributes();
+    }
+
+    public Item(long serial, String behavior) {
+    	super(serial);
+    	this.graphic = 0; // should be overridden by onCreate
+    	this.behavior = behavior;
+    	setBasicAttributes();
+        ItemBehavior ib = ScriptManager.instance().getItemBehavior(behavior);
+        if(ib != null) {
+            try {
+                ib.onCreate(this);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onCreate: " + e.getMessage(), e);
+                delete();
+            }
+        }
+    }
+
+    protected void setBasicAttributes() {
         this.children = new CopyOnWriteArrayList<Item>();
         this.amount = 1;
         StaticTile tile = SLData.get().getTiles().getStaticTile(graphic);
@@ -69,6 +89,19 @@ public class Item extends SLObject implements SendableItem {
         super.delete();
     }
 
+    @Override
+    public void onLoad() {
+    	super.onLoad();
+        ItemBehavior ib = ScriptManager.instance().getItemBehavior(behavior);
+        if(ib != null) {
+            try {
+                ib.onLoad(this);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onLoad: " + e.getMessage(), e);
+            }
+        }
+    }
+
     public int getHeight() {
         return height;
     }
@@ -78,9 +111,9 @@ public class Item extends SLObject implements SendableItem {
         ItemBehavior ib = ScriptManager.instance().getItemBehavior(behavior);
         if(ib != null) {
             try {
-                ib.onInit(this);
+                ib.onBehaviorChange(this);
             } catch(Exception e) {
-                log.log(Level.SEVERE, "Script error in onInit: " + e.getMessage(), e);
+                log.log(Level.SEVERE, "Script error in onBehaviorSet: " + e.getMessage(), e);
             }
         }
     }
