@@ -236,11 +236,7 @@ public class ScriptAPIImpl implements ScriptAPI {
 
     @Override
     public void setObjectProperty(SLObject object, String name, IRubyObject value) {
-        if(value instanceof RubyObject) {
-            object.setProperty(name, (RubyObject) value);
-        } else {
-            log.severe("setObjectProperty: IRubyObject not instanceof RubyObject");
-        }
+        object.setProperty(name, (RubyObject) value);
     }
 
     @Override
