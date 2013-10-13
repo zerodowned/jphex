@@ -307,13 +307,6 @@ public class GameView extends JPanel {
             sceneCenter.setY(hackDest.getY());
             // keep old Z
         }
-        if(finder == null) {
-            finder = new Pathfinder(sceneCenter, new Point3D(409,678, 0), statics);
-            finder.findPath(2000);
-            if(finder.hasPath()) {
-                System.out.println(finder.getPathInfo());
-            }
-        }
     }
 
     private void drawMapTile(Graphics g, Point3D pos) {

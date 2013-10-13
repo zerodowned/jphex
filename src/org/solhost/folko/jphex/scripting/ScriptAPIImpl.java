@@ -136,7 +136,36 @@ public class ScriptAPIImpl implements ScriptAPI {
         return item;
     }
 
-    @Override
+	@Override
+	public Item createItemInBackpack(Mobile mob, String behavior) {
+        Item backpack = mob.getBackpack();
+        if(backpack != null) {
+            Item item = new Item(world.registerItemSerial(), behavior);
+            world.registerObject(item);
+            backpack.addChild(item, new Point2D(50, 50));
+            return item;
+        } else {
+            return createItemAtMobile(mob, behavior);
+        }
+	}
+
+	@Override
+	public Item createItemAtMobile(Mobile mob, String behavior) {
+        Item item = new Item(world.registerItemSerial(), behavior);
+        item.setLocation(mob.getLocation());
+        world.registerObject(item);
+        return item;
+	}
+
+	@Override
+	public Item createItemAtLocation(int x, int y, int z, String behavior) {
+        Item item = new Item(world.registerItemSerial(), behavior);
+        item.setLocation(new Point3D(x, y, z));
+        world.registerObject(item);
+        return item;
+	}
+
+	@Override
     public void setGraphic(SLObject obj, int graphic) {
         obj.setGraphic(graphic);
     }
@@ -375,4 +404,9 @@ public class ScriptAPIImpl implements ScriptAPI {
         }
         return online;
     }
+
+	@Override
+	public long getTimerTicks() {
+		return Timer.getCurrentTicks();
+	}
 }

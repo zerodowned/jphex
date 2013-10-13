@@ -111,9 +111,9 @@ public class Point2D implements Serializable {
         case NORTH_WEST:    newX--; newY--; break;
         }
         if(newX < 0) newX = 0;
-        if(newX >= 1024) newX = 1023;
+        if(newX >= MAP_WIDTH) newX = MAP_WIDTH - 1;
         if(newY < 0) newY = 0;
-        if(newY >= 1024) newY = 1023;
+        if(newY >= MAP_HEIGHT) newY = MAP_HEIGHT - 1;
         return new Point2D(newX, newY);
     }
 

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -24,16 +24,21 @@ public class Timer implements Comparable<Timer> {
 
     // call in n milliseconds
     public Timer(long milliseconds, Runnable what) {
-        this.when = System.currentTimeMillis() + milliseconds;
+        this.when = getCurrentTicks() + milliseconds;
         this.what = what;
     }
+
+    // base reference for timers
+	public static long getCurrentTicks() {
+		return System.currentTimeMillis();
+	}
 
     public boolean hasExpired() {
         return getExpirationDelta() <= 0;
     }
 
     public long getExpirationDelta() {
-        return when - System.currentTimeMillis();
+        return when - getCurrentTicks();
     }
 
     public void invoke() {
@@ -74,6 +79,4 @@ public class Timer implements Comparable<Timer> {
             return false;
         return true;
     }
-
-
 }

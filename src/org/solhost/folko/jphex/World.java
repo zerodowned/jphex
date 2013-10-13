@@ -77,7 +77,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     public static final int NEW_CHAR_X = 553;
     public static final int NEW_CHAR_Y = 575;
 
-    // temple in britain
+    // temple in Britain
     public static final int RESURRECT_POSITION_X = 507;
     public static final int RESURRECT_POSITION_Y = 584;
 
@@ -143,19 +143,23 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             nextItemSerial = SLData.get().getStatics().getHighestSerial() + 1;
         }
 
+        log.config(String.format("World initialized with %d dynamic and %d static objects", objects.size(), statics.size()));
+        log.fine(String.format("Next item 0x%08X, next mobile 0x%08X", nextItemSerial, nextMobileSerial));
+    }
+
+    // called right before the game should start
+	public void onStart() {
         for(SLObject obj : objects.values()) {
             obj.onLoad();
             if(obj instanceof Mobile) {
                 Mobile mob = (Mobile) obj;
-                mob.setRefreshRunning(false);
                 mob.setOpponent(null);
+                mob.setRefreshRunning(false);
+                runRefresh(mob);
             }
             obj.addObserver(this);
         }
-
-        log.config(String.format("World initialized with %d dynamic and %d static objects", objects.size(), statics.size()));
-        log.fine(String.format("Next item 0x%08X, next mobile 0x%08X", nextItemSerial, nextMobileSerial));
-    }
+	}
 
     public synchronized SLObject findObject(long serial) {
         return objects.get(serial);
@@ -166,6 +170,10 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     }
 
     public synchronized void registerObject(SLObject object) {
+    	if(object.isDeleted()) {
+    		return;
+    	}
+
         long serial = object.getSerial();
         if(objects.containsKey(serial)) {
             throw new RuntimeException("already registered: " + serial);
@@ -784,7 +792,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             player.sendSysMessage("You do not have that spell");
             return;
         }
-        SpellHandler handler = ScriptManager.instance().getSpellHandler(spell);
+        SpellHandler handler = scripts.getSpellHandler(spell);
         try {
             switch(spell) {
                 case CREATEFOOD:    handler.cast(player); break;
@@ -1029,7 +1037,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
         }
 
         obj.removeObserver(this);
-        objects.remove(obj);
+        objects.remove(obj.getSerial());
     }
 
     @Override
@@ -1108,8 +1116,6 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
 
             player.setLocation(new Point3D(RESURRECT_POSITION_X, RESURRECT_POSITION_Y, 0));
             playSound(0xA4, mob.getLocation()); // resurrect sound
-            runRefresh(player);
-
         } else {
             mob.delete();
         }

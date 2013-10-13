@@ -54,7 +54,7 @@ public abstract class SLObject implements Serializable, SendableObject {
         observers.remove(o);
     }
 
-    // called after loading on server start
+    // called on first creation and after loading on server start
     public void onLoad() {
         this.observers = new CopyOnWriteArraySet<ObjectObserver>();
     }
