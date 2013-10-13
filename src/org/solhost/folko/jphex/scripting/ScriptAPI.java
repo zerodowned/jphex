@@ -26,6 +26,7 @@ import org.solhost.folko.jphex.types.Item;
 import org.solhost.folko.jphex.types.Mobile;
 import org.solhost.folko.jphex.types.Player;
 import org.solhost.folko.jphex.types.SLObject;
+import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Spell;
 
@@ -85,6 +86,10 @@ public interface ScriptAPI {
     public int randomHairStyle(int graphic);
     public int randomHairHue();
     public int randomClothColor();
+
+    public Collection<SLStatic> getStaticsAtLocation(int x, int y);
+    public Collection<Item> getItemsAtLocation(int x, int y);
+    public Collection<Item> getItemsAtLocation(int x, int y, int z);
 
     public void speakPowerWords(Player player, Spell spell);
 }
