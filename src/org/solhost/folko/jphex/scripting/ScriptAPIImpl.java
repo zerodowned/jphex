@@ -140,10 +140,14 @@ public class ScriptAPIImpl implements ScriptAPI {
 	public Item createItemInBackpack(Mobile mob, String behavior) {
         Item backpack = mob.getBackpack();
         if(backpack != null) {
-            Item item = new Item(world.registerItemSerial(), behavior);
-            world.registerObject(item);
-            backpack.addChild(item, new Point2D(50, 50));
-            return item;
+            try {
+                Item item = new Item(world.registerItemSerial(), behavior);
+                world.registerObject(item);
+                backpack.addChild(item, new Point2D(50, 50));
+                return item;
+            } catch (Exception e) {
+                return null;
+            }
         } else {
             return createItemAtMobile(mob, behavior);
         }
@@ -151,18 +155,26 @@ public class ScriptAPIImpl implements ScriptAPI {
 
 	@Override
 	public Item createItemAtMobile(Mobile mob, String behavior) {
-        Item item = new Item(world.registerItemSerial(), behavior);
-        item.setLocation(mob.getLocation());
-        world.registerObject(item);
-        return item;
+	    try {
+            Item item = new Item(world.registerItemSerial(), behavior);
+            item.setLocation(mob.getLocation());
+            world.registerObject(item);
+            return item;
+	    } catch(Exception e) {
+	        return null;
+	    }
 	}
 
 	@Override
 	public Item createItemAtLocation(int x, int y, int z, String behavior) {
-        Item item = new Item(world.registerItemSerial(), behavior);
-        item.setLocation(new Point3D(x, y, z));
-        world.registerObject(item);
-        return item;
+	    try {
+            Item item = new Item(world.registerItemSerial(), behavior);
+            item.setLocation(new Point3D(x, y, z));
+            world.registerObject(item);
+            return item;
+	    } catch(Exception e) {
+	        return null;
+	    }
 	}
 
 	@Override

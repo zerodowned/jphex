@@ -30,12 +30,15 @@ class Create < TextCommand
     rescue
       what = desc
     end
-        
+
     if where == nil
-      $api.createItemAtMobile(player, what)
+      item = $api.createItemAtMobile(player, what)
     else
-      $api.createItemInBackpack(player, what)
+      item = $api.createItemInBackpack(player, what)
     end
 
+    if item == nil
+      $api.sendSysMessage(player, "Invalid parameters")
+    end
   end
 end

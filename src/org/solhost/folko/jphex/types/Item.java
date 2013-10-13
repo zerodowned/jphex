@@ -56,7 +56,9 @@ public class Item extends SLObject implements SendableItem {
     	this.behavior = behavior;
     	setBasicAttributes();
         ItemBehavior ib = ScriptManager.instance().getItemBehavior(behavior);
-        if(ib != null) {
+        if(ib == null) {
+            throw new UnsupportedOperationException("invalid behavior");
+        } else {
             try {
                 ib.onCreate(this);
             } catch(Exception e) {
