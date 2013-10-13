@@ -138,7 +138,7 @@ public class JPhex {
     }
 
     public static void main(String[] args) throws IOException {
-        JPhex phex = new JPhex(Level.FINEST);
+        JPhex phex = new JPhex(Level.INFO);
         if(!phex.loadData("data")) {
             return;
         }

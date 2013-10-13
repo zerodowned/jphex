@@ -21,6 +21,8 @@ package org.solhost.folko.jphex.scripting;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.jruby.RubyObject;
@@ -32,6 +34,7 @@ import org.solhost.folko.jphex.Util;
 import org.solhost.folko.jphex.World;
 import org.solhost.folko.jphex.types.*;
 import org.solhost.folko.uosl.data.SLData;
+import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Items;
@@ -417,4 +420,31 @@ public class ScriptAPIImpl implements ScriptAPI {
 	public long getTimerTicks() {
 		return Timer.getCurrentTicks();
 	}
+
+    @Override
+    public Collection<SLStatic> getStaticsAtLocation(int x, int y) {
+        return SLData.get().getStatics().getStatics(new Point2D(x, y));
+    }
+
+    @Override
+    public Collection<Item> getItemsAtLocation(int x, int y, int z) {
+        List<Item> res = new LinkedList<Item>();
+        for(SLObject obj : world.getObjectsInRange(new Point2D(x, y), 0)) {
+            if(obj instanceof Item && obj.getLocation().getZ() == z) {
+                res.add((Item) obj);
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public Collection<Item> getItemsAtLocation(int x, int y) {
+        List<Item> res = new LinkedList<Item>();
+        for(SLObject obj : world.getObjectsInRange(new Point2D(x, y), 0)) {
+            if(obj instanceof Item) {
+                res.add((Item) obj);
+            }
+        }
+        return res;
+    }
 }
