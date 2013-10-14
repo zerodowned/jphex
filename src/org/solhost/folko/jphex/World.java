@@ -646,14 +646,16 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
 
     public synchronized void onSingleClick(Player player, SLObject object) {
         long color;
+        String name = object.getName();
         if(object instanceof Player) {
             color = SendTextPacket.COLOR_SEE_PLAYER;
         } else if (object instanceof Mobile) {
             color = SendTextPacket.COLOR_SEE_NPC;
+            name = ((Mobile) object).getDecoratedName();
         } else {
             color = SendTextPacket.COLOR_SYSTEM;
         }
-        SendTextPacket packet = new SendTextPacket(object, SendTextPacket.MODE_SEE, color, object.getName());
+        SendTextPacket packet = new SendTextPacket(object, SendTextPacket.MODE_SEE, color, name);
         player.getClient().send(packet);
     }
 

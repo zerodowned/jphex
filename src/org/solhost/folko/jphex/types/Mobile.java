@@ -43,11 +43,12 @@ public class Mobile extends SLObject implements SendableMobile {
     protected Map<Attribute, Long> attributes;
     protected short hairHue, hairStyle;
     protected Mobile opponent;
-    private String behavior;
+    private String behavior, suffix;
 
     public Mobile(long serial) {
         super(serial);
-        this.name = new String("");
+        this.name = "";
+        this.suffix = "";
         this.attributes = new HashMap<Attribute, Long>();
         this.equipped = new CopyOnWriteArraySet<Item>();
     }
@@ -58,6 +59,22 @@ public class Mobile extends SLObject implements SendableMobile {
             equip.delete();
         }
         super.delete();
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public String getDecoratedName() {
+        if(suffix.length() > 0) {
+            return getName() + " " + getSuffix();
+        } else {
+            return getName();
+        }
     }
 
     public void setRefreshRunning(boolean running) {
