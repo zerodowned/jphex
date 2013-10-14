@@ -27,14 +27,27 @@ class Create < TextCommand
     # check whether first parameter is integer or string (graphic or behavior)
     begin
       what = Integer(desc)
+      if where == nil
+        item = $api.createItemAtMobile(player, what)
+      else
+        item = $api.createItemInBackpack(player, what)
+      end
     rescue
-      what = desc
+      # Couldn't parse integer -> item unset
     end
-
-    if where == nil
-      item = $api.createItemAtMobile(player, what)
-    else
-      item = $api.createItemInBackpack(player, what)
+    
+    if item == nil
+      begin
+        # Couldn't parse integer -> try as behavior
+        what = desc
+        if where == nil
+          item = $api.createItemAtMobile(player, 0, what)
+        else
+          item = $api.createItemInBackpack(player, 0, what)
+        end
+      rescue
+        # Couldn't parse behavior either, item still unset
+      end
     end
 
     if item == nil

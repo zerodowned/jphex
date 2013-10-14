@@ -748,11 +748,19 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             player.getBackpack().consumeByType(Items.GFX_GOLD, sum);
             sayAbove(shop, "The total of thy purchase is " + sum + " gp");
             for(Item item : items) {
-                if(item.isStackable()) {
-                    Item.createInContainer(this, player.getBackpack(), item.getGraphic(), item.getAmount());
+            	if(item.getAmount() == 0) continue;
+
+            	if(item.isStackable()) {
+                	Item article = item.createCopy(registerItemSerial());
+                	article.setAmount(item.getAmount());
+                	player.getBackpack().addChild(article, new Point2D(0, 0));
+                	registerObject(article);
                 } else {
                     for(int i = 0; i < item.getAmount(); i++) {
-                        Item.createInContainer(this, player.getBackpack(), item.getGraphic(), 1);
+                    	Item article = item.createCopy(registerItemSerial());
+                    	article.setAmount(1);
+                    	player.getBackpack().addChild(article, new Point2D(0, 0));
+                    	registerObject(article);
                     }
                 }
             }

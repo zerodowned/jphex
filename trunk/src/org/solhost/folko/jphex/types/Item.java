@@ -50,11 +50,10 @@ public class Item extends SLObject implements SendableItem {
         setBasicAttributes();
     }
 
-    public Item(long serial, String behavior) {
+    public Item(long serial, int graphic, String behavior) {
     	super(serial);
-    	this.graphic = 0; // should be overridden by onCreate
+    	this.graphic = graphic; // might be overridden by onCreate
     	this.behavior = behavior;
-    	setBasicAttributes();
         ItemBehavior ib = ScriptManager.instance().getItemBehavior(behavior);
         if(ib == null) {
             throw new UnsupportedOperationException("invalid behavior");
@@ -66,6 +65,13 @@ public class Item extends SLObject implements SendableItem {
                 delete();
             }
         }
+    	setBasicAttributes();
+    }
+
+    @Override
+    public void setGraphic(int graphic) {
+    	super.setGraphic(graphic);
+    	setBasicAttributes();
     }
 
     protected void setBasicAttributes() {
@@ -80,6 +86,7 @@ public class Item extends SLObject implements SendableItem {
             this.defaultLayer = tile.layer;
             this.isContainer = tile.isContainer();
             this.isWearable = tile.isWearable();
+            this.isStackable = tile.isStackable();
         }
     }
 
@@ -128,7 +135,6 @@ public class Item extends SLObject implements SendableItem {
         Item res = new Item(serial, graphic);
         res.weight = weight;
         res.amount = amount;
-        res.graphic = graphic;
         res.hue = hue;
         res.location = new Point3D(location.getX(), location.getY(), location.getZ());
         res.name = new String(name);
@@ -249,10 +255,13 @@ public class Item extends SLObject implements SendableItem {
         for(Item child : getChildren()) {
             if(child.getGraphic() == graphicID) {
                 if(count >= child.getAmount()) {
+                	// Less than we need, take everything from here and go on
                     count -= child.getAmount();
                     child.consume(child.getAmount());
                 } else {
+                	// More or exactly what we need, take what we need and stop
                     child.consume(count);
+                    count = 0;
                     break;
                 }
             }
@@ -269,7 +278,7 @@ public class Item extends SLObject implements SendableItem {
             }
         }
         if(count != 0) {
-            log.severe("Logic error in consumeByType");
+            log.severe("Logic error in consumeByType: " + count + " left of ID " + graphicID);
         }
     }
 

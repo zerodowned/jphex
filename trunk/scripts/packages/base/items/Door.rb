@@ -56,9 +56,9 @@ class Door
       ]
       
   def onCreate(door)
-    # Default state: Closed
-    $api.setGraphic(door, 0x3EEC)
-    onBehaviorChange(door)
+    if door.getGraphic() == 0
+      $api.setGraphic(door, 0x3EEC)
+    end
   end
 
   def onBehaviorChange(door)

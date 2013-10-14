@@ -140,11 +140,11 @@ public class ScriptAPIImpl implements ScriptAPI {
     }
 
 	@Override
-	public Item createItemInBackpack(Mobile mob, String behavior) {
+	public Item createItemInBackpack(Mobile mob, int graphic, String behavior) {
         Item backpack = mob.getBackpack();
         if(backpack != null) {
             try {
-                Item item = new Item(world.registerItemSerial(), behavior);
+                Item item = new Item(world.registerItemSerial(), graphic, behavior);
                 world.registerObject(item);
                 backpack.addChild(item, new Point2D(50, 50));
                 return item;
@@ -152,14 +152,14 @@ public class ScriptAPIImpl implements ScriptAPI {
                 return null;
             }
         } else {
-            return createItemAtMobile(mob, behavior);
+            return createItemAtMobile(mob, graphic, behavior);
         }
 	}
 
 	@Override
-	public Item createItemAtMobile(Mobile mob, String behavior) {
+	public Item createItemAtMobile(Mobile mob, int graphic, String behavior) {
 	    try {
-            Item item = new Item(world.registerItemSerial(), behavior);
+            Item item = new Item(world.registerItemSerial(), graphic, behavior);
             item.setLocation(mob.getLocation());
             world.registerObject(item);
             return item;
@@ -169,9 +169,9 @@ public class ScriptAPIImpl implements ScriptAPI {
 	}
 
 	@Override
-	public Item createItemAtLocation(int x, int y, int z, String behavior) {
+	public Item createItemAtLocation(int x, int y, int z, int graphic, String behavior) {
 	    try {
-            Item item = new Item(world.registerItemSerial(), behavior);
+            Item item = new Item(world.registerItemSerial(), graphic, behavior);
             item.setLocation(new Point3D(x, y, z));
             world.registerObject(item);
             return item;
