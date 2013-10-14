@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -48,7 +48,7 @@ public class AnimationView extends JPanel {
     private int currentFrame;
     private AnimationEntry currentAnimation;
 
-    private static final int MAX_FRAMES = 32768;  
+    private static final int MAX_FRAMES = 32768;
     private static final int ANIMATION_DELAY = 80;
 
     public AnimationView(SLArt art) {
@@ -66,7 +66,7 @@ public class AnimationView extends JPanel {
                 i += entry.frames.size() - 1; // -1 because loop will do ++
             }
         }
-        
+
         JPanel artInfoPanel = new JPanel();
         artInfoPanel.setLayout(new FlowLayout());
         artLabel = new JLabel("0x0000");
@@ -74,7 +74,7 @@ public class AnimationView extends JPanel {
         artInfoPanel.add(artLabel);
         artInfoPanel.add(animationButton);
         artInfoPanel.add(imagePanel);
-       
+
         animationButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if(timer == null) {
@@ -94,7 +94,7 @@ public class AnimationView extends JPanel {
                 }
             }
         });
-        
+
         artList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         artList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -104,11 +104,11 @@ public class AnimationView extends JPanel {
             }
         });
         artList.setSelectedIndex(0);
-        
+
         add(new JScrollPane(artList), BorderLayout.WEST);
         add(artInfoPanel, BorderLayout.CENTER);
     }
-    
+
     private void selectArt(int idx) {
         if(timer != null) {
             animationButton.setText("Start");
@@ -121,7 +121,7 @@ public class AnimationView extends JPanel {
         artLabel.setText(String.format("0x%04X: %d frames", currentAnimation.id, currentAnimation.frames.size()));
         updateFrame();
     }
-    
+
     private void updateFrame() {
         imagePanel.setImage(currentAnimation.frames.get(currentFrame).image);
         currentFrame++;

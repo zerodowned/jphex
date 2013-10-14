@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -39,21 +39,21 @@ public class GumpView extends JPanel {
     private ImagePanel imagePanel;
     private JList<String> gumpList;
     private JLabel gumpLabel;
-    
+
     private static final int NUM_GUMPS = 29;
-    
+
     public GumpView(SLGumps gumps) {
         this.gumps = gumps;
         this.imagePanel = new ImagePanel(200, 200);
 
         setLayout(new BorderLayout());
-        
+
         DefaultListModel<String> model = new DefaultListModel<String>();
         gumpList = new JList<String>(model);
         for(int i = 0; i < NUM_GUMPS; i++)  {
             model.addElement(String.format("0x%04X", i));
         }
-        
+
         JPanel gumpInfoPanel = new JPanel();
         gumpInfoPanel.setLayout(new FlowLayout());
         gumpLabel = new JLabel("0x0000");
@@ -69,11 +69,11 @@ public class GumpView extends JPanel {
             }
         });
         gumpList.setSelectedIndex(0);
-        
+
         add(new JScrollPane(gumpList), BorderLayout.WEST);
         add(gumpInfoPanel, BorderLayout.CENTER);
     }
-    
+
     private void selectGump(int listIndex) {
         GumpEntry entry = gumps.getGump(listIndex);
         gumpLabel.setText(String.format("0x%04X", entry.id));

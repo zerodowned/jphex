@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -57,9 +57,9 @@ public class ArtView extends JPanel {
         this.imagePanel = new ImagePanel(200, 200);
         this.staticPanel = new StaticInfoPanel();
         this.landPanel = new LandInfoPanel();
-        
+
         setLayout(new BorderLayout());
-        
+
         DefaultListModel<String> model = new DefaultListModel<String>();
         artList = new JList<String>(model);
         for(int i = 0; i < NUM_ENTRIES; i++)  {
@@ -82,7 +82,7 @@ public class ArtView extends JPanel {
                 model.addElement(info);
             }
         }
-        
+
         JPanel artInfoPanel = new JPanel();
         artInfoPanel.setLayout(new GridLayout(2, 1));
         if(landOrStatic) {
@@ -91,7 +91,7 @@ public class ArtView extends JPanel {
             artInfoPanel.add(staticPanel);
         }
         artInfoPanel.add(imagePanel);
-       
+
         artList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         artList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -101,7 +101,7 @@ public class ArtView extends JPanel {
             }
         });
         artList.setSelectedIndex(0);
-        
+
         add(new JScrollPane(artList), BorderLayout.WEST);
         add(artInfoPanel, BorderLayout.CENTER);
     }
@@ -143,8 +143,8 @@ public class ArtView extends JPanel {
 
 class StaticInfoPanel extends JPanel {
     private static final long serialVersionUID = -6607340640593973648L;
-    private JLabel height, layer, price, weight, animation, unk1, unk2;
-    private JLabel[] flagLabels = new JLabel[32];
+    private final JLabel height, layer, price, weight, animation, unk1, unk2;
+    private final JLabel[] flagLabels = new JLabel[32];
     private static final String[] staticFlags = {
         //  1               2               4             8
         "Background",   "Weapon",       "Transparent",  "Translucent",
@@ -155,8 +155,8 @@ class StaticInfoPanel extends JPanel {
         "NoDiagonal",   "Container",    "Wearable",     "Light",
         "Animation",    "Unknown 3",    "Unknown 4",    "Armor",
         "Roof",         "Door",         "Unknown 8",    "Unknown 9" };
-    
-    
+
+
     public StaticInfoPanel() {
         height = new JLabel();
         layer = new JLabel();
@@ -165,7 +165,7 @@ class StaticInfoPanel extends JPanel {
         animation = new JLabel();
         unk1 = new JLabel();
         unk2 = new JLabel();
-        
+
         JPanel flagPanel = new JPanel();
         setLayout(new GridLayout(10, 4));
         for(int i = 0; i < 32; i++) {
@@ -179,10 +179,10 @@ class StaticInfoPanel extends JPanel {
         add(animation);
         add(unk1);
         add(unk2);
-        
+
         add(flagPanel);
     }
-    
+
     public void setTile(StaticTile tile) {
         for(int i = 0; i < 32; i++) {
             if((tile.flags & (1 << i)) != 0) {
@@ -205,8 +205,8 @@ class StaticInfoPanel extends JPanel {
 
 class LandInfoPanel extends JPanel {
     private static final long serialVersionUID = -6607340640593973648L;
-    private JLabel texture;
-    private JLabel[] flagLabels = new JLabel[32];
+    private final JLabel texture;
+    private final JLabel[] flagLabels = new JLabel[32];
     private static final String[] staticFlags = {
         //  1               2               4             8
         "Unknown",      "Unknown",      "Unknown",      "Unknown",
@@ -217,11 +217,11 @@ class LandInfoPanel extends JPanel {
         "Unknown",      "Unknown",      "Unknown",      "Unknown",
         "Unknown",      "Unknown",      "Unknown",      "Unknown",
         "Unknown",      "Unknown",      "Unknown",      "Unknown" };
-    
-    
+
+
     public LandInfoPanel() {
         texture = new JLabel();
-        
+
         JPanel flagPanel = new JPanel();
         setLayout(new GridLayout(9, 4));
         for(int i = 0; i < 32; i++) {
@@ -231,7 +231,7 @@ class LandInfoPanel extends JPanel {
         add(texture);
         add(flagPanel);
     }
-    
+
     public void setTile(LandTile tile) {
         for(int i = 0; i < 32; i++) {
             if((tile.flags & (1 << i)) != 0) {

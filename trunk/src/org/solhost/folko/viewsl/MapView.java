@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -33,28 +33,28 @@ import org.solhost.folko.uosl.types.Point2D;
 public class MapView extends JPanel {
     private static final long serialVersionUID = -9081741694620720599L;
     private BufferedImage mapImage;
-    private ImagePanel imagePanel;
-    private JLabel coordsLabel;
-    private SLMap map;
-    
+    private final ImagePanel imagePanel;
+    private final JLabel coordsLabel;
+    private final SLMap map;
+
     public MapView(SLMap map) {
         this.map = map;
         generateImage();
-        
+
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
                 mouseChanged(e.getX(), e.getY());
             }
         });
-        
+
         setLayout(new BorderLayout());
         this.imagePanel = new ImagePanel(mapImage);
         this.coordsLabel = new JLabel("Map Coordinates: ");
         add(imagePanel, BorderLayout.NORTH);
         add(coordsLabel, BorderLayout.SOUTH);
     }
-    
+
     public void generateImage() {
         mapImage = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
         for(int x = 0; x < 512; x += 2) {
@@ -75,7 +75,7 @@ public class MapView extends JPanel {
             }
         }
     }
-    
+
     public void mouseChanged(int mouseX, int mouseY) {
         Point p = imagePanel.getMouseImagePosition();
         if(p == null) {
