@@ -18,7 +18,6 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.scripting;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,6 +27,7 @@ import java.util.logging.Logger;
 import org.jruby.RubyObject;
 import org.jruby.RubyProc;
 import org.jruby.runtime.builtin.IRubyObject;
+import org.solhost.folko.jphex.ObjectRegistry;
 import org.solhost.folko.jphex.Timer;
 import org.solhost.folko.jphex.TimerQueue;
 import org.solhost.folko.jphex.Util;
@@ -47,9 +47,11 @@ import org.solhost.folko.uosl.util.Pathfinder;
 public class ScriptAPIImpl implements ScriptAPI {
     private static final Logger log = Logger.getLogger("jphex.scriptapi");
     private final World world;
+    private final ObjectRegistry registry;
 
     public ScriptAPIImpl(World world) {
         this.world = world;
+        this.registry = ObjectRegistry.get();
     }
 
     @Override
@@ -114,8 +116,8 @@ public class ScriptAPIImpl implements ScriptAPI {
     public Item createItemInBackpack(Mobile mob, int graphic) {
         Item backpack = mob.getBackpack();
         if(backpack != null) {
-            Item item = new Item(world.registerItemSerial(), graphic);
-            world.registerObject(item);
+            Item item = new Item(registry.registerItemSerial(), graphic);
+            registry.registerObject(item);
             backpack.addChild(item, new Point2D(50, 50));
             return item;
         } else {
@@ -125,17 +127,17 @@ public class ScriptAPIImpl implements ScriptAPI {
 
     @Override
     public Item createItemAtMobile(Mobile mob, int graphic) {
-        Item item = new Item(world.registerItemSerial(), graphic);
+        Item item = new Item(registry.registerItemSerial(), graphic);
         item.setLocation(mob.getLocation());
-        world.registerObject(item);
+        registry.registerObject(item);
         return item;
     }
 
     @Override
     public Item createItemAtLocation(int x, int y, int z, int graphic) {
-        Item item = new Item(world.registerItemSerial(), graphic);
+        Item item = new Item(registry.registerItemSerial(), graphic);
         item.setLocation(new Point3D(x, y, z));
-        world.registerObject(item);
+        registry.registerObject(item);
         return item;
     }
 
@@ -144,8 +146,8 @@ public class ScriptAPIImpl implements ScriptAPI {
         Item backpack = mob.getBackpack();
         if(backpack != null) {
             try {
-                Item item = new Item(world.registerItemSerial(), graphic, behavior);
-                world.registerObject(item);
+                Item item = new Item(registry.registerItemSerial(), graphic, behavior);
+                registry.registerObject(item);
                 backpack.addChild(item, new Point2D(50, 50));
                 return item;
             } catch (Exception e) {
@@ -159,9 +161,9 @@ public class ScriptAPIImpl implements ScriptAPI {
     @Override
     public Item createItemAtMobile(Mobile mob, int graphic, String behavior) {
         try {
-            Item item = new Item(world.registerItemSerial(), graphic, behavior);
+            Item item = new Item(registry.registerItemSerial(), graphic, behavior);
             item.setLocation(mob.getLocation());
-            world.registerObject(item);
+            registry.registerObject(item);
             return item;
         } catch(Exception e) {
             return null;
@@ -171,9 +173,9 @@ public class ScriptAPIImpl implements ScriptAPI {
     @Override
     public Item createItemAtLocation(int x, int y, int z, int graphic, String behavior) {
         try {
-            Item item = new Item(world.registerItemSerial(), graphic, behavior);
+            Item item = new Item(registry.registerItemSerial(), graphic, behavior);
             item.setLocation(new Point3D(x, y, z));
-            world.registerObject(item);
+            registry.registerObject(item);
             return item;
         } catch(Exception e) {
             return null;
@@ -239,14 +241,17 @@ public class ScriptAPIImpl implements ScriptAPI {
 
     @Override
     public void setObjectProperty(SLObject object, String name, IRubyObject value) {
+        if(!(value instanceof RubyObject)) {
+            throw new UnsupportedOperationException("can only store real RubyObjects");
+        }
         object.setProperty(name, (RubyObject) value);
     }
 
     @Override
     public IRubyObject getObjectProperty(SLObject object, String name) {
-        Serializable value = object.getProperty(name);
+        IRubyObject value = object.getProperty(name);
         if(value != null) {
-            return (RubyObject) value;
+            return value;
         } else {
             return ScriptManager.instance().toRubyObject(null);
         }
@@ -268,13 +273,13 @@ public class ScriptAPIImpl implements ScriptAPI {
         if(be == null) {
             return false;
         }
-        Mobile mob = new Mobile(world.registerMobileSerial());
-        mob.setLocation(near.getLocation());
-        mob.setFacing(near.getFacing());
-        mob.setBehavior(behavior);
-        be.onSpawn(mob);
-        world.registerObject(mob);
-        world.npcPlayerSearch(mob);
+        NPC npc = new NPC(registry.registerMobileSerial());
+        npc.setLocation(near.getLocation());
+        npc.setFacing(near.getFacing());
+        npc.setBehavior(behavior);
+        be.onSpawn(npc);
+        registry.registerObject(npc);
+        world.npcPlayerSearch(npc);
         return true;
     }
 
@@ -329,20 +334,20 @@ public class ScriptAPIImpl implements ScriptAPI {
 
     @Override
     public void createClothes(Mobile mob) {
-        Item.createEquipped(world, mob, Items.GFX_INVIS_PACK, 0);
-        Item.createEquipped(world, mob, Items.GFX_SHOP_CONTAINER, 0);
-        Item.createEquipped(world, mob, Items.GFX_TUNIC, randomClothColor());
-        Item.createEquipped(world, mob, randomHairStyle(mob.getGraphic()), randomHairHue());
+        Item.createEquipped(mob, Items.GFX_INVIS_PACK, 0);
+        Item.createEquipped(mob, Items.GFX_SHOP_CONTAINER, 0);
+        Item.createEquipped(mob, Items.GFX_TUNIC, randomClothColor());
+        Item.createEquipped(mob, randomHairStyle(mob.getGraphic()), randomHairHue());
         if(mob.getGraphic() == Mobiles.MOBTYPE_HUMAN_MALE) {
-            Item.createEquipped(world, mob, Items.GFX_PANTS, randomClothColor());
+            Item.createEquipped(mob, Items.GFX_PANTS, randomClothColor());
         } else {
-            Item.createEquipped(world, mob, Items.GFX_SKIRT, randomClothColor());
+            Item.createEquipped(mob, Items.GFX_SKIRT, randomClothColor());
         }
     }
 
     @Override
-    public void say(Mobile mob, String text) {
-        world.sayAbove(mob, text);
+    public void say(SLObject obj, String text) {
+        world.sayAbove(obj, text);
     }
 
     @Override

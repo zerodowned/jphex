@@ -18,12 +18,15 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.types;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.jruby.RubyObject;
 import org.solhost.folko.uosl.network.SendableObject;
 import org.solhost.folko.uosl.types.Point2D;
 import org.solhost.folko.uosl.types.Point3D;
@@ -31,19 +34,20 @@ import org.solhost.folko.uosl.types.Point3D;
 public abstract class SLObject implements Serializable, SendableObject {
     private static final long serialVersionUID = 1L;
     protected transient Set<ObjectObserver> observers;
-    protected Map<String, Serializable> scriptProperties;
+    protected transient SLObject parent, backupParent; // backup for drag cancelling
+    protected Map<String, RubyObject> scriptProperties;
     protected long serial;
     protected Point3D location;
     protected int graphic, hue;
     protected String name;
     protected boolean deleted, hidden;
-    protected SLObject parent, backupParent; // backup for drag cancelling
 
     public SLObject(long serial) {
         this.serial = serial;
         this.deleted = false;
-        this.scriptProperties = new HashMap<String, Serializable>();
-        onLoad();
+        this.scriptProperties = new HashMap<String, RubyObject>();
+        this.observers = new CopyOnWriteArraySet<ObjectObserver>();
+        this.onLoad();
     }
 
     public void addObserver(ObjectObserver o) {
@@ -56,7 +60,6 @@ public abstract class SLObject implements Serializable, SendableObject {
 
     // called on first creation and after loading on server start
     public void onLoad() {
-        this.observers = new CopyOnWriteArraySet<ObjectObserver>();
     }
 
     public void setVisible(boolean visible) {
@@ -92,7 +95,7 @@ public abstract class SLObject implements Serializable, SendableObject {
     }
 
     public SLObject getRoot() {
-        SLObject iter = parent, prevIter = this;
+        SLObject iter = getParent(), prevIter = this;
         while(iter != null) {
             prevIter = iter;
             iter = iter.getParent();
@@ -160,11 +163,18 @@ public abstract class SLObject implements Serializable, SendableObject {
         return serial;
     }
 
-    public void setProperty(String name, Serializable value) {
+    public void setProperty(String name, RubyObject value) {
         scriptProperties.put(name, value);
     }
 
-    public Serializable getProperty(String name) {
+    public RubyObject getProperty(String name) {
         return scriptProperties.get(name);
+    }
+
+    public abstract void foundOrphan(SLObject orphan);
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        this.observers = new CopyOnWriteArraySet<ObjectObserver>();
     }
 }

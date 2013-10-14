@@ -18,11 +18,15 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.types;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.solhost.folko.jphex.ObjectRegistry;
 import org.solhost.folko.jphex.scripting.ItemBehavior;
 import org.solhost.folko.jphex.scripting.ScriptManager;
 import org.solhost.folko.uosl.data.SLData;
@@ -39,7 +43,7 @@ public class Item extends SLObject implements SendableItem {
     private boolean isContainer, isWearable, isStackable;
     private short weight, defaultLayer;
     private byte lightLevel;
-    private List<Item> children;
+    private transient List<Item> children;
     private Player draggedBy;
     private int amount, price, height;
     private String behavior;
@@ -95,6 +99,7 @@ public class Item extends SLObject implements SendableItem {
         for(Item child : children) {
             child.delete();
         }
+        children.clear();
         super.delete();
     }
 
@@ -170,8 +175,13 @@ public class Item extends SLObject implements SendableItem {
         for(ObjectObserver o : observers) o.onChildAdded(this, child);
     }
 
+    // adding or removing has no effect
     public List<Item> getChildren() {
-        return children;
+        List<Item> res = new ArrayList<Item>();
+        for(Item child : children) {
+            res.add(child);
+        }
+        return res;
     }
 
     public void removeChild(Item child) {
@@ -180,15 +190,15 @@ public class Item extends SLObject implements SendableItem {
     }
 
     public boolean isOnGround() {
-        return parent == null && location != null;
+        return getParent() == null && location != null;
     }
 
     public boolean isWorn() {
-        return parent instanceof Mobile;
+        return getParent() instanceof Mobile;
     }
 
     public boolean isInContainer() {
-        return parent instanceof Item;
+        return getParent() instanceof Item;
     }
 
     @Override
@@ -336,32 +346,32 @@ public class Item extends SLObject implements SendableItem {
         return defaultLayer;
     }
 
-    public static Item createAtLocation(SerialProvider serialProvider, Point3D location, int graphic, int amount) {
-        long serial = serialProvider.registerItemSerial();
+    public static Item createAtLocation(Point3D location, int graphic, int amount) {
+        long serial = ObjectRegistry.get().registerItemSerial();
 
         Item item = new Item(serial, graphic);
         item.setLocation(location);
         item.setAmount(amount);
-        serialProvider.registerObject(item);
+        ObjectRegistry.get().registerObject(item);
 
         return item;
     }
 
-    public static Item createEquipped(SerialProvider serialProvider, Mobile on, int graphic, int hue) {
-        long serial = serialProvider.registerItemSerial();
+    public static Item createEquipped(Mobile on, int graphic, int hue) {
+        long serial = ObjectRegistry.get().registerItemSerial();
 
         Item item = new Item(serial, graphic);
         item.setParent(on);
         item.setHue(hue);
         item.setLocation(new Point3D(0, 0, 0));
-        serialProvider.registerObject(item);
+        ObjectRegistry.get().registerObject(item);
         on.equipItem(item);
 
         return item;
     }
 
-    public static Item createInContainer(SerialProvider serialProvider, Item container, int graphic, int amount) {
-        long serial = serialProvider.registerItemSerial();
+    public static Item createInContainer(Item container, int graphic, int amount) {
+        long serial = ObjectRegistry.get().registerItemSerial();
         if(container == null) {
             log.severe("tried to create item in null-container");
             return null;
@@ -371,7 +381,7 @@ public class Item extends SLObject implements SendableItem {
         item.setLocation(new Point3D(50, 50, 0));
         item.setParent(container);
         item.setAmount(amount);
-        serialProvider.registerObject(item);
+        ObjectRegistry.get().registerObject(item);
         container.addChild(item, item.getLocation());
 
         return item;
@@ -394,5 +404,15 @@ public class Item extends SLObject implements SendableItem {
                 log.log(Level.SEVERE, "Exception in onUse: " + e.getMessage(), e);
             }
         }
+    }
+
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        this.children = new CopyOnWriteArrayList<Item>();
+    }
+
+    @Override
+    public void foundOrphan(SLObject orphan) {
+        addChild((Item) orphan, orphan.getLocation());
     }
 }

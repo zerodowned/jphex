@@ -19,6 +19,10 @@
 package org.solhost.folko.uosl.types;
 
 public class Mobiles {
+    // Hardcoded into client: serials above are considered items
+    public static final long SERIAL_FIRST           = 0x00000001;
+    public static final long SERIAL_LAST            = 0x3FFFFFFF;
+
     public static final int MOBTYPE_HUMAN_MALE      = 0x00;
     public static final int MOBTYPE_HUMAN_FEMALE    = 0x01;
     public static final int MOBTYPE_PALE_HUMAN      = 0x03;

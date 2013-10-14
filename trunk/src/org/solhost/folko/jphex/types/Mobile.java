@@ -18,37 +18,34 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.types;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.Util;
-import org.solhost.folko.jphex.scripting.MobileBehavior;
-import org.solhost.folko.jphex.scripting.ScriptManager;
 import org.solhost.folko.uosl.data.SLTiles;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
-import org.solhost.folko.uosl.types.Mobiles;
 
-public class Mobile extends SLObject implements SendableMobile {
+public abstract class Mobile extends SLObject implements SendableMobile {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.mobile");
+    protected transient Set<Item> equipped;
     protected boolean refreshRunning;
     protected Direction facing;
-    protected Set<Item> equipped;
     protected Map<Attribute, Long> attributes;
     protected short hairHue, hairStyle;
     protected Mobile opponent;
-    private String behavior, suffix;
 
     public Mobile(long serial) {
         super(serial);
         this.name = "";
-        this.suffix = "";
         this.attributes = new HashMap<Attribute, Long>();
         this.equipped = new CopyOnWriteArraySet<Item>();
     }
@@ -58,23 +55,8 @@ public class Mobile extends SLObject implements SendableMobile {
         for(Item equip : equipped) {
             equip.delete();
         }
+        equipped.clear();
         super.delete();
-    }
-
-    public void setSuffix(String suffix) {
-        this.suffix = suffix;
-    }
-
-    public String getSuffix() {
-        return suffix;
-    }
-
-    public String getDecoratedName() {
-        if(suffix.length() > 0) {
-            return getName() + " " + getSuffix();
-        } else {
-            return getName();
-        }
     }
 
     public void setRefreshRunning(boolean running) {
@@ -92,16 +74,6 @@ public class Mobile extends SLObject implements SendableMobile {
 
     public Mobile getOpponent() {
         return opponent;
-    }
-
-    public void setBehavior(String behavior) {
-        if(ScriptManager.instance().getMobileBehaviour(behavior) != null) {
-            this.behavior = behavior;
-        }
-    }
-
-    public String getBehavior() {
-        return behavior;
     }
 
     public void setAttribute(Attribute a, long value) {
@@ -195,61 +167,13 @@ public class Mobile extends SLObject implements SendableMobile {
         equipped.remove(item);
     }
 
+    // changes won't be reflected
     public Set<Item> getEquippedItems() {
-        return equipped;
-    }
-
-    public void onEnterArea(Player player) {
-        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        if(be != null) {
-            try {
-                be.onEnterArea(this, player);
-            } catch(Exception e) {
-                log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
-            }
+        Set<Item> res = new HashSet<Item>();
+        for(Item equip : equipped) {
+            res.add(equip);
         }
-    }
-
-    public void onSpeech(Player player, String line) {
-        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        if(be != null) {
-            try {
-                be.onSpeech(this, player, line);
-            } catch(Exception e) {
-                log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
-            }
-        }
-    }
-
-    public void onHello(Player player) {
-        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        if(be != null) {
-            try {
-                be.onHello(this, player);
-            } catch(Exception e) {
-                log.log(Level.SEVERE, "Script error in onHello: " + e.getMessage(), e);
-            }
-        }
-    }
-
-    // returns whether to send the paperdoll to the player
-    public boolean onDoubleClick(Player player) {
-        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
-        if(be != null) {
-            try {
-                return be.onDoubleClick(this, player);
-            } catch(Exception e) {
-                log.log(Level.SEVERE, "Script error in onEnterArea: " + e.getMessage(), e);
-                return false;
-            }
-        } else {
-            // default behavior: depend on graphic
-            if(getGraphic() == Mobiles.MOBTYPE_HUMAN_FEMALE || getGraphic() == Mobiles.MOBTYPE_HUMAN_MALE) {
-                return true;
-            } else {
-                return false;
-            }
-        }
+        return res;
     }
 
     public boolean checkSkill(Attribute skill, long minRequired, long maxUntilNoGain) {
@@ -465,6 +389,15 @@ public class Mobile extends SLObject implements SendableMobile {
         if(fatigue < getAttribute(Attribute.MAX_FATIGUE)) {
             setAttribute(Attribute.FATIGUE, fatigue + 1);
         }
+    }
 
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        stream.defaultReadObject();
+        this.equipped = new CopyOnWriteArraySet<Item>();
+    }
+
+    @Override
+    public void foundOrphan(SLObject orphan) {
+        equipItem((Item) orphan);
     }
 }

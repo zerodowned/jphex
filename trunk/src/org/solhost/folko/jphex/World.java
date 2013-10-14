@@ -33,38 +33,16 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.solhost.folko.jphex.ObjectRegistry.SerialObserver;
 import org.solhost.folko.jphex.network.*;
-import org.solhost.folko.jphex.scripting.ScriptManager;
-import org.solhost.folko.jphex.scripting.SpellHandler;
+import org.solhost.folko.jphex.scripting.*;
 import org.solhost.folko.jphex.types.*;
 import org.solhost.folko.uosl.data.*;
-import org.solhost.folko.uosl.network.packets.DeathPacket;
-import org.solhost.folko.uosl.network.packets.EquipPacket;
-import org.solhost.folko.uosl.network.packets.FightPacket;
-import org.solhost.folko.uosl.network.packets.FullItemsContainerPacket;
-import org.solhost.folko.uosl.network.packets.InitPlayerPacket;
-import org.solhost.folko.uosl.network.packets.ItemInContainerPacket;
-import org.solhost.folko.uosl.network.packets.LightLevelPacket;
-import org.solhost.folko.uosl.network.packets.LocationPacket;
-import org.solhost.folko.uosl.network.packets.OpenGumpPacket;
-import org.solhost.folko.uosl.network.packets.RemoveObjectPacket;
-import org.solhost.folko.uosl.network.packets.SLPacket;
-import org.solhost.folko.uosl.network.packets.SendInitialStatsPacket;
-import org.solhost.folko.uosl.network.packets.SendObjectPacket;
-import org.solhost.folko.uosl.network.packets.SendTextPacket;
-import org.solhost.folko.uosl.network.packets.ShopPacket;
-import org.solhost.folko.uosl.network.packets.SkillsPacket;
-import org.solhost.folko.uosl.network.packets.StatsPacket;
-import org.solhost.folko.uosl.types.Attribute;
-import org.solhost.folko.uosl.types.Direction;
-import org.solhost.folko.uosl.types.Items;
-import org.solhost.folko.uosl.types.Mobiles;
-import org.solhost.folko.uosl.types.Point2D;
-import org.solhost.folko.uosl.types.Point3D;
-import org.solhost.folko.uosl.types.Spell;
+import org.solhost.folko.uosl.network.packets.*;
+import org.solhost.folko.uosl.types.*;
 import org.solhost.folko.uosl.util.ObjectLister;
 
-public class World implements ObjectObserver, SerialProvider, ObjectLister {
+public class World implements ObjectObserver, SerialObserver, ObjectLister {
     public static final int VISIBLE_RANGE = 15;
     public static final int SPEECH_RANGE = 10;
     public static final int ENTER_AREA_RANGE = 5;
@@ -81,63 +59,56 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
     private static final Logger log = Logger.getLogger("jphex.world");
     private final String savePath;
 
-    private long nextItemSerial;
-    private long nextMobileSerial;
-    private Map<Long, SLObject> objects;
-    private Map<Long, SLStatic> statics;
-
+    private ObjectRegistry registry;
     private final Map<Client, Player> onlinePlayers;
 
     private World(String savePath) {
-        this.objects = new HashMap<Long, SLObject>();
         this.onlinePlayers = new HashMap<Client, Player>();
         this.savePath = savePath;
     }
 
-    @SuppressWarnings("unchecked")
     public static World loadOrCreateNew(String savePath) throws Exception {
         File file = new File(savePath + "/save.ser");
         World world = new World(savePath);
+        Map<Long, SLObject> objects = new HashMap<Long, SLObject>();
+        Map<SLObject, Long> orphans = new HashMap<SLObject, Long>();
         if(!file.exists()) {
             log.config("Creating a fresh save");
         } else {
             log.config("Loading an existing save");
             FileInputStream saveFile = new FileInputStream(file);
             ObjectInputStream objIn = new ObjectInputStream(saveFile);
-            world.objects = (Map<Long, SLObject>) objIn.readObject();
+            int num = objIn.readInt();
+            for(int i = 0; i < num; i++) {
+                SLObject obj = (SLObject) objIn.readObject();
+                objects.put(obj.getSerial(), obj);
+                long parentSerial = objIn.readLong();
+                orphans.put(obj, parentSerial);
+            }
             objIn.close();
             saveFile.close();
         }
-        world.setup();
-        return world;
-    }
+        ObjectRegistry.init(SLData.get().getStatics().getAllStatics(), objects);
+        world.registry = ObjectRegistry.get();
 
-    // calculate highest serials and load statics
-    private void setup() {
-        this.statics = SLData.get().getStatics().getAllStatics();
+        for(SLObject orphan : orphans.keySet()) {
+            long parentSerial = orphans.get(orphan);
+            if(parentSerial == -1) {
+                continue;
+            }
 
-        // clients can doubleclick static items in UOSL, so make sure our serials don't
-        // conflict with static serials
-        this.nextItemSerial = SLData.get().getStatics().getHighestSerial() + 1;
-        this.nextMobileSerial = 0x00000001;
-
-        // this loop may not call any script because the script might create an
-        // item and we wouldn't know its serial yet, that's why there's another
-        // loop in init()
-        for(SLObject obj : objects.values()) {
-            long serial = obj.getSerial();
-            if(obj instanceof Mobile) {
-                if(serial >= nextMobileSerial) {
-                    nextMobileSerial = serial + 1;
-                }
-            } else if(obj instanceof Item) {
-                if(serial >= nextItemSerial) {
-                    nextItemSerial = serial + 1;
-                }
+            SLObject parent = world.registry.findObject(parentSerial);
+            if(parent == null) {
+                log.severe(String.format("Couldn't find parent %08X for %08X, deleting orphan", parentSerial, orphan.getSerial()));
+                world.registry.removeObject(orphan.getSerial());
+                orphan.delete();
+            } else {
+                parent.foundOrphan(orphan);
             }
         }
-        log.config(String.format("World initialized with %d dynamic and %d static objects", objects.size(), statics.size()));
-        log.fine(String.format("Next item serial 0x%08X, next mobile serial 0x%08X", nextItemSerial, nextMobileSerial));
+
+        world.registry.addObserver(world);
+        return world;
     }
 
     public synchronized boolean save() {
@@ -146,7 +117,17 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
         try {
             FileOutputStream saveFile = new FileOutputStream(savePath + "/save.ser", false);
             ObjectOutputStream objOut = new ObjectOutputStream(saveFile);
-            objOut.writeObject(objects);
+            Collection<SLObject> all = registry.allObjects();
+            objOut.writeInt(all.size());
+            for(SLObject obj : all) {
+                objOut.writeObject(obj);
+                SLObject parent = obj.getParent();
+                if(parent != null) {
+                    objOut.writeLong(obj.getParent().getSerial());
+                } else {
+                    objOut.writeLong(-1);
+                }
+            }
             objOut.close();
             saveFile.close();
         } catch (IOException e) {
@@ -161,7 +142,7 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
     // scripts must be able to execute when calling this
     public synchronized void init() {
         // second pass: call init scripts etc.
-        for(SLObject obj : objects.values()) {
+        for(SLObject obj : registry.allObjects()) {
             obj.onLoad();
             if(obj instanceof Mobile) {
                 Mobile mob = (Mobile) obj;
@@ -171,40 +152,6 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
             }
             obj.addObserver(this);
         }
-    }
-
-    public synchronized SLObject findObject(long serial) {
-        return objects.get(serial);
-    }
-
-    public synchronized SLStatic findStatic(long serial) {
-        return statics.get(serial);
-    }
-
-    public synchronized void registerObject(SLObject object) {
-        if(object.isDeleted()) {
-            return;
-        }
-
-        long serial = object.getSerial();
-        if(objects.containsKey(serial)) {
-            throw new RuntimeException("already registered: " + serial);
-        }
-        objects.put(serial, object);
-        object.addObserver(this);
-        onObjectUpdate(object);
-    }
-
-    public synchronized Collection<SLObject> getAllObjects() {
-        return objects.values();
-    }
-
-    public synchronized long registerItemSerial() {
-        return nextItemSerial++;
-    }
-
-    public synchronized long registerMobileSerial() {
-        return nextMobileSerial++;
     }
 
     public synchronized Collection<Player> getOnlinePlayersInRange(Point2D point, int range) {
@@ -230,7 +177,7 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
     // objects on ground
     public synchronized Collection<SLObject> getObjectsInRange(Point2D point, int range) {
         List<SLObject> res = new LinkedList<SLObject>();
-        for(SLObject obj : objects.values()) {
+        for(SLObject obj : registry.allObjects()) {
             if(obj instanceof Item && !((Item) obj).isOnGround()) continue;
 
             if(obj.isVisible() && obj.inRange(point, range)) {
@@ -261,7 +208,9 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
                 sendObject(player, obj);
                 if(obj instanceof Mobile) {
                     sendFullEquipment(player, (Mobile) obj);
-                    ((Mobile) obj).onEnterArea(player);
+                }
+                if(obj instanceof NPC) {
+                    ((NPC) obj).onEnterArea(player);
                 }
             }
         }
@@ -282,30 +231,30 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
     public synchronized void onCreatePlayer(Player player) {
         player.setLocation(new Point3D(NEW_CHAR_X, NEW_CHAR_Y, 0));
 
-        Item backpack = Item.createEquipped(this, player, Items.GFX_BACKPACK, 0);
-        Item.createEquipped(this, player, Items.GFX_DAGGER, 0);
-        Item.createEquipped(this, player, Items.GFX_TUNIC, Util.random(23, 40));
+        Item backpack = Item.createEquipped(player, Items.GFX_BACKPACK, 0);
+        Item.createEquipped(player, Items.GFX_DAGGER, 0);
+        Item.createEquipped(player, Items.GFX_TUNIC, Util.random(23, 40));
         if(player.getGraphic() == Mobiles.MOBTYPE_HUMAN_MALE) {
             if(player.getHairStyle() != 2) {
-                Item.createEquipped(this, player, Items.GFX_HAIR_START + player.getHairStyle(), player.getHairHue() + 7);
+                Item.createEquipped(player, Items.GFX_HAIR_START + player.getHairStyle(), player.getHairHue() + 7);
             }
-            Item.createEquipped(this, player, Items.GFX_PANTS, Util.random(23, 40));
+            Item.createEquipped(player, Items.GFX_PANTS, Util.random(23, 40));
         } else {
-            Item.createEquipped(this, player, Items.GFX_HAIR_START + 3 + player.getHairStyle(), player.getHairHue() + 7);
-            Item.createEquipped(this, player, Items.GFX_SKIRT, Util.random(23, 40));
+            Item.createEquipped(player, Items.GFX_HAIR_START + 3 + player.getHairStyle(), player.getHairHue() + 7);
+            Item.createEquipped(player, Items.GFX_SKIRT, Util.random(23, 40));
         }
-        Item.createInContainer(this, backpack, Items.GFX_GOLD, 100);
+        Item.createInContainer(backpack, Items.GFX_GOLD, 100);
 
         if(player.getSerial() == 1) {
             player.setCommandLevel(CommandLevel.ADMIN);
-            Item spellbook = Item.createInContainer(this, backpack, Items.GFX_SPELLBOOK, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_LIGHTSOURCE, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_DARKSOURCE, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_GREATLIGHT, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_LIGHT, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_HEALING, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_FIREBALL, 1);
-            Item.createInContainer(this, spellbook, Items.GFX_SCROLL_CREATEFOOD, 1);
+            Item spellbook = Item.createInContainer(backpack, Items.GFX_SPELLBOOK, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_LIGHTSOURCE, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_DARKSOURCE, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_GREATLIGHT, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_LIGHT, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_HEALING, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_FIREBALL, 1);
+            Item.createInContainer(spellbook, Items.GFX_SCROLL_CREATEFOOD, 1);
         }
     }
 
@@ -359,10 +308,12 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
             return;
         }
 
-        if(obj instanceof Mobile) {
-            Mobile mob = (Mobile) obj;
-            if(mob.onDoubleClick(player)) {
-                sendPaperdoll(player, (Mobile) obj);
+        if(obj instanceof Player) {
+            sendPaperdoll(player, (Player) obj);
+        } else if(obj instanceof NPC) {
+            NPC npc = (NPC) obj;
+            if(npc.onDoubleClick(player)) {
+                sendPaperdoll(player, npc);
             }
         } else if (obj instanceof Item) {
             Item itm = (Item) obj;
@@ -471,9 +422,9 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
 
         if(amount != 0 && amount < item.getAmount()) {
             // not dragging the whole pile -> need to create new pile
-            Item newPile = item.createCopy(registerItemSerial());
+            Item newPile = item.createCopy(registry.registerItemSerial());
             newPile.setAmount(item.getAmount() - amount);
-            registerObject(newPile);
+            registry.registerObject(newPile);
             if(item.getParent() != null) {
                 Item container = (Item) item.getParent();
                 container.addChild(newPile, newPile.getLocation());
@@ -583,21 +534,21 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
         boolean isHello = text.toLowerCase().startsWith("hello");
         // remember nearest NPC
         int minDist = Integer.MAX_VALUE;
-        Mobile helloNPC = null;
+        NPC helloNPC = null;
 
         // normal speech -> send to players and NPCs
         SendTextPacket packet = new SendTextPacket(src, SendTextPacket.MODE_SAY, color, text);
         for(SLObject obj : getObjectsInRange(src.getLocation(), SPEECH_RANGE)) {
             if(obj instanceof Player) {
                 ((Player) obj).getClient().send(packet);
-            } else if(obj instanceof Mobile) {
+            } else if(obj instanceof NPC) {
                 if(isHello) {
                     if(src.distanceTo(obj) < minDist) {
                         minDist = src.distanceTo(obj);
-                        helloNPC = (Mobile) obj;
+                        helloNPC = (NPC) obj;
                     }
                 } else {
-                    ((Mobile) obj).onSpeech(src, text.toLowerCase());
+                    ((NPC) obj).onSpeech(src, text.toLowerCase());
                 }
             }
         }
@@ -611,7 +562,7 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
     public synchronized Collection<Player> getInterestedPlayers(SLObject obj) {
         List<Player> empty = new LinkedList<Player>();
 
-        if(findObject(obj.getSerial()) == null) {
+        if(registry.findObject(obj.getSerial()) == null) {
             return empty;
         }
 
@@ -661,9 +612,9 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
         String name = object.getName();
         if(object instanceof Player) {
             color = SendTextPacket.COLOR_SEE_PLAYER;
-        } else if (object instanceof Mobile) {
+        } else if (object instanceof NPC) {
             color = SendTextPacket.COLOR_SEE_NPC;
-            name = ((Mobile) object).getDecoratedName();
+            name = ((NPC) object).getDecoratedName();
         } else {
             color = SendTextPacket.COLOR_SYSTEM;
         }
@@ -671,9 +622,9 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
         player.getClient().send(packet);
     }
 
-    public synchronized void sayAbove(Mobile mob, String text) {
-        SendTextPacket packet = new SendTextPacket(mob, SendTextPacket.MODE_SAY, SendTextPacket.COLOR_SEE_NPC, text);
-        for(Player p : getOnlinePlayersInRange(mob.getLocation(), World.VISIBLE_RANGE)) {
+    public synchronized void sayAbove(SLObject obj, String text) {
+        SendTextPacket packet = new SendTextPacket(obj, SendTextPacket.MODE_SAY, SendTextPacket.COLOR_SEE_NPC, text);
+        for(Player p : getOnlinePlayersInRange(obj.getLocation(), World.VISIBLE_RANGE)) {
             p.sendPacket(packet);
         }
     }
@@ -763,16 +714,16 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
                 if(item.getAmount() == 0) continue;
 
                 if(item.isStackable()) {
-                    Item article = item.createCopy(registerItemSerial());
+                    Item article = item.createCopy(registry.registerItemSerial());
                     article.setAmount(item.getAmount());
                     player.getBackpack().addChild(article, new Point2D(0, 0));
-                    registerObject(article);
+                    registry.registerObject(article);
                 } else {
                     for(int i = 0; i < item.getAmount(); i++) {
-                        Item article = item.createCopy(registerItemSerial());
+                        Item article = item.createCopy(registry.registerItemSerial());
                         article.setAmount(1);
                         player.getBackpack().addChild(article, new Point2D(0, 0));
-                        registerObject(article);
+                        registry.registerObject(article);
                     }
                 }
             }
@@ -891,10 +842,10 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
         }
     }
 
-    public synchronized void npcPlayerSearch(Mobile mob) {
-        for(SLObject obj : getObjectsInRange(mob.getLocation(), ENTER_AREA_RANGE)) {
+    public synchronized void npcPlayerSearch(NPC npc) {
+        for(SLObject obj : getObjectsInRange(npc.getLocation(), ENTER_AREA_RANGE)) {
             if(obj instanceof Player && obj.isVisible()) {
-                mob.onEnterArea((Player) obj);
+                npc.onEnterArea((Player) obj);
             }
         }
     }
@@ -1013,8 +964,8 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
                     }
 
                     // inform NPCs that are now in range
-                    if(newObj instanceof Mobile && newObj.distanceTo(oldLoc) > SPEECH_RANGE && newObj.distanceTo(newLoc) <= SPEECH_RANGE) {
-                        ((Mobile) newObj).onEnterArea(movedPlayer);
+                    if(newObj instanceof NPC && newObj.distanceTo(oldLoc) > SPEECH_RANGE && newObj.distanceTo(newLoc) <= SPEECH_RANGE) {
+                        ((NPC) newObj).onEnterArea(movedPlayer);
                     }
 
                     if(!wasForced && newObj.distanceTo(oldLoc) <= VISIBLE_RANGE) {
@@ -1059,7 +1010,7 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
         }
 
         obj.removeObserver(this);
-        objects.remove(obj.getSerial());
+        registry.removeObject(obj.getSerial());
     }
 
     @Override
@@ -1122,7 +1073,7 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
             playSound(sound, mob.getLocation());
         }
 
-        Item corpse = Item.createAtLocation(this, mob.getLocation(), mob.getCorpseGraphic(), 1);
+        Item corpse = Item.createAtLocation(mob.getLocation(), mob.getCorpseGraphic(), 1);
         if(mob instanceof Player) {
             log.fine(mob.getName() + " died");
             Player player = (Player) mob;
@@ -1171,5 +1122,11 @@ public class World implements ObjectObserver, SerialProvider, ObjectLister {
 
         // start first round delayed to avoid exploiting by opponent switching
         TimerQueue.get().addTimer(new Timer(200, fight));
+    }
+
+    @Override
+    public void onObjectRegistered(SLObject object) {
+        object.addObserver(this);
+        onObjectUpdate(object);
     }
 }
