@@ -284,6 +284,21 @@ public class ScriptAPIImpl implements ScriptAPI {
     }
 
     @Override
+    public boolean spawnMobileAtLocation(int x, int y, int z, String behavior) {
+        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
+        if(be == null) {
+            return false;
+        }
+        NPC npc = new NPC(registry.registerMobileSerial());
+        npc.setLocation(new Point3D(x, y, z));
+        npc.setBehavior(behavior);
+        be.onSpawn(npc);
+        registry.registerObject(npc);
+        world.npcPlayerSearch(npc);
+        return true;
+    }
+
+    @Override
     public void setName(SLObject obj, String name) {
         obj.setName(name);
     }

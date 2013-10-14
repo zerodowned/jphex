@@ -75,6 +75,7 @@ public interface ScriptAPI {
     public void sendSound(Player player, int soundID);
 
     public boolean spawnMobileAtPlayer(Player near, String behavior);
+    public boolean spawnMobileAtLocation(int x, int y, int z, String behavior);
     public void assignRandomName(Mobile mob, String suffix);
     public void createClothes(Mobile mob);
     public void say(SLObject mob, String text);
