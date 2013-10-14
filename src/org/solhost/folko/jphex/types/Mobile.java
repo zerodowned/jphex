@@ -46,6 +46,7 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     public Mobile(long serial) {
         super(serial);
         this.name = "";
+        this.facing = Direction.SOUTH_EAST;
         this.attributes = new HashMap<Attribute, Long>();
         this.equipped = new CopyOnWriteArraySet<Item>();
     }

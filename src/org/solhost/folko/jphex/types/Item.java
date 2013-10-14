@@ -96,10 +96,12 @@ public class Item extends SLObject implements SendableItem {
 
     @Override
     public void delete() {
-        for(Item child : children) {
-            child.delete();
+        if(children != null) {
+            for(Item child : children) {
+                child.delete();
+            }
+            children.clear();
         }
-        children.clear();
         super.delete();
     }
 
