@@ -16,17 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-require './scripts/packages/base/mobiles/Merchant'
-class Cook < Merchant
-  include MobileBehavior
 
-  def setupMerchant(me)
-    me.setSuffix("the Cook")
-    $api.createItemInBackpack(me, 0x0011, "food") # apple
-    $api.createItemInBackpack(me, 0x0039, "food") # peach
-    $api.createItemInBackpack(me, 0x012C, "food") # ham
-    $api.createItemInBackpack(me, 0x0136, "food") # bread
-    $api.createItemInBackpack(me, 0x0137, "food") # pie
-    $api.createItemInBackpack(me, 0x02FF, "food") # grapes
+# General food class: Set this behavior on items to make them edible
+class Food
+  include ItemBehavior
+
+  def onCreate(food)
+  end
+
+  def onBehaviorChange(food)
+  end
+
+  def onLoad(food)
+  end
+    
+  def onUse(player, food)
+    if(player.tryAccess(food))
+      food.consume(1)
+      $api.sendSysMessage(player, "You feel less hungry")
+    end
   end
 end

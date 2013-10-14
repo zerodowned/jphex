@@ -243,27 +243,21 @@ class DoorGen < TextCommand
   def findOther(x, y, z, id, graphic)
     if hasStatic(x + 2, y, z, id) and isFree(x + 1, y, z, id)
       puts "placed door at #{x + 1} #{y} #{z}"
-      door = $api.createItemAtLocation(x + 1, y, z, "door")
-      $api.setGraphic(door, graphic)
+      door = $api.createItemAtLocation(x + 1, y, z, graphic, "door")
       return 1
     elsif hasStatic(x, y + 2, z, id) and isFree(x, y + 1, z, id)
       puts "placed door at #{x} #{y + 1} #{z}"
-      door = $api.createItemAtLocation(x, y + 1, z, "door")
-      $api.setGraphic(door, graphic + 8)
+      door = $api.createItemAtLocation(x, y + 1, z, graphic + 8, "door")
       return 1
     elsif hasStatic(x + 3, y, z, id) and isFree(x + 1, y, z, id) and isFree(x + 2, y, z, id)
       puts "placed double door at #{x + 1} #{y} #{z}"
-      door = $api.createItemAtLocation(x + 1, y, z, "door")
-      $api.setGraphic(door, graphic)
-      door = $api.createItemAtLocation(x + 2, y, z, "door")
-      $api.setGraphic(door, graphic + 2)
+      door = $api.createItemAtLocation(x + 1, y, z, graphic, "door")
+      door = $api.createItemAtLocation(x + 2, y, z, graphic + 2, "door")
       return 1
     elsif hasStatic(x, y + 3, z, id) and isFree(x, y + 1, z, id) and isFree(x, y + 2, z, id)
       puts "placed double door at #{x} #{y + 1} #{z}"
-      door = $api.createItemAtLocation(x, y + 1, z, "door")
-      $api.setGraphic(door, graphic + 10)
-      door = $api.createItemAtLocation(x, y + 2, z, "door")
-      $api.setGraphic(door, graphic + 8)
+      door = $api.createItemAtLocation(x, y + 1, z, graphic + 10, "door")
+      door = $api.createItemAtLocation(x, y + 2, z, graphic + 8, "door")
       return 1
     end
     return 0
