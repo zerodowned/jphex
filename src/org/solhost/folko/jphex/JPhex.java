@@ -138,14 +138,14 @@ public class JPhex {
     }
 
     public static void main(String[] args) throws IOException {
-        JPhex phex = new JPhex(Level.FINEST);
-        if(!phex.loadData("data")) {
+        JPhex phex = new JPhex(Level.CONFIG);
+        if(!phex.loadData("data/")) {
             return;
         }
-        if(!phex.loadScripts("scripts")) {
+        if(!phex.loadScripts("scripts/")) {
             return;
         }
-        if(!phex.loadWorld("data/")) {
+        if(!phex.loadWorld("saves/")) {
             return;
         }
         if(!phex.runServer(2590)) {

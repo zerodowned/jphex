@@ -77,7 +77,7 @@ public interface ScriptAPI {
     public boolean spawnMobileAtPlayer(Player near, String behavior);
     public void assignRandomName(Mobile mob, String suffix);
     public void createClothes(Mobile mob);
-    public void say(Mobile mob, String text);
+    public void say(SLObject mob, String text);
     public void offerShop(Mobile mob, Player player);
     public void refreshStats(Mobile mob);
     public void lookAt(Mobile who, SLObject what);

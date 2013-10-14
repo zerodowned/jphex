@@ -44,12 +44,12 @@ public class Player extends Mobile {
     private transient Client client;
     private transient TargetLocationHandler targetLocation;
     private transient TargetObjectHandler targetObject;
+    private transient Map<Long, List<Item>> shopList; // current shop listing with amount etc for certain shop npc
     private boolean isWalking, male;
     private CommandLevel commandLevel;
     private long seed;
     private int dragAmount;
     private String email, homepage, realName, password, pcSpecs;
-    private transient Map<Long, List<Item>> shopList; // current shop listing with amount etc for certain shop npc
 
     public Player(long serial) {
         super(serial);
@@ -161,12 +161,6 @@ public class Player extends Mobile {
         if(isOnline()) {
             client.send(packet);
         }
-    }
-
-    // always show paperdoll to other players
-    @Override
-    public boolean onDoubleClick(Player player) {
-        return true;
     }
 
     public void sendSysMessage(String text) {

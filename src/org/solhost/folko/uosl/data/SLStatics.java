@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -31,12 +31,10 @@ import org.solhost.folko.uosl.util.ObjectLister;
 
 public class SLStatics implements ObjectLister {
     private final SLDataFile staticsFile, staticsIndex;
-    private Long highestSerial;
 
     public SLStatics(String staticsPath, String staIdxPath) throws IOException {
         staticsFile = new SLDataFile(staticsPath, true);
         staticsIndex = new SLDataFile(staIdxPath, true);
-        highestSerial = null;
     }
 
     private synchronized List<SLStatic> getStatics(int cell) {
@@ -80,21 +78,13 @@ public class SLStatics implements ObjectLister {
     }
 
     public Map<Long, SLStatic> getAllStatics() {
-        highestSerial = 0L;
         Map<Long, SLStatic> res = new HashMap<Long, SLStatic>();
         for(int cell = 0; cell < 16384; cell++) {
             for(SLStatic stat : getStatics(cell)) {
                 res.put(stat.getSerial(), stat);
-                if(stat.getSerial() > highestSerial) {
-                    highestSerial = stat.getSerial();
-                }
             }
         }
         return res;
-    }
-
-    public long getHighestSerial() {
-        return highestSerial;
     }
 
     @Override
