@@ -67,6 +67,15 @@ public class ScriptAPIImpl implements ScriptAPI {
 
     @Override
     public void moveObject(SLObject obj, int x, int y, int z) {
+        if(obj instanceof Item && obj.getParent() != null) {
+            SLObject parent = obj.getParent();
+            obj.setParent(null);
+            if(parent instanceof Item) {
+                ((Item) parent).removeChild((Item) obj);
+            } else if(parent instanceof Mobile) {
+                ((Mobile) parent).unequipItem((Item) obj);
+            }
+        }
         obj.setLocation(new Point3D(x, y, z));
     }
 
@@ -268,10 +277,10 @@ public class ScriptAPIImpl implements ScriptAPI {
     }
 
     @Override
-    public boolean spawnMobileAtPlayer(Player near, String behavior) {
+    public NPC spawnMobileAtPlayer(Player near, String behavior) {
         MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
         if(be == null) {
-            return false;
+            return null;
         }
         NPC npc = new NPC(registry.registerMobileSerial());
         npc.setLocation(near.getLocation());
@@ -280,14 +289,14 @@ public class ScriptAPIImpl implements ScriptAPI {
         be.onSpawn(npc);
         registry.registerObject(npc);
         world.npcPlayerSearch(npc);
-        return true;
+        return npc;
     }
 
     @Override
-    public boolean spawnMobileAtLocation(int x, int y, int z, String behavior) {
+    public NPC spawnMobileAtLocation(int x, int y, int z, String behavior) {
         MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
         if(be == null) {
-            return false;
+            return null;
         }
         NPC npc = new NPC(registry.registerMobileSerial());
         npc.setLocation(new Point3D(x, y, z));
@@ -295,7 +304,7 @@ public class ScriptAPIImpl implements ScriptAPI {
         be.onSpawn(npc);
         registry.registerObject(npc);
         world.npcPlayerSearch(npc);
-        return true;
+        return npc;
     }
 
     @Override
@@ -466,5 +475,10 @@ public class ScriptAPIImpl implements ScriptAPI {
             }
         }
         return res;
+    }
+
+    @Override
+    public SLObject findObject(long serial) {
+        return registry.findObject(serial);
     }
 }

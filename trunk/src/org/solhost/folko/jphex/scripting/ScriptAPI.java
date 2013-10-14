@@ -24,6 +24,7 @@ import org.jruby.RubyProc;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.solhost.folko.jphex.types.Item;
 import org.solhost.folko.jphex.types.Mobile;
+import org.solhost.folko.jphex.types.NPC;
 import org.solhost.folko.jphex.types.Player;
 import org.solhost.folko.jphex.types.SLObject;
 import org.solhost.folko.uosl.data.SLStatic;
@@ -31,6 +32,8 @@ import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Spell;
 
 public interface ScriptAPI {
+    public SLObject findObject(long serial);
+
     public void targetObject(Player player, RubyProc block);
     public void targetLocation(Player player, RubyProc block);
 
@@ -74,8 +77,8 @@ public interface ScriptAPI {
     public void playSoundNearObj(SLObject obj, int soundID);
     public void sendSound(Player player, int soundID);
 
-    public boolean spawnMobileAtPlayer(Player near, String behavior);
-    public boolean spawnMobileAtLocation(int x, int y, int z, String behavior);
+    public NPC spawnMobileAtPlayer(Player near, String behavior);
+    public NPC spawnMobileAtLocation(int x, int y, int z, String behavior);
     public void assignRandomName(Mobile mob, String suffix);
     public void createClothes(Mobile mob);
     public void say(SLObject mob, String text);

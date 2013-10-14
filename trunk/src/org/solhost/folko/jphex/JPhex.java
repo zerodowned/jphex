@@ -74,6 +74,7 @@ public class JPhex {
             world = World.loadOrCreateNew(savePath);
             ScriptAPI api = new ScriptAPIImpl(world);
             ScriptManager.instance().setGlobal("$api", api);
+            TimerQueue.init();
             world.init();
             return true;
         } catch (Exception e) {
@@ -108,7 +109,6 @@ public class JPhex {
     }
 
     public void startEventLoop() {
-        TimerQueue.init();
         serverThread.start();
         log.info("JPhex running...");
     }
@@ -138,7 +138,7 @@ public class JPhex {
     }
 
     public static void main(String[] args) throws IOException {
-        JPhex phex = new JPhex(Level.CONFIG);
+        JPhex phex = new JPhex(Level.FINEST);
         if(!phex.loadData("data/")) {
             return;
         }

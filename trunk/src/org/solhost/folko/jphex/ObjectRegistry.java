@@ -18,6 +18,7 @@
  ******************************************************************************/
 package org.solhost.folko.jphex;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -146,7 +147,8 @@ public class ObjectRegistry {
 
     // only World should use this, others should have a serial reference or something
     Collection<SLObject> allObjects() {
-        return objects.values();
+        Collection<SLObject> res = new ArrayList<SLObject>(objects.values());
+        return res;
     }
 
     public synchronized SLStatic findStatic(long serial) {

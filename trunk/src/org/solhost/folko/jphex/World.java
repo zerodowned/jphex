@@ -144,6 +144,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
         // second pass: call init scripts etc.
         for(SLObject obj : registry.allObjects()) {
             obj.onLoad();
+            if(obj.isDeleted()) {
+                registry.removeObject(obj.getSerial());
+                continue;
+            }
             if(obj instanceof Mobile) {
                 Mobile mob = (Mobile) obj;
                 mob.setOpponent(null);
