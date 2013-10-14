@@ -93,9 +93,9 @@ public class SLTiles {
             return (flags & FLAG_STAIRS) != 0;
         }
 
-		public boolean isStackable() {
-			return (flags & FLAG_STACKABLE) != 0;
-		}
+        public boolean isStackable() {
+            return (flags & FLAG_STACKABLE) != 0;
+        }
     }
 
     public SLTiles(String tilePath) throws IOException {

@@ -37,7 +37,7 @@ import org.solhost.folko.uosl.types.Mobiles;
 public class Mobile extends SLObject implements SendableMobile {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.mobile");
-    private boolean refreshRunning;
+    protected boolean refreshRunning;
     protected Direction facing;
     protected Set<Item> equipped;
     protected Map<Attribute, Long> attributes;
