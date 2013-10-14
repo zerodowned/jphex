@@ -795,13 +795,14 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
         player.setOpponent(victim);
     }
 
-    private synchronized void doFightRound(Mobile attacker, Mobile defender) {
+    // returns whether there could be a next round
+    private synchronized boolean doFightRound(Mobile attacker, Mobile defender) {
         int deltaZ = Math.abs(attacker.getLocation().getZ() - defender.getLocation().getZ());
         if(deltaZ > SLData.CHARACHTER_HEIGHT / 2) {
-            return;
+            return false;
         }
         if(attacker.distanceTo(defender) > 1 || !defender.isVisible()) {
-            return;
+            return false;
         }
         log.finer("fight ongoing between " + attacker.getName() + " and " + defender.getName());
         attacker.lookAt(defender);
@@ -833,6 +834,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
         if(painSound != null) {
             playSound(painSound, defender.getLocation());
         }
+        return true;
 
     }
 
@@ -1095,25 +1097,25 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
     }
 
     @Override
-    public synchronized void onOpponentChanged(final Mobile attacker, final Mobile defender) {
-        // TODO: changing the opponent allows immediate swing, this can easily be exploited
-
+    public synchronized void onOpponentChanged(final Mobile attacker, final Mobile defender, final Mobile oldDefender) {
         if(defender == null) {
             // cleared
             return;
         } else if(defender == attacker) {
             attacker.setOpponent(null);
             return;
+        } else if(defender == oldDefender) {
+            // already doing this fight
+            return;
         }
 
         Runnable fight = new Runnable() {
             public void run() {
-                if(attacker.getOpponent() == defender) {
-                    if(attacker.canFight() && defender.canFight()) {
-                        doFightRound(attacker, defender);
-                        if(!defender.canFight() || !attacker.canFight()) {
-                            attacker.setOpponent(null);
-                        }
+                if(attacker.getOpponent() == defender && attacker.canFight() && defender.canFight()) {
+                    boolean canGoOn = doFightRound(attacker, defender);
+                    if(!canGoOn || !defender.canFight() || !attacker.canFight()) {
+                        attacker.setOpponent(null);
+                    } else {
                         TimerQueue.get().addTimer(new Timer(1500, this));
                     }
                 }

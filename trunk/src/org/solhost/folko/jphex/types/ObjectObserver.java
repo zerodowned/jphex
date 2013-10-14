@@ -31,5 +31,5 @@ public interface ObjectObserver {
     public void onChildAdded(Item container, Item child);
     public void onChildRemoved(Item container, Item child);
     public void onDeath(Mobile mob);
-    public void onOpponentChanged(Mobile mob, Mobile victim);
+    public void onOpponentChanged(Mobile mob, Mobile victim, Mobile oldVictim);
 }
