@@ -28,19 +28,20 @@ class Merchant
 
     $api.assignRandomName(me, "")
     $api.createClothes(me)
+    me.setSuffix("the Merchant")
 
     $api.setAttribute(me, Attribute::STRENGTH, 25)
     $api.setAttribute(me, Attribute::FATIGUE, 10)
     $api.setAttribute(me, Attribute::INTELLIGENCE, 25)
     $api.refreshStats(me)
     
-    # Fill inventory
-    $api.createItemInBackpack(me, 0x0011) # apple
-    $api.createItemInBackpack(me, 0x0039) # peach
-    $api.createItemInBackpack(me, 0x00B3) # candle stick
-    $api.createItemInBackpack(me, 0x028E) # quarrel
+    setupMerchant(me)
   end
 
+  def setupMerchant(me)
+    # deriving classes should set suffix and fill inventory
+  end
+  
   def onEnterArea(me, player)
     $api.lookAt(me, player)
   end
