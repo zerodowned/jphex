@@ -37,7 +37,6 @@ class Skeleton
     # Focus on this player - first come, first served :)
     return if $api.getObjectProperty(me, "ignoreIncoming")
     $api.setObjectProperty(me, "ignoreIncoming", true)
-    $api.attack(me, player)
     chase(me, player)
   end
 
@@ -71,6 +70,7 @@ class Skeleton
       # player not arrived yet, run after him
       $api.runToward(me, player)
     end
+    $api.attack(me, player)
 
     # Check again (we might arrive the player or it ran from us, so chase again)
     $api.addTimer(500) do 

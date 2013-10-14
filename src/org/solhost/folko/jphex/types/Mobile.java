@@ -68,8 +68,9 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     }
 
     public void setOpponent(Mobile what) {
+        Mobile old = this.opponent;
         this.opponent = what;
-        for(ObjectObserver o : observers) o.onOpponentChanged(this, what);
+        for(ObjectObserver o : observers) o.onOpponentChanged(this, what, old);
     }
 
     public Mobile getOpponent() {
