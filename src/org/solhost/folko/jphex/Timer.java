@@ -29,9 +29,9 @@ public class Timer implements Comparable<Timer> {
     }
 
     // base reference for timers
-	public static long getCurrentTicks() {
-		return System.currentTimeMillis();
-	}
+    public static long getCurrentTicks() {
+        return System.currentTimeMillis();
+    }
 
     public boolean hasExpired() {
         return getExpirationDelta() <= 0;

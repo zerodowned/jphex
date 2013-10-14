@@ -24,7 +24,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,9 +64,7 @@ import org.solhost.folko.uosl.types.Point3D;
 import org.solhost.folko.uosl.types.Spell;
 import org.solhost.folko.uosl.util.ObjectLister;
 
-public class World implements Serializable, ObjectObserver, SerialProvider, ObjectLister {
-    private static final long serialVersionUID = 1L;
-
+public class World implements ObjectObserver, SerialProvider, ObjectLister {
     public static final int VISIBLE_RANGE = 15;
     public static final int SPEECH_RANGE = 10;
     public static final int ENTER_AREA_RANGE = 5;
@@ -82,48 +79,74 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     public static final int RESURRECT_POSITION_Y = 584;
 
     private static final Logger log = Logger.getLogger("jphex.world");
-    private transient Map<Client, Player> onlinePlayers;
-    private transient Map<Long, SLStatic> statics;
-    private transient String savePath;
-    private transient ScriptManager scripts;
+    private final String savePath;
 
     private long nextItemSerial;
     private long nextMobileSerial;
-    private final Map<Long, SLObject> objects;
+    private Map<Long, SLObject> objects;
+    private Map<Long, SLStatic> statics;
 
-    public World(String savePath) {
+    private final Map<Client, Player> onlinePlayers;
+
+    private World(String savePath) {
         this.objects = new HashMap<Long, SLObject>();
-        this.nextMobileSerial = 0x00000001;
-        this.nextItemSerial   = -1; // will be set by init()
+        this.onlinePlayers = new HashMap<Client, Player>();
         this.savePath = savePath;
-        init();
     }
 
+    @SuppressWarnings("unchecked")
     public static World loadOrCreateNew(String savePath) throws Exception {
-        File file = new File(savePath);
+        File file = new File(savePath + "/save.ser");
+        World world = new World(savePath);
         if(!file.exists()) {
             log.config("Creating a fresh save");
-            return new World(savePath);
         } else {
             log.config("Loading an existing save");
-            FileInputStream saveFile = new FileInputStream(savePath);
+            FileInputStream saveFile = new FileInputStream(file);
             ObjectInputStream objIn = new ObjectInputStream(saveFile);
-            World world = (World) objIn.readObject();
+            world.objects = (Map<Long, SLObject>) objIn.readObject();
             objIn.close();
             saveFile.close();
-            world.savePath = savePath;
-            world.init();
-            return world;
         }
+        world.setup();
+        return world;
+    }
+
+    // calculate highest serials and load statics
+    private void setup() {
+        this.statics = SLData.get().getStatics().getAllStatics();
+
+        // clients can doubleclick static items in UOSL, so make sure our serials don't
+        // conflict with static serials
+        this.nextItemSerial = SLData.get().getStatics().getHighestSerial() + 1;
+        this.nextMobileSerial = 0x00000001;
+
+        // this loop may not call any script because the script might create an
+        // item and we wouldn't know its serial yet, that's why there's another
+        // loop in init()
+        for(SLObject obj : objects.values()) {
+            long serial = obj.getSerial();
+            if(obj instanceof Mobile) {
+                if(serial >= nextMobileSerial) {
+                    nextMobileSerial = serial + 1;
+                }
+            } else if(obj instanceof Item) {
+                if(serial >= nextItemSerial) {
+                    nextItemSerial = serial + 1;
+                }
+            }
+        }
+        log.config(String.format("World initialized with %d dynamic and %d static objects", objects.size(), statics.size()));
+        log.fine(String.format("Next item serial 0x%08X, next mobile serial 0x%08X", nextItemSerial, nextMobileSerial));
     }
 
     public synchronized boolean save() {
         log.info("Saving world state...");
         broadcast("Saving world state...");
         try {
-            FileOutputStream saveFile = new FileOutputStream(savePath, false);
+            FileOutputStream saveFile = new FileOutputStream(savePath + "/save.ser", false);
             ObjectOutputStream objOut = new ObjectOutputStream(saveFile);
-            objOut.writeObject(this);
+            objOut.writeObject(objects);
             objOut.close();
             saveFile.close();
         } catch (IOException e) {
@@ -134,21 +157,10 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
         return true;
     }
 
-    // done after constructor and after loading from save
-    private synchronized void init() {
-        this.scripts = ScriptManager.instance();
-        this.onlinePlayers = new HashMap<Client, Player>();
-        this.statics = SLData.get().getStatics().getAllStatics();
-        if(nextItemSerial == -1) {
-            nextItemSerial = SLData.get().getStatics().getHighestSerial() + 1;
-        }
-
-        log.config(String.format("World initialized with %d dynamic and %d static objects", objects.size(), statics.size()));
-        log.fine(String.format("Next item 0x%08X, next mobile 0x%08X", nextItemSerial, nextMobileSerial));
-    }
-
-    // called right before the game should start
-	public void onStart() {
+    // must be called after creating a new world or after loading a world, do initialization here
+    // scripts must be able to execute when calling this
+    public synchronized void init() {
+        // second pass: call init scripts etc.
         for(SLObject obj : objects.values()) {
             obj.onLoad();
             if(obj instanceof Mobile) {
@@ -159,7 +171,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             }
             obj.addObserver(this);
         }
-	}
+    }
 
     public synchronized SLObject findObject(long serial) {
         return objects.get(serial);
@@ -170,9 +182,9 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     }
 
     public synchronized void registerObject(SLObject object) {
-    	if(object.isDeleted()) {
-    		return;
-    	}
+        if(object.isDeleted()) {
+            return;
+        }
 
         long serial = object.getSerial();
         if(objects.containsKey(serial)) {
@@ -564,7 +576,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
     public synchronized void onSpeech(Player src, String text, long color) {
         if(text.startsWith("#")) {
             // text command
-            scripts.handleTextCommand(src, text.substring(1));
+            ScriptManager.instance().handleTextCommand(src, text.substring(1));
             return;
         }
 
@@ -748,19 +760,19 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             player.getBackpack().consumeByType(Items.GFX_GOLD, sum);
             sayAbove(shop, "The total of thy purchase is " + sum + " gp");
             for(Item item : items) {
-            	if(item.getAmount() == 0) continue;
+                if(item.getAmount() == 0) continue;
 
-            	if(item.isStackable()) {
-                	Item article = item.createCopy(registerItemSerial());
-                	article.setAmount(item.getAmount());
-                	player.getBackpack().addChild(article, new Point2D(0, 0));
-                	registerObject(article);
+                if(item.isStackable()) {
+                    Item article = item.createCopy(registerItemSerial());
+                    article.setAmount(item.getAmount());
+                    player.getBackpack().addChild(article, new Point2D(0, 0));
+                    registerObject(article);
                 } else {
                     for(int i = 0; i < item.getAmount(); i++) {
-                    	Item article = item.createCopy(registerItemSerial());
-                    	article.setAmount(1);
-                    	player.getBackpack().addChild(article, new Point2D(0, 0));
-                    	registerObject(article);
+                        Item article = item.createCopy(registerItemSerial());
+                        article.setAmount(1);
+                        player.getBackpack().addChild(article, new Point2D(0, 0));
+                        registerObject(article);
                     }
                 }
             }
@@ -802,7 +814,7 @@ public class World implements Serializable, ObjectObserver, SerialProvider, Obje
             player.sendSysMessage("You do not have that spell");
             return;
         }
-        SpellHandler handler = scripts.getSpellHandler(spell);
+        SpellHandler handler = ScriptManager.instance().getSpellHandler(spell);
         try {
             switch(spell) {
                 case CREATEFOOD:    handler.cast(player); break;

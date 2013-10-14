@@ -139,8 +139,8 @@ public class ScriptAPIImpl implements ScriptAPI {
         return item;
     }
 
-	@Override
-	public Item createItemInBackpack(Mobile mob, int graphic, String behavior) {
+    @Override
+    public Item createItemInBackpack(Mobile mob, int graphic, String behavior) {
         Item backpack = mob.getBackpack();
         if(backpack != null) {
             try {
@@ -154,33 +154,33 @@ public class ScriptAPIImpl implements ScriptAPI {
         } else {
             return createItemAtMobile(mob, graphic, behavior);
         }
-	}
+    }
 
-	@Override
-	public Item createItemAtMobile(Mobile mob, int graphic, String behavior) {
-	    try {
+    @Override
+    public Item createItemAtMobile(Mobile mob, int graphic, String behavior) {
+        try {
             Item item = new Item(world.registerItemSerial(), graphic, behavior);
             item.setLocation(mob.getLocation());
             world.registerObject(item);
             return item;
-	    } catch(Exception e) {
-	        return null;
-	    }
-	}
+        } catch(Exception e) {
+            return null;
+        }
+    }
 
-	@Override
-	public Item createItemAtLocation(int x, int y, int z, int graphic, String behavior) {
-	    try {
+    @Override
+    public Item createItemAtLocation(int x, int y, int z, int graphic, String behavior) {
+        try {
             Item item = new Item(world.registerItemSerial(), graphic, behavior);
             item.setLocation(new Point3D(x, y, z));
             world.registerObject(item);
             return item;
-	    } catch(Exception e) {
-	        return null;
-	    }
-	}
+        } catch(Exception e) {
+            return null;
+        }
+    }
 
-	@Override
+    @Override
     public void setGraphic(SLObject obj, int graphic) {
         obj.setGraphic(graphic);
     }
@@ -416,10 +416,10 @@ public class ScriptAPIImpl implements ScriptAPI {
         return online;
     }
 
-	@Override
-	public long getTimerTicks() {
-		return Timer.getCurrentTicks();
-	}
+    @Override
+    public long getTimerTicks() {
+        return Timer.getCurrentTicks();
+    }
 
     @Override
     public Collection<SLStatic> getStaticsAtLocation(int x, int y) {

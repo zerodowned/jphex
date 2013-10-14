@@ -72,13 +72,14 @@ public class JPhex {
         try {
             log.info("Loading world... ");
             world = World.loadOrCreateNew(savePath);
+            ScriptAPI api = new ScriptAPIImpl(world);
+            ScriptManager.instance().setGlobal("$api", api);
+            world.init();
+            return true;
         } catch (Exception e) {
             log.log(Level.SEVERE, "Couldn't initialize world: " + e.getMessage(), e);
             return false;
         }
-        ScriptAPI api = new ScriptAPIImpl(world);
-        ScriptManager.instance().setGlobal("$api", api);
-        return true;
     }
 
     public boolean runServer(int port) {
@@ -108,7 +109,6 @@ public class JPhex {
 
     public void startEventLoop() {
         TimerQueue.init();
-        world.onStart();
         serverThread.start();
         log.info("JPhex running...");
     }
@@ -138,14 +138,14 @@ public class JPhex {
     }
 
     public static void main(String[] args) throws IOException {
-        JPhex phex = new JPhex(Level.INFO);
+        JPhex phex = new JPhex(Level.FINEST);
         if(!phex.loadData("data")) {
             return;
         }
         if(!phex.loadScripts("scripts")) {
             return;
         }
-        if(!phex.loadWorld("data/save.ser")) {
+        if(!phex.loadWorld("data/")) {
             return;
         }
         if(!phex.runServer(2590)) {

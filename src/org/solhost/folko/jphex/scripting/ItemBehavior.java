@@ -22,13 +22,13 @@ import org.solhost.folko.jphex.types.Item;
 import org.solhost.folko.jphex.types.Player;
 
 public interface ItemBehavior {
-	// when an item was created with a behavior set
-	public void onCreate(Item item);
+    // when an item was created with a behavior set
+    public void onCreate(Item item);
 
-	// when a behavior changes on an item
-	public void onBehaviorChange(Item item);
+    // when a behavior changes on an item
+    public void onBehaviorChange(Item item);
 
-	// called on server load
+    // called on server load
     public void onLoad(Item item);
 
     // called when player doubleclicks item
