@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -65,7 +65,111 @@ public class SLData {
         gumps = new SLGumps(dataPath +      "/GUMPS.MUL");
     }
 
-    private Point3D getElevatedPointEx(Point3D source, Direction dir, ObjectLister lister) {
+    // reverse engineered from the client, sub_4061A0
+    // this _should_ be written more readable, but it is very important
+    // that the semantic doesn't change. Otherwise, client and server would
+    // become out of sync and NPCs could walk through statics or bad things like that
+    private Point3D getElevatedPointReal(Point3D source, Direction dir, ObjectLister lister) {
+        Point3D dest = new Point3D(source.getTranslated(dir), 0);
+
+        int currentZ = source.getZ();
+        int currZp9 = currentZ + 9;
+        int finalZ = -128;
+        int edi = -128;
+        boolean staticsAllowWalking = false;
+        for(SLStatic stat : lister.getStaticAndDynamicsAtLocation(dest)) {
+            StaticTile tile = tiles.getStaticTile(stat.getStaticID());
+            int eax = stat.getLocation().getZ();
+            if(eax > currZp9) {
+                // starts above us -> ignore
+                continue;
+            }
+            // is lastStat.blocks: break
+            eax = 1;
+            int ecx = tile.height;
+            if(ecx != 0) {
+                eax = ecx;
+            }
+            int ebx = stat.getLocation().getZ();
+            int edx = eax + ebx;
+            if(edx > edi) {
+                if(tile.isStair()) {
+                    // 40627B
+                    eax = ebx + ecx;
+                    if(currZp9 >= eax) {
+                        ebx += ecx;
+                        edi = edx;
+                        staticsAllowWalking = true;
+                        finalZ = ebx;
+                        continue;
+                    }
+                }
+                if(tile.isSurface()) {
+                    // 406284
+                    eax = ebx + ecx;
+                    if(currentZ >= eax) {
+                        ebx += ecx;
+                        edi = edx;
+                        staticsAllowWalking = true;
+                        finalZ = ebx;
+                        continue;
+                    }
+                }
+                if(tile.isImpassable()) {
+                    staticsAllowWalking = false;
+                    edi = edx;
+                    continue;
+                }
+                eax = currentZ;
+                eax++;
+                if(eax >= edx) {
+                    continue;
+                }
+                eax = currZp9;
+                eax += 3;
+                if(eax < edx) {
+                    continue;
+                }
+                staticsAllowWalking = false;
+                edi = edx;
+                continue;
+            } else {
+                if(edx != edi) {
+                    continue;
+                } else {
+                    if(tile.isImpassable()) {
+                        staticsAllowWalking = false;
+                    }
+                }
+            }
+        }
+        if(edi > -128) {
+            // there are statics in our way
+            if(staticsAllowWalking) {
+                dest.setZ(finalZ);
+                return dest;
+            } else {
+                return null;
+            }
+        }
+
+        // statics are ok, need to check land
+
+        // maybe todo: if lastStat.blocks: return false;
+
+        LandTile tile = tiles.getLandTile(map.getTextureID(dest));
+        if(tile.isImpassable()) {
+            return null;
+        }
+
+        dest.setZ(map.getElevation(dest));
+
+        return dest;
+    }
+
+    // my own attempt before reverse engineering, but it wasn't behaving correctly
+    // at some locations, so the original function was taken
+    protected Point3D getElevatedPointOld(Point3D source, Direction dir, ObjectLister lister) {
         Point2D dest = source.getTranslated(dir);
         int mapZ =  map.getElevation(dest);
 
@@ -157,38 +261,39 @@ public class SLData {
         case WEST:
         case SOUTH:
         case EAST:
-            return getElevatedPointEx(source, dir, lister);
+            // straight movement: only check target
+            return getElevatedPointReal(source, dir, lister);
         case NORTH_EAST:
-            if(getElevatedPointEx(source, Direction.NORTH, lister) == null) {
+            if(getElevatedPointReal(source, Direction.NORTH, lister) == null) {
                 return null;
-            } else if(getElevatedPointEx(source, Direction.EAST, lister) == null) {
+            } else if(getElevatedPointReal(source, Direction.EAST, lister) == null) {
                 return null;
             } else {
-                return getElevatedPointEx(source, dir, lister);
+                return getElevatedPointReal(source, dir, lister);
             }
         case NORTH_WEST:
-            if(getElevatedPointEx(source, Direction.NORTH, lister) == null) {
+            if(getElevatedPointReal(source, Direction.NORTH, lister) == null) {
                 return null;
-            } else if(getElevatedPointEx(source, Direction.WEST, lister) == null) {
+            } else if(getElevatedPointReal(source, Direction.WEST, lister) == null) {
                 return null;
             } else {
-                return getElevatedPointEx(source, dir, lister);
+                return getElevatedPointReal(source, dir, lister);
             }
         case SOUTH_EAST:
-            if(getElevatedPointEx(source, Direction.SOUTH, lister) == null) {
+            if(getElevatedPointReal(source, Direction.SOUTH, lister) == null) {
                 return null;
-            } else if(getElevatedPointEx(source, Direction.EAST, lister) == null) {
+            } else if(getElevatedPointReal(source, Direction.EAST, lister) == null) {
                 return null;
             } else {
-                return getElevatedPointEx(source, dir, lister);
+                return getElevatedPointReal(source, dir, lister);
             }
         case SOUTH_WEST:
-            if(getElevatedPointEx(source, Direction.SOUTH, lister) == null) {
+            if(getElevatedPointReal(source, Direction.SOUTH, lister) == null) {
                 return null;
-            } else if(getElevatedPointEx(source, Direction.WEST, lister) == null) {
+            } else if(getElevatedPointReal(source, Direction.WEST, lister) == null) {
                 return null;
             } else {
-                return getElevatedPointEx(source, dir, lister);
+                return getElevatedPointReal(source, dir, lister);
             }
         default: return null;
         }
