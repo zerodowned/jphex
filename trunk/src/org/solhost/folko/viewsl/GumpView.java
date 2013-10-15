@@ -40,7 +40,7 @@ public class GumpView extends JPanel {
     private JList<String> gumpList;
     private JLabel gumpLabel;
 
-    private static final int NUM_GUMPS = 29;
+    private static final int NUM_GUMPS = 77;
 
     public GumpView(SLGumps gumps) {
         this.gumps = gumps;
