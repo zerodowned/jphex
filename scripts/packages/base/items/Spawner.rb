@@ -29,6 +29,7 @@ class Spawner
     0x0440 => "guard",
     0x044B => "blacksmith",
     0x044D => "cook",
+    0x0451 => "mage",
     0x0455 => "provisioner"
   }
   

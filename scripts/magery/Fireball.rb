@@ -16,9 +16,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Fireball < SpellHandler
-  def castOn(player, target)
-    $api.sendSysMessage(player, "Fireball is not implemented yet.")
-    $api.sendHexPacket(player, 0x4E, "00" + "00000001" + "00000002")
+require './scripts/magery/BaseSpellHandler'
+class Fireball < BaseSpellHandler
+
+  @@delay = 2000
+  
+  def castOn(player, scroll, target)
+    if player.distanceTo(target) > 10
+      $api.sendSysMessage(player, "That is too far away.")
+      return
+    end
+    if !player.canSee(target)
+      $api.sendSysMessage(player, "You can't see that.")
+      return
+    end    
+
+    beginCast(player, Spell::FIREBALL, scroll, 20, @@delay, 100, 300) do
+      damage = player.getAttribute(Attribute::INTELLIGENCE) / 5
+      sound = 0xA2
+      if $api.checkSkill(target, Attribute::MAGIC_DEFENSE, 0, 1100)
+        $api.sendSysMessage(target, "You feel yourself resisting magical energy!")
+        damage = damage / 3
+        sound = 0xA1
+      end
+      damage = 1 if damage <= 0
+      
+      $api.throwFireball(player, target)
+      $api.playSoundNearObj(player, sound)
+      target.dealDamage(damage)      
+    end
   end
 end

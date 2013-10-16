@@ -16,8 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Healing < SpellHandler
-  def castOn(player, target)
-    $api.sendSysMessage(player, "Healing is not implemented yet.")
+require './scripts/magery/BaseSpellHandler'
+class Healing < BaseSpellHandler
+  @@delay = 1000
+  @@range = 10
+  @@mana = 15
+
+  def castOn(player, scroll, target)
+    if player.distanceTo(target) > @@range
+      $api.sendSysMessage(player, "That is too far away.")
+      return
+    end
+
+    if !player.canSee(target)
+      $api.sendSysMessage(player, "You can't see that.")
+      return
+    end    
+
+    beginCast(player, Spell::HEALING, scroll, @@mana, @@delay, 100, 200) do
+      hits = player.getAttribute(Attribute::INTELLIGENCE) / 3
+      $api.playSoundNearObj(target, 0xA4)
+      target.rewardAttribute(Attribute::HITS, hits)
+    end
   end
 end

@@ -26,6 +26,7 @@ import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.network.packets.*;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Items;
 import org.solhost.folko.uosl.types.Mobiles;
 import org.solhost.folko.uosl.types.Point3D;
 import org.solhost.folko.uosl.types.Spell;
@@ -264,38 +265,88 @@ public class PacketHandler implements IPacketHandler {
 
         if(packet.getMode() == ActionPacket.MODE_OPEN_SPELLBOOK) {
             world.doOpenSpellbook(player);
-        } else if(action.startsWith("In Mani Ylem")){
-            world.onCastSpell(player, Spell.CREATEFOOD, null, null);
-        } else if(action.startsWith("Por Flam")){
-            long serial = Long.valueOf(parts[2]);
-            SLObject target = registry.findObject(serial);
-            if(target != null && target instanceof Mobile) {
-                world.onCastSpell(player, Spell.FIREBALL, null, (Mobile) target);
+        } else if(packet.getMode() == ActionPacket.MODE_CAST_SPELL) {
+            if(action.startsWith("In Mani Ylem")){
+                world.onCastSpell(player, Spell.CREATEFOOD, null, null, null);
+            } else if(action.startsWith("Por Flam")){
+                long serial = Long.valueOf(parts[2]);
+                SLObject target = registry.findObject(serial);
+                if(target != null && target instanceof Mobile) {
+                    world.onCastSpell(player, Spell.FIREBALL, null, null, (Mobile) target);
+                }
+            } else if(action.startsWith("Mani")){
+                long serial = Long.valueOf(parts[1]);
+                SLObject target = registry.findObject(serial);
+                if(target != null && target instanceof Mobile) {
+                    world.onCastSpell(player, Spell.HEALING, null, null, (Mobile) target);
+                }
+            } else if(action.startsWith("In Lor")){
+                world.onCastSpell(player, Spell.LIGHT, null, null, null);
+            } else if(action.startsWith("In Vas Lor")){
+                world.onCastSpell(player, Spell.GREATLIGHT, null, null, null);
+            } else if(action.startsWith("Quas An Lor")){
+                int x = Integer.valueOf(parts[3]);
+                int y = Integer.valueOf(parts[4]);
+                int z = Integer.valueOf(parts[5]);
+                world.onCastSpell(player, Spell.DARKSOURCE, null, new Point3D(x, y, z), null);
+            } else if(action.startsWith("Quas In Lor")){
+                int x = Integer.valueOf(parts[3]);
+                int y = Integer.valueOf(parts[4]);
+                int z = Integer.valueOf(parts[5]);
+                if(player.hasLocationTarget()) {
+                    player.onTargetLocation(new Point3D(x, y, z));
+                } else {
+                    world.onCastSpell(player, Spell.LIGHTSOURCE, null, new Point3D(x, y, z), null);
+                }
             }
-        } else if(action.startsWith("Mani")){
-            long serial = Long.valueOf(parts[1]);
-            SLObject target = registry.findObject(serial);
-            if(target != null && target instanceof Mobile) {
-                world.onCastSpell(player, Spell.HEALING, null, (Mobile) target);
+        } else if(packet.getMode() == ActionPacket.MODE_USE_SCROLL) {
+            Item scroll = registry.findItem(Long.valueOf(parts[0]));
+            if(scroll == null) {
+                return;
             }
-        } else if(action.startsWith("In Lor")){
-            world.onCastSpell(player, Spell.LIGHT, null, null);
-        } else if(action.startsWith("In Vas Lor")){
-            world.onCastSpell(player, Spell.GREATLIGHT, null, null);
-        } else if(action.startsWith("Quas An Lor")){
-            int x = Integer.valueOf(parts[3]);
-            int y = Integer.valueOf(parts[4]);
-            int z = Integer.valueOf(parts[5]);
-            world.onCastSpell(player, Spell.DARKSOURCE, new Point3D(x, y, z), null);
-        } else if(action.startsWith("Quas In Lor")){
-            int x = Integer.valueOf(parts[3]);
-            int y = Integer.valueOf(parts[4]);
-            int z = Integer.valueOf(parts[5]);
-            if(player.hasLocationTarget()) {
-                player.onTargetLocation(new Point3D(x, y, z));
-            } else {
-                world.onCastSpell(player, Spell.LIGHTSOURCE, new Point3D(x, y, z), null);
+            switch(scroll.getGraphic()) {
+            case Items.GFX_SCROLL_CREATEFOOD: {
+                world.onCastSpell(player, Spell.CREATEFOOD, scroll, null, null);
+                break;
             }
+            case Items.GFX_SCROLL_FIREBALL: {
+                long serial = Long.valueOf(parts[1]);
+                SLObject target = registry.findObject(serial);
+                if(target != null && target instanceof Mobile) {
+                    world.onCastSpell(player, Spell.FIREBALL, scroll, null, (Mobile) target);
+                }
+                break;
+            }
+            case Items.GFX_SCROLL_HEALING: {
+                long serial = Long.valueOf(parts[1]);
+                SLObject target = registry.findObject(serial);
+                if(target != null && target instanceof Mobile) {
+                    world.onCastSpell(player, Spell.HEALING, scroll, null, (Mobile) target);
+                }
+                break;
+            }
+            case Items.GFX_SCROLL_LIGHT: {
+                world.onCastSpell(player, Spell.LIGHT, scroll, null, null);
+                break;
+            }
+            case Items.GFX_SCROLL_GREATLIGHT: {
+                world.onCastSpell(player, Spell.GREATLIGHT, scroll, null, null);
+                break;
+            }
+            case Items.GFX_SCROLL_DARKSOURCE: {
+                int x = Integer.valueOf(parts[1]);
+                int y = Integer.valueOf(parts[2]);
+                int z = Integer.valueOf(parts[3]);
+                world.onCastSpell(player, Spell.DARKSOURCE, scroll, new Point3D(x, y, z), null);
+                break;
+            }
+            case Items.GFX_SCROLL_LIGHTSOURCE: {
+                int x = Integer.valueOf(parts[1]);
+                int y = Integer.valueOf(parts[2]);
+                int z = Integer.valueOf(parts[3]);
+                world.onCastSpell(player, Spell.LIGHTSOURCE, scroll, new Point3D(x, y, z), null);
+                break;
+            }}
         } else {
             log.finer("Player " + player.getName() + " requesting unknown action: " + action + " (mode " + packet.getMode() + ")");
         }

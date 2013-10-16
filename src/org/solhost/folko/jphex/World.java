@@ -764,21 +764,24 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
         }
     }
 
-    public synchronized void onCastSpell(Player player, Spell spell, Point3D at, Mobile on) {
-        if(!player.hasSpell(spell)) {
+    public synchronized void onCastSpell(Player player, Spell spell, Item scroll, Point3D at, Mobile on) {
+        if(scroll != null && !player.tryAccess(scroll)) {
+            return;
+        } else if(!player.hasSpell(spell)) {
             player.sendSysMessage("You do not have that spell");
             return;
         }
+
         SpellHandler handler = ScriptManager.instance().getSpellHandler(spell);
         try {
             switch(spell) {
-                case CREATEFOOD:    handler.cast(player); break;
-                case DARKSOURCE:    handler.castAt(player, at); break;
-                case FIREBALL:      handler.castOn(player, on); break;
-                case GREATLIGHT:    handler.cast(player); break;
-                case HEALING:       handler.castOn(player, on); break;
-                case LIGHT:         handler.cast(player); break;
-                case LIGHTSOURCE:   handler.castAt(player, at); break;
+                case CREATEFOOD:    handler.cast(player, scroll); break;
+                case DARKSOURCE:    handler.castAt(player, scroll, at); break;
+                case FIREBALL:      handler.castOn(player, scroll, on); break;
+                case GREATLIGHT:    handler.cast(player, scroll); break;
+                case HEALING:       handler.castOn(player, scroll, on); break;
+                case LIGHT:         handler.cast(player, scroll); break;
+                case LIGHTSOURCE:   handler.castAt(player, scroll, at); break;
             }
         } catch(Exception e) {
             log.log(Level.SEVERE, "Exception in magery: " + e.getMessage(), e);

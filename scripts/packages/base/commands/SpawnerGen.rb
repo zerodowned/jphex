@@ -21,7 +21,9 @@ class SpawnerGen < TextCommand
       # Blacksmith
       {:x => 393, :y => 532, :z => 0, :type => 0x044B, :count => 1, :duration => 10, :range => 0},
       # Provisioner
-      {:x => 478, :y => 654, :z => 0, :type => 0x0455, :count => 1, :duration => 10, :range => 0}
+      {:x => 478, :y => 654, :z => 0, :type => 0x0455, :count => 1, :duration => 10, :range => 0},
+      # Mage
+      {:x => 462, :y => 528, :z => 0, :type => 0x0451, :count => 1, :duration => 10, :range => 0},
     ]
   
   def invoke(player, line)

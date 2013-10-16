@@ -43,7 +43,7 @@ public interface ScriptAPI {
     public void runToward(Mobile who, Mobile to);
     public void attack(Mobile attacker, Mobile defender);
 
-    public void sendSysMessage(Player player, String message);
+    public void sendSysMessage(Mobile mob, String message);
 
     public void setName(SLObject obj, String name);
     public void setGraphic(SLObject obj, int graphic);
@@ -96,4 +96,7 @@ public interface ScriptAPI {
     public Collection<Item> getItemsAtLocation(int x, int y, int z);
 
     public void speakPowerWords(Player player, Spell spell);
+    public void throwFireball(Player player, Mobile target);
+
+    public boolean checkSkill(Mobile mob, Attribute toCheck, long minRequired, long maxUntilNoGain);
 }
