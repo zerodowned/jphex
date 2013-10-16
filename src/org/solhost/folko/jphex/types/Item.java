@@ -32,6 +32,7 @@ import org.solhost.folko.jphex.scripting.ScriptManager;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 import org.solhost.folko.uosl.network.SendableItem;
+import org.solhost.folko.uosl.types.Gumps;
 import org.solhost.folko.uosl.types.Items;
 import org.solhost.folko.uosl.types.Point2D;
 import org.solhost.folko.uosl.types.Point3D;
@@ -296,8 +297,19 @@ public class Item extends SLObject implements SendableItem {
 
     public int getGumpID() {
         switch(graphic) {
-        case Items.GFX_BACKPACK:      return 0x003C;
-        case Items.GFX_SPELLBOOK:     return 0xFFFF;
+        case Items.GFX_BACKPACK:      return Gumps.ID_BACKPACK;
+
+        case Items.GFX_CORPSE_DEER:
+        case Items.GFX_CORPSE_HUMAN:
+        case Items.GFX_CORPSE_ORC:
+        case Items.GFX_CORPSE_ORC_CAPTAIN:
+        case Items.GFX_CORPSE_RABBIT:
+        case Items.GFX_CORPSE_SKELETON:
+        case Items.GFX_CORPSE_WOLF:
+                                      return Gumps.ID_CORPSE;
+
+        case Items.GFX_SPELLBOOK:     return Gumps.ID_SPELLBOOK;
+
         default:                      return 0;
         }
     }

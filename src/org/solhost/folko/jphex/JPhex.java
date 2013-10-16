@@ -74,7 +74,7 @@ public class JPhex {
             world = World.loadOrCreateNew(savePath);
             ScriptAPI api = new ScriptAPIImpl(world);
             ScriptManager.instance().setGlobal("$api", api);
-            TimerQueue.init();
+            TimerQueue.start();
             world.init();
             return true;
         } catch (Exception e) {
@@ -119,9 +119,7 @@ public class JPhex {
 
     public void halt() {
         log.info("Shutting down...");
-        if(TimerQueue.isInitialized()) {
-            TimerQueue.get().stop();
-        }
+        TimerQueue.stop();
         if(serverThread != null) {
             serverThread.interrupt();
             try {

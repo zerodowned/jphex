@@ -32,6 +32,8 @@ import org.solhost.folko.uosl.data.SLTiles;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Items;
+import org.solhost.folko.uosl.types.Mobiles;
 
 public abstract class Mobile extends SLObject implements SendableMobile {
     private static final long serialVersionUID = 1L;
@@ -349,23 +351,32 @@ public abstract class Mobile extends SLObject implements SendableMobile {
 
     public int getCorpseGraphic() {
         switch(getGraphic()) {
-        case 0x00: // Human Male
-        case 0x01: // Human Female
-            return 0x3D67;
-        case 0x2A: // Skeleton
-            return 0x3D66;
-        case 0x34: // Deer
-            return 0x3D69;
-        case 0x28: // orc
-            return 0x3D65;
-        case 0x29: // orc captain
-            return 0x3D64;
-        case 0x35: // rabbit
-            return 0x3D6B;
-        case 0x32: // wolf
-            return 0x3D6A;
+        case Mobiles.MOBTYPE_HUMAN_FEMALE:
+        case Mobiles.MOBTYPE_HUMAN_MALE:
+        case Mobiles.MOBTYPE_LORD_BRITISH:
+        case Mobiles.MOBTYPE_GUARD:
+            return Items.GFX_CORPSE_HUMAN;
+
+        case Mobiles.MOBTYPE_SKELETON:
+            return Items.GFX_CORPSE_SKELETON;
+
+        case Mobiles.MOBTYPE_DEER:
+            return Items.GFX_CORPSE_DEER;
+
+        case Mobiles.MOBTYPE_ORC:
+            return Items.GFX_CORPSE_ORC;
+
+        case Mobiles.MOBTYPE_ORC_CAPTAIN:
+            return Items.GFX_CORPSE_ORC_CAPTAIN;
+
+        case Mobiles.MOBTYPE_RABBIT:
+            return Items.GFX_CORPSE_RABBIT;
+
+        case Mobiles.MOBTYPE_WOLF:
+            return Items.GFX_CORPSE_WOLF;
+
         default:
-            return 0x3D68;
+            return Items.GFX_CORPSE_SKELETON;
         }
     }
 

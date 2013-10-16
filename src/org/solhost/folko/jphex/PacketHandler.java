@@ -18,6 +18,8 @@
  ******************************************************************************/
 package org.solhost.folko.jphex;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.network.*;
@@ -34,11 +36,13 @@ import org.solhost.folko.uosl.types.Spell;
 // translates from network packets to world actions
 public class PacketHandler implements IPacketHandler {
     private static final Logger log = Logger.getLogger("jphex.packethandler");
+    private final Map<Client, Player> playerClients;
     private final ObjectRegistry registry;
     private final World world;
 
     public PacketHandler(World world) {
         this.world = world;
+        this.playerClients = new HashMap<Client, Player>();
         this.registry = ObjectRegistry.get();
     }
 
@@ -67,10 +71,11 @@ public class PacketHandler implements IPacketHandler {
 
     public void onDisconnect(Client client) {
         log.info("Disconnect from " + client.getRemoteAddress());
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         if(player != null) {
             world.logoutPlayer(player);
             player.setClient(null);
+            playerClients.remove(client);
         }
     }
 
@@ -102,6 +107,7 @@ public class PacketHandler implements IPacketHandler {
             }
 
             // everything ok
+            playerClients.put(client, player);
             player.setClient(client);
             world.sendInitSequence(player);
             world.loginPlayer(player);
@@ -147,6 +153,7 @@ public class PacketHandler implements IPacketHandler {
         player.setFacing(Direction.EAST);
         player.setMale(player.getGraphic() == Mobiles.MOBTYPE_HUMAN_MALE);
 
+        playerClients.put(client, player);
         player.setClient(client);
         world.onCreatePlayer(player);
         registry.registerObject(player);
@@ -155,7 +162,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onMoveRequest(Client client, MoveRequestPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         if(world.onPlayerRequestMove(player, packet.getDirection())) {
             client.send(new AllowMovePacket(packet.getSequence()));
         } else {
@@ -164,7 +171,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onSingleClick(Client client, SingleClickPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject object = registry.findObject(packet.getSerial());
         if(object != null) {
             world.onSingleClick(player, object);
@@ -172,7 +179,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onDoubleClick(Client client, DoubleClickPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject obj = registry.findObject(packet.getSerial());
         if(obj != null) {
             world.onDoubleClick(player, obj);
@@ -187,12 +194,12 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onSpeechRequest(Client client, SpeechRequestPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         world.onSpeech(player, packet.getText(), packet.getColor());
     }
 
     private void onRequest(Client client, RequestPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         if(packet.getMode() == RequestPacket.MODE_SKILLS) {
             SLObject what = registry.findObject(packet.getSerial());
             if(!(what instanceof Mobile)) {
@@ -215,7 +222,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onDrag(Client client, DragPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject object = registry.findObject(packet.getSerial());
         if(object == null || !(object instanceof Item)) {
             player.sendSysMessage("I cannot move that.");
@@ -230,7 +237,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onDrop(Client client, DropPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject object = registry.findObject(packet.getSerial());
         if(object == null || !(object instanceof Item)) {
             return;
@@ -245,7 +252,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onEquip(Client client, EquipReqPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject item = registry.findObject(packet.getItemSerial());
         SLObject mob = registry.findObject(packet.getMobSerial());
         short layer = packet.getLayer();
@@ -259,7 +266,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onAction(Client client, ActionPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         String action = packet.getAction();
         String parts[] = action.split(" ");
 
@@ -353,7 +360,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onShopAction(Client client, ShopPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject shop = registry.findObject(packet.getShopSerial());
         if(shop instanceof Mobile) {
             world.onShopAction(player, (Mobile) shop, packet.getAction());
@@ -361,7 +368,7 @@ public class PacketHandler implements IPacketHandler {
     }
 
     private void onAttack(Client client, AttackPacket packet) {
-        Player player = world.getPlayer(client);
+        Player player = playerClients.get(client);
         SLObject victim = registry.findObject(packet.getVictimSerial());
         if(victim instanceof Mobile) {
             world.onAttack(player, (Mobile) victim);

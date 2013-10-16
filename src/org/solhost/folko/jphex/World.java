@@ -27,15 +27,16 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.DayNightCycle.TimeListener;
 import org.solhost.folko.jphex.ObjectRegistry.SerialObserver;
-import org.solhost.folko.jphex.network.*;
 import org.solhost.folko.jphex.scripting.*;
 import org.solhost.folko.jphex.types.*;
 import org.solhost.folko.uosl.data.*;
@@ -63,11 +64,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     private final String savePath;
 
     private ObjectRegistry registry;
-    private final Map<Client, Player> onlinePlayers;
+    private final Set<Player> onlinePlayers;
     private final DayNightCycle dayNightCycle;
 
     private World(String savePath) {
-        this.onlinePlayers = new HashMap<Client, Player>();
+        this.onlinePlayers = new HashSet<Player>();
         this.savePath = savePath;
         this.dayNightCycle = new DayNightCycle(this, SECONDS_PER_INGAME_HOUR);
     }
@@ -166,7 +167,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     public synchronized Collection<Player> getOnlinePlayersInRange(Point2D point, int range) {
         List<Player> res = new LinkedList<Player>();
-        for(Player p : onlinePlayers.values()) {
+        for(Player p : onlinePlayers) {
             if(p.isOnline() && p.inRange(point, range)) {
                 res.add(p);
             }
@@ -176,7 +177,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     public synchronized Collection<Player> getOnlinePlayers() {
         List<Player> res = new LinkedList<Player>();
-        for(Player p : onlinePlayers.values()) {
+        for(Player p : onlinePlayers) {
             if(p.isOnline()) {
                 res.add(p);
             }
@@ -199,15 +200,15 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     public synchronized void sendInitSequence(Player player) {
         SLPacket init = new InitPlayerPacket(player, player.getSeed());
-        player.getClient().send(init);
-        player.getClient().send(new SendInitialStatsPacket(player));
+        player.sendPacket(init);
+        player.sendPacket(new SendInitialStatsPacket(player));
 
         SLPacket locationPacket = new LocationPacket(player);
-        player.getClient().send(locationPacket);
+        player.sendPacket(locationPacket);
     }
 
     public synchronized void loginPlayer(Player player) {
-        onlinePlayers.put(player.getClient(), player);
+        onlinePlayers.add(player);
         log.info(player.getName() + " logged in, " + onlinePlayers.size() + " online");
 
         sendFullEquipment(player, player);
@@ -233,12 +234,8 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized void logoutPlayer(Player player) {
-        onlinePlayers.remove(player.getClient());
+        onlinePlayers.remove(player);
         log.info(player.getName() + " logged out, " + onlinePlayers.size() + " online");
-    }
-
-    public synchronized Player getPlayer(Client client) {
-        return onlinePlayers.get(client);
     }
 
     public synchronized void onCreatePlayer(Player player) {
@@ -359,13 +356,13 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized void sendPaperdoll(Player requester, Mobile whose) {
-        OpenGumpPacket gump = new OpenGumpPacket(whose, OpenGumpPacket.GUMP_ID_PAPERDOLL);
-        requester.getClient().send(gump);
+        OpenGumpPacket gump = new OpenGumpPacket(whose, Gumps.ID_PAPERDOLL);
+        requester.sendPacket(gump);
     }
 
     public synchronized void sendSkills(Player player,  boolean openWindow) {
         SkillsPacket skills = new SkillsPacket(player, openWindow);
-        player.getClient().send(skills);
+        player.sendPacket(skills);
     }
 
     public synchronized void sendStats(Player player, Mobile obj) {
@@ -377,7 +374,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             int maxHits = (int) obj.getAttribute(Attribute.MAX_HITS);
             stats = new StatsPacket(obj, hits * 100 / maxHits, 100);
         }
-        player.getClient().send(stats);
+        player.sendPacket(stats);
     }
 
     public synchronized void sendObject(Player player, SLObject obj) {
@@ -391,21 +388,21 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             if(i.isOnGround()) {
                 SendObjectPacket packet;
                 packet = new SendObjectPacket(i);
-                player.getClient().send(packet);
+                player.sendPacket(packet);
             } else if(i.isWorn()) {
                 Mobile wearer = (Mobile) i.getParent();
                 EquipPacket equip = new EquipPacket(wearer, i);
-                player.getClient().send(equip);
+                player.sendPacket(equip);
             } else if(i.isInContainer()) {
                 Item container = (Item) i.getParent();
                 ItemInContainerPacket packet = new ItemInContainerPacket(i, container);
-                player.getClient().send(packet);
+                player.sendPacket(packet);
             }
         } else if(obj instanceof Mobile) {
             Mobile m = (Mobile) obj;
             SendObjectPacket packet;
             packet = new SendObjectPacket(m);
-            player.getClient().send(packet);
+            player.sendPacket(packet);
         } else {
             throw new RuntimeException("sendObject: don't know how to send " + obj);
         }
@@ -420,7 +417,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized void sendDelete(Player player, SLObject obj) {
-        player.getClient().send(new RemoveObjectPacket(obj));
+        player.sendPacket(new RemoveObjectPacket(obj));
     }
 
     public synchronized boolean onDrag(Player player, Item item, int amount) {
@@ -515,7 +512,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public synchronized boolean onEquip(Player player, Item item, Mobile mob, short layer) {
         if(player == mob) {
             if(layer != item.getLayer()) {
-                log.warning(String.format("Client requested equip on layer %d but default is %d", layer, item.getLayer()));
+                log.warning(String.format("Player requested equip on layer %d but default is %d", layer, item.getLayer()));
             }
             player.equipItem(item);
             return true;
@@ -527,13 +524,13 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public synchronized void sendContainer(Player player, Item container, boolean open) {
         if(open) {
             OpenGumpPacket gump = new OpenGumpPacket(container, container.getGumpID());
-            player.getClient().send(gump);
+            player.sendPacket(gump);
         }
 
         List<Item> items = container.getChildren();
         if(items.size() > 0) {
             FullItemsContainerPacket packet = new FullItemsContainerPacket(container.getChildren(), container);
-            player.getClient().send(packet);
+            player.sendPacket(packet);
         }
     }
 
@@ -553,7 +550,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         SendTextPacket packet = new SendTextPacket(src, SendTextPacket.MODE_SAY, color, text);
         for(SLObject obj : getObjectsInRange(src.getLocation(), SPEECH_RANGE)) {
             if(obj instanceof Player) {
-                ((Player) obj).getClient().send(packet);
+                ((Player) obj).sendPacket(packet);
             } else if(obj instanceof NPC) {
                 if(isHello) {
                     if(src.distanceTo(obj) < minDist) {
@@ -632,7 +629,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             color = SendTextPacket.COLOR_SYSTEM;
         }
         SendTextPacket packet = new SendTextPacket(object, SendTextPacket.MODE_SEE, color, name);
-        player.getClient().send(packet);
+        player.sendPacket(packet);
     }
 
     public synchronized void sayAbove(SLObject obj, String text) {
@@ -663,7 +660,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
         player.initShopping(shop.getBackpack());
         sendCurrentShopList(player, shop);
-        OpenGumpPacket gump = new OpenGumpPacket(shop, OpenGumpPacket.GUMP_ID_SHOP);
+        OpenGumpPacket gump = new OpenGumpPacket(shop, Gumps.ID_SHOP);
         player.sendPacket(gump);
     }
 
@@ -1022,7 +1019,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             Player p = (Player) obj;
             if(p.isOnline()) {
                 p.sendSysMessage("You have been deleted.");
-                p.getClient().disconnect();
+                p.kick();
             }
         } else if(obj instanceof Item) {
             SLObject parent = obj.getParent();
