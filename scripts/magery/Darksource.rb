@@ -16,13 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Darksource < SpellHandler
-  def castAt(player, target)
-    $api.speakPowerWords(player, Spell::DARKSOURCE)
-    darksource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B2)
-    darksource.setLightLevel(-10)
-    $api.addTimer(6000) do
-      darksource.delete()
+require './scripts/magery/BaseSpellHandler'
+class Darksource < BaseSpellHandler
+  
+  @@delay = 2000
+  
+  def castAt(player, scroll, target)
+    beginCast(player, Spell::DARKSOURCE, scroll, 20, @@delay, 300, 500) do
+      darksource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B2)
+      duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3
+      $api.addTimer(duration) do
+        darksource.delete()
+      end
     end
   end
 end

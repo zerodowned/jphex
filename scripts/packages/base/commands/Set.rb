@@ -28,6 +28,7 @@ class Set < TextCommand
         when "amount"   then obj.setAmount(Integer(value))
         when "hue"      then obj.setHue(Integer(value))
         when "graphic"  then obj.setGraphic(Integer(value))
+        when "light"    then obj.setLightLevel(Integer(value))
         when "x"        then $api.moveObject(obj,  Integer(value), obj.getLocation().getY()) 
         when "y"        then $api.moveObject(obj, obj.getLocation().getX(), Integer(value))
         when "z"        then $api.moveObject(obj, obj.getLocation().getX(), obj.getLocation().getY(), Integer(value))

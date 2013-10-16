@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.solhost.folko.jphex.DayNightCycle.TimeListener;
 import org.solhost.folko.jphex.ObjectRegistry.SerialObserver;
 import org.solhost.folko.jphex.network.*;
 import org.solhost.folko.jphex.scripting.*;
@@ -42,11 +43,13 @@ import org.solhost.folko.uosl.network.packets.*;
 import org.solhost.folko.uosl.types.*;
 import org.solhost.folko.uosl.util.ObjectLister;
 
-public class World implements ObjectObserver, SerialObserver, ObjectLister {
+public class World implements ObjectObserver, SerialObserver, ObjectLister, TimeListener {
     public static final int VISIBLE_RANGE = 15;
     public static final int SPEECH_RANGE = 10;
     public static final int ENTER_AREA_RANGE = 5;
     public static final int STAT_REFRESH_DELAY = 1200;
+
+    public static final int SECONDS_PER_INGAME_HOUR = 120;
 
     // Sweet Dreams Inn
     public static final int NEW_CHAR_X = 553;
@@ -61,10 +64,12 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
 
     private ObjectRegistry registry;
     private final Map<Client, Player> onlinePlayers;
+    private final DayNightCycle dayNightCycle;
 
     private World(String savePath) {
         this.onlinePlayers = new HashMap<Client, Player>();
         this.savePath = savePath;
+        this.dayNightCycle = new DayNightCycle(this, SECONDS_PER_INGAME_HOUR);
     }
 
     public static World loadOrCreateNew(String savePath) throws Exception {
@@ -156,6 +161,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
             }
             obj.addObserver(this);
         }
+        dayNightCycle.start();
     }
 
     public synchronized Collection<Player> getOnlinePlayersInRange(Point2D point, int range) {
@@ -219,6 +225,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
             }
         }
         runRefresh(player);
+
+        GlobalLightLevelPacket packet = new GlobalLightLevelPacket(dayNightCycle.getLightLevel());
+        player.sendPacket(packet);
 
         player.sendSysMessage("Welcome to JPhex");
     }
@@ -882,6 +891,15 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister {
         };
         mob.setRefreshRunning(true);
         TimerQueue.get().addTimer(new Timer(STAT_REFRESH_DELAY, refreshAction));
+    }
+
+    @Override
+    public void onTimeChange(boolean phaseChanged) {
+        log.fine("Ingame hour: " + dayNightCycle.getHour() + ", light level: " + dayNightCycle.getLightLevel());
+        GlobalLightLevelPacket packet = new GlobalLightLevelPacket(dayNightCycle.getLightLevel());
+        for(Player player : getOnlinePlayers()) {
+            player.sendPacket(packet);
+        }
     }
 
     @Override

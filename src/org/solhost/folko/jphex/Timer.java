@@ -20,12 +20,18 @@ package org.solhost.folko.jphex;
 
 public class Timer implements Comparable<Timer> {
     private final Runnable what;
-    private final long when;
+    private final long delay;
+    private long when;
 
     // call in n milliseconds
     public Timer(long milliseconds, Runnable what) {
-        this.when = getCurrentTicks() + milliseconds;
+        this.delay = milliseconds;
+        this.when = getCurrentTicks() + delay;
         this.what = what;
+    }
+
+    public void reset() {
+        this.when = getCurrentTicks() + delay;
     }
 
     // base reference for timers

@@ -16,8 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Lightsource < SpellHandler
-  def castAt(player, target)
-    $api.sendSysMessage(player, "Lightsource is not implemented yet.")
+require './scripts/magery/BaseSpellHandler'
+class Lightsource < BaseSpellHandler
+  
+  @@delay = 2000
+  
+  def castAt(player, scroll, target)
+    beginCast(player, Spell::LIGHTSOURCE, scroll, 20, @@delay, 300, 500) do
+      lightsource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B3)
+      duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3
+      $api.addTimer(duration) do
+        lightsource.delete()
+      end
+    end
   end
 end
