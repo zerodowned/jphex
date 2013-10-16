@@ -16,25 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-require './scripts/magery/BaseSpellHandler'
-class CreateFood < BaseSpellHandler
+require './scripts/packages/base/mobiles/Merchant'
+class Mage < Merchant
+  include MobileBehavior
 
-  @@delay = 1500
-  @@food = [
-      {:graphic => 0x0011, :name => 'an apple'},
-      {:graphic => 0x0039, :name => 'a peach'},
-      {:graphic => 0x012C, :name => 'ham'},
-      {:graphic => 0x0136, :name => 'bread'},
-      {:graphic => 0x0137, :name => 'a pie'},
-      {:graphic => 0x02FF, :name => 'grapes'},
-    ]
-
-  def cast(player, scroll)
-    beginCast(player, Spell::CREATEFOOD, scroll, 10, @@delay, 0, 200) do
-      $api.playSoundNearObj(player, 0x9F)
-      entry = @@food.sample
-      $api.createItemInBackpack(player, entry[:graphic], "food")
-      $api.sendSysMessage(player, "You magically created some food: " + entry[:name])
-    end
+  def setupMerchant(me)
+    me.setSuffix("the Mage")
+    $api.createItemInBackpack(me, 0x0386) # spellbook
+    $api.createItemInBackpack(me, 0x0387) # lightsource
+    $api.createItemInBackpack(me, 0x0444) # darksource
+    $api.createItemInBackpack(me, 0x0445) # great light
+    $api.createItemInBackpack(me, 0x0446) # light
+    $api.createItemInBackpack(me, 0x0447) # healing
+    $api.createItemInBackpack(me, 0x0448) # fireball
+    $api.createItemInBackpack(me, 0x0449) # create food
   end
 end

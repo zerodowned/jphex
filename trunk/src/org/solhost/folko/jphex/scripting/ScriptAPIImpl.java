@@ -35,6 +35,7 @@ import org.solhost.folko.jphex.World;
 import org.solhost.folko.jphex.types.*;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLStatic;
+import org.solhost.folko.uosl.network.packets.FightPacket;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Items;
@@ -55,8 +56,10 @@ public class ScriptAPIImpl implements ScriptAPI {
     }
 
     @Override
-    public void sendSysMessage(Player player, String message) {
-        player.sendSysMessage(message);
+    public void sendSysMessage(Mobile mob, String message) {
+        if(mob instanceof Player) {
+            ((Player) mob).sendSysMessage(message);
+        }
     }
 
     @Override
@@ -480,5 +483,19 @@ public class ScriptAPIImpl implements ScriptAPI {
     @Override
     public SLObject findObject(long serial) {
         return registry.findObject(serial);
+    }
+
+    @Override
+    public boolean checkSkill(Mobile mob, Attribute toCheck, long minRequired, long maxUntilNoGain) {
+        return mob.checkSkill(toCheck, minRequired, maxUntilNoGain);
+    }
+
+    @Override
+    public void throwFireball(Player player, Mobile target) {
+        player.lookAt(target);
+        FightPacket packet = new FightPacket(true, player, target);
+        for(Player p : world.getInterestedPlayers(target)) {
+            p.sendPacket(packet);
+        }
     }
 }

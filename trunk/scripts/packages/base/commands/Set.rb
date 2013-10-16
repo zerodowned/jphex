@@ -31,6 +31,7 @@ class Set < TextCommand
         when "x"        then $api.moveObject(obj,  Integer(value), obj.getLocation().getY()) 
         when "y"        then $api.moveObject(obj, obj.getLocation().getX(), Integer(value))
         when "z"        then $api.moveObject(obj, obj.getLocation().getX(), obj.getLocation().getY(), Integer(value))
+        when "magic"    then obj.setAttribute(Attribute::MAGIC, Integer(value))
       end
     end
   end

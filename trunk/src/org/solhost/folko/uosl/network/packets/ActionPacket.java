@@ -24,6 +24,7 @@ public class ActionPacket extends SLPacket {
     public static final short ID = 0x17;
     public static final short MODE_BBOARD = 0x20;
     public static final short MODE_CAST_SPELL = 0x27;
+    public static final short MODE_USE_SCROLL = 0x2F;
     public static final short MODE_OPEN_SPELLBOOK = 0x43;
     private String action;
     private short mode;

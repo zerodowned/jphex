@@ -81,6 +81,12 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     public void setAttribute(Attribute a, long value) {
         if(a == Attribute.MAX_HITS || a == Attribute.MAX_FATIGUE || a == Attribute.MAX_MANA || a == Attribute.NEXT_LEVEL) {
             throw new IllegalArgumentException("not writable");
+        } else if(a == Attribute.HITS && value > getAttribute(Attribute.MAX_HITS)) {
+            value = getAttribute(Attribute.MAX_HITS);
+        } else if(a == Attribute.MANA && value > getAttribute(Attribute.MAX_MANA)) {
+            value = getAttribute(Attribute.MAX_MANA);
+        } else if(a == Attribute.FATIGUE && value > getAttribute(Attribute.MAX_FATIGUE)) {
+            value = getAttribute(Attribute.MAX_FATIGUE);
         }
         attributes.put(a,  value);
         for(ObjectObserver o : observers) o.onAttributeChanged(this, a);
@@ -396,6 +402,26 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         this.equipped = new CopyOnWriteArraySet<Item>();
+    }
+
+    public synchronized boolean consumeAttribute(Attribute stat, long amount) {
+        long oldValue = getAttribute(stat);
+        if(amount > oldValue) {
+            return false;
+        }
+        setAttribute(stat, oldValue - amount);
+        return true;
+    }
+
+    public synchronized void rewardAttribute(Attribute stat, long amount) {
+        if(amount > 0) {
+            setAttribute(stat, getAttribute(stat) + amount);
+        }
+    }
+
+    // TODO
+    public boolean canSee(SLObject what) {
+        return true;
     }
 
     @Override
