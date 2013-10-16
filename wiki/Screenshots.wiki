@@ -2,12 +2,15 @@
 
 = Server =
 Original client with working shop gump
+
 http://jphex.googlecode.com/svn/wiki/images/client_shop.png
 
 Original client with a combat scene
+
 http://jphex.googlecode.com/svn/wiki/images/client_fight.png
 
 A cold night in Britain
+
 http://jphex.googlecode.com/svn/wiki/images/night.png
 
 = ViewSL =
