@@ -414,6 +414,15 @@ public class Item extends SLObject implements SendableItem {
     }
 
     @Override
+    public short getFacingOverride() {
+        if(graphic == Items.GFX_DARKSOURCE) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
     public void foundOrphan(SLObject orphan) {
         addChild((Item) orphan, orphan.getLocation());
     }

@@ -18,17 +18,7 @@
 #-------------------------------------------------------------------------------
 class Test < TextCommand
   def invoke(player, line)
-    $api.targetObject(player) do |obj|
-      $api.setGraphic(obj, 0xa0)
-      cycleGraphic(obj)
-    end
-  end
-  
-  def cycleGraphic(obj)
-    $api.setGraphic(obj, obj.getGraphic() + 1)
-    $api.say(obj, "Graphic: #{obj.getGraphic().to_s(16)}")
-    $api.addTimer(750) do
-      cycleGraphic(obj)
-    end
+    #                                 serial      graphic   unk    amount   x         y    facing   z        hue
+    $api.sendHexPacket(player, 0x35, "40428DCD" + "01B2" + "00" + "0000" + "0000" + "0000" + "01" + "00" + "0000")
   end
 end
