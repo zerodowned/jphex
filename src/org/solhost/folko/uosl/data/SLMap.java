@@ -53,7 +53,7 @@ public class SLMap {
         return mapFile.readUDWord();
     }
 
-    private byte getTileElevation(int x, int y) {
+    public byte getTileElevation(int x, int y) {
         if(x < 0 || x >= 1024 || y < 0 || y >= 1024) {
             return 0;
         }

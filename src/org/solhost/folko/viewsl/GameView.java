@@ -86,7 +86,7 @@ public class GameView extends JPanel {
         this.hackMover = true;
         this.mapTileCache = new HashMap<Integer, Image>();
         this.staticTileCache = new HashMap<Integer, Image>();
-        this.sceneCenter = new Point3D(553, 575, 0);
+        this.sceneCenter = new Point3D(379, 607, 0);
         this.lastRedraw = System.currentTimeMillis();
         this.redrawTimer = new Timer((int) (1000.0 / TARGET_FPS), new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -158,7 +158,6 @@ public class GameView extends JPanel {
                     break;
                 }
                 if(dir != null) {
-                    // shift forces location
                     moveCenter(dir);
                 }
             }
@@ -188,7 +187,6 @@ public class GameView extends JPanel {
                 }
             }
         });
-
         redrawTimer.start();
     }
 
@@ -205,7 +203,7 @@ public class GameView extends JPanel {
                 if(x >= 0 && x < 1024 && y >= 0 && y < 1024) {
                     point.setX(x);
                     point.setY(y);
-                    point.setZ(map.getElevation(point));
+                    point.setZ(getZ(x, y));
                     //drawGrid(g, point, Color.blue);
                     drawMapTile(g, point);
                     drawStatics(g, point);
@@ -215,8 +213,12 @@ public class GameView extends JPanel {
 
         drawInfo(g);
         drawPath(g);
+        markCenter(g);
+    }
 
-        drawGrid(g, sceneCenter, Color.green);
+    protected void markCenter(Graphics g) {
+        Point center = transform(sceneCenter);
+        g.fillOval(center.x - 4, center.y - 4, 8, 8);
     }
 
     protected void drawGrid(Graphics g, Point3D p, Color color) {
@@ -281,20 +283,21 @@ public class GameView extends JPanel {
             System.out.println(info);
         }
         int landID = map.getTextureID(sceneCenter);
-        System.out.println(String.format("Land: %04X, Z: %d", landID, map.getElevation(sceneCenter)));
+        System.out.println(String.format("Land: %04X, Z: %d", landID, getZ(sceneCenter.getX(), sceneCenter.getY())));
         System.out.println("====");
     }
 
     private void moveCenter(Direction dir) {
-        Point3D dest = data.getElevatedPoint(sceneCenter, dir, statics);
-        if(dest != null) {
-            sceneCenter = dest;
-        } else if(hackMover) {
-            // hack mover
+        if(hackMover) {
             Point2D hackDest = sceneCenter.getTranslated(dir);
             sceneCenter.setX(hackDest.getX());
             sceneCenter.setY(hackDest.getY());
-            // keep old Z
+            sceneCenter.setZ(0);
+        } else {
+            Point3D dest = data.getElevatedPoint(sceneCenter, dir, statics);
+            if(dest != null) {
+                sceneCenter = dest;
+            }
         }
     }
 
@@ -347,8 +350,7 @@ public class GameView extends JPanel {
     }
 
     private void drawStatics(Graphics g, Point3D pos) {
-        pos.setZ(0);
-        Point center = transform(pos);
+        Point center = transform(new Point3D(pos, 0));
         for(SLStatic s : sortStatics(statics.getStatics(pos))) {
             if(s.getLocation().getZ() - sceneCenter.getZ() > 10 && cutOffZ) {
                 continue;
@@ -433,11 +435,7 @@ public class GameView extends JPanel {
     }
 
     private int getZ(int x, int y) {
-        if(x < 0 || x >= 1024 || y < 0 || y >= 1024) {
-            return 0;
-        }
-        Point2D point = new Point3D(x, y);
-        return map.getElevation(point);
+        return map.getTileElevation(x, y);
     }
 
     private Double getPointPolygon(Polygon dest, Point3D point) {
@@ -505,7 +503,7 @@ public class GameView extends JPanel {
         if(resY >= 1024) resY = 1023;
 
         Point3D res = new Point3D(resX, resY, 0);
-        res.setZ(map.getElevation(res));
+        res.setZ(getZ(resX, resY));
         return res;
     }
 }
