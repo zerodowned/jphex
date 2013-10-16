@@ -112,17 +112,25 @@ public class Pathfinder {
 
     // c(from, to) -> cost for this edge
     private int c(Point3D from, Point3D to) {
-        if(from.distanceTo(dest) <= to.distanceTo(dest)) {
-            if(Math.abs(from.getZ() - dest.getZ()) <= Math.abs(to.getZ() - dest.getZ())) {
-                return 2;
-            }
-            return 1;
+        boolean isShorter = to.distanceTo(dest) < from.distanceTo(dest);
+        int deltaZBefore = Math.abs(to.getZ() - dest.getZ());
+        int deltaZNow =  Math.abs(from.getZ() - dest.getZ());
+
+        int cost = 0;
+        if(isShorter) {
+            cost--;
         } else {
-            if(Math.abs(from.getZ() - dest.getZ()) <= Math.abs(to.getZ() - dest.getZ())) {
-                return -1;
-            }
-            return -2;
+            cost++;
         }
+        // when near the destination, take Z difference into account
+        if(to.distanceTo(dest) < 30 && deltaZNow > 5) {
+            if(deltaZBefore <= deltaZNow) {
+                cost++;
+            } else {
+                cost--;
+            }
+        }
+        return cost;
     }
 
     // A*
@@ -195,6 +203,10 @@ public class Pathfinder {
     }
 
     public int getPathLength() {
+        if(last == null) {
+            return 0;
+        }
+
         PathEntry cur = last;
         int len = 0;
         do {
@@ -205,6 +217,10 @@ public class Pathfinder {
     }
 
     public String getPathInfo() {
-        return String.format("Length %d after %d iterations", getPathLength(), iterations);
+        if(hasPath()) {
+            return String.format("Length %d after %d iterations", getPathLength(), iterations);
+        } else {
+            return "No path found after " + iterations + " iterations";
+        }
     }
 }
