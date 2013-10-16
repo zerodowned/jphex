@@ -34,9 +34,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -72,9 +69,9 @@ public class GameView extends JPanel {
     private final SLStatics statics;
     private final Timer redrawTimer;
     private long lastRedraw, drawDuration, lastFPSUpdate;
-    private int redrawDelay;
     private double lastFPS;
     private Pathfinder finder;
+    private boolean cutOffZ, hackMover;
 
     private static final int TILE_SIZE = 44;
     private static final double TARGET_FPS = 25.0;
@@ -85,18 +82,17 @@ public class GameView extends JPanel {
         this.art = data.getArt();
         this.statics = data.getStatics();
         this.tiles = data.getTiles();
+        this.cutOffZ = true;
+        this.hackMover = true;
         this.mapTileCache = new HashMap<Integer, Image>();
         this.staticTileCache = new HashMap<Integer, Image>();
-        this.sceneCenter = new Point3D(379, 607, 0); // 600, 700 has interesting Z
+        this.sceneCenter = new Point3D(553, 575, 0);
         this.lastRedraw = System.currentTimeMillis();
-        this.redrawDelay = (int) (1000.0 / TARGET_FPS);
-        this.redrawTimer = new Timer(redrawDelay, new ActionListener() {
+        this.redrawTimer = new Timer((int) (1000.0 / TARGET_FPS), new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 repaint();
             }
         });
-
-        SLData.DEBUG_MOVE = false;
 
         setMinimumSize(new Dimension(800, 600));
         setPreferredSize(new Dimension(800, 600));
@@ -154,10 +150,16 @@ public class GameView extends JPanel {
                 case KeyEvent.VK_I:
                     showStatics();
                     break;
+                case KeyEvent.VK_R:
+                    cutOffZ = !cutOffZ;
+                    break;
+                case KeyEvent.VK_H:
+                    hackMover = !hackMover;
+                    break;
                 }
                 if(dir != null) {
                     // shift forces location
-                    moveCenter(dir, e.isShiftDown());
+                    moveCenter(dir);
                 }
             }
         });
@@ -182,7 +184,7 @@ public class GameView extends JPanel {
                     }
                 }
                 for(int i = 0; i < num; i++) {
-                    moveCenter(dir, e.isMetaDown());
+                    moveCenter(dir);
                 }
             }
         });
@@ -204,50 +206,31 @@ public class GameView extends JPanel {
                     point.setX(x);
                     point.setY(y);
                     point.setZ(map.getElevation(point));
+                    //drawGrid(g, point, Color.blue);
                     drawMapTile(g, point);
                     drawStatics(g, point);
                 }
             }
         }
 
-        markPoint(g, sceneCenter);
         drawInfo(g);
         drawPath(g);
-        // drawSlopes(g);
-        controlFPS();
+
+        drawGrid(g, sceneCenter, Color.green);
     }
 
-    private void controlFPS() {
-        this.drawDuration = System.currentTimeMillis() - lastRedraw;
-        this.lastRedraw = System.currentTimeMillis();
-        if(System.currentTimeMillis() - lastFPSUpdate > 500) {
-            lastFPSUpdate = System.currentTimeMillis();
-            lastFPS = 1000.0 / drawDuration;
-            double off = lastFPS - TARGET_FPS;
-            if(off > 1) {
-                redrawDelay += 5;
-            } else if(off < -1 && redrawDelay >= 5) {
-                redrawDelay -= 5;
-            }
-            redrawTimer.setDelay(redrawDelay);
+    protected void drawGrid(Graphics g, Point3D p, Color color) {
+        Polygon poly = new Polygon();
+        Double theta = getPointPolygon(poly, p);
+        if(theta == null) {
+            Point center = transform(p);
+            poly.addPoint(center.x, center.y + TILE_SIZE / 2);
+            poly.addPoint(center.x - TILE_SIZE / 2, center.y);
+            poly.addPoint(center.x, center.y - TILE_SIZE / 2);
+            poly.addPoint(center.x + TILE_SIZE / 2, center.y);
         }
-    }
-
-    private void markPoint(Graphics g, Point3D p) {
-        Point center = transform(p);
-        Point bottom = new Point(center.x, center.y + TILE_SIZE / 2);
-        Point left = new Point(center.x - TILE_SIZE / 2, center.y);
-        Point top = new Point(center.x,                 center.y - TILE_SIZE / 2);
-        Point right = new Point(center.x + TILE_SIZE / 2, center.y);
-
-        g.setColor(Color.pink);
-        g.drawLine(top.x, top.y, left.x, left.y);
-        g.drawLine(left.x, left.y, bottom.x, bottom.y);
-        g.drawLine(bottom.x, bottom.y, right.x, right.y);
-        g.drawLine(right.x, right.y, top.x, top.y);
-
-        g.setColor(Color.red);
-        g.fillOval(center.x - 5, center.y - 5, 10, 10);
+        g.setColor(color);
+        g.drawPolygon(poly);
     }
 
     private void drawPath(Graphics g) {
@@ -270,6 +253,12 @@ public class GameView extends JPanel {
     }
 
     private void drawInfo(Graphics g) {
+        drawDuration = System.currentTimeMillis() - lastRedraw;
+        lastRedraw = System.currentTimeMillis();
+        if(lastRedraw - lastFPSUpdate > 500) {
+            lastFPSUpdate = System.currentTimeMillis();
+            lastFPS = 1000.0 / drawDuration;
+        }
         String info = String.format("Standing at %4d, %4d, %4d with %.2f FPS",
                 sceneCenter.getX(), sceneCenter.getY(), sceneCenter.getZ(), lastFPS);
         g.setColor(Color.red);
@@ -292,15 +281,15 @@ public class GameView extends JPanel {
             System.out.println(info);
         }
         int landID = map.getTextureID(sceneCenter);
-        System.out.println(String.format("Land: %04X", landID));
+        System.out.println(String.format("Land: %04X, Z: %d", landID, map.getElevation(sceneCenter)));
         System.out.println("====");
     }
 
-    private void moveCenter(Direction dir, boolean force) {
+    private void moveCenter(Direction dir) {
         Point3D dest = data.getElevatedPoint(sceneCenter, dir, statics);
         if(dest != null) {
             sceneCenter = dest;
-        } else if(force) {
+        } else if(hackMover) {
             // hack mover
             Point2D hackDest = sceneCenter.getTranslated(dir);
             sceneCenter.setX(hackDest.getX());
@@ -361,7 +350,7 @@ public class GameView extends JPanel {
         pos.setZ(0);
         Point center = transform(pos);
         for(SLStatic s : sortStatics(statics.getStatics(pos))) {
-            if(s.getLocation().getZ() - sceneCenter.getZ() > 10) {
+            if(s.getLocation().getZ() - sceneCenter.getZ() > 10 && cutOffZ) {
                 continue;
             }
 
@@ -430,11 +419,14 @@ public class GameView extends JPanel {
         g.setClip(poly);
         Rectangle box = poly.getBounds();
         if(box.width > 0 && box.height > 0) {
-            if(angle != 0.0) {
-                AffineTransform rot = AffineTransform.getRotateInstance(angle, image.getWidth(null) / 2.0, image.getHeight(null) / 2.0);
-                AffineTransformOp op = new AffineTransformOp(rot, AffineTransformOp.TYPE_BILINEAR);
-                image = op.filter((BufferedImage) image, null);
-            }
+//            double w = image.getWidth(null), h = image.getHeight(null);
+//            double nh = box.height;
+//            double nw = w / h * nh;
+//            AffineTransform scale = AffineTransform.getScaleInstance(w / nw, h / nh);
+//            AffineTransform rot = AffineTransform.getRotateInstance(Math.PI / 4, w / 2, h / 2);
+//            scale.concatenate(rot);
+//            AffineTransformOp op = new AffineTransformOp(scale, AffineTransformOp.TYPE_BILINEAR);
+//            image = op.filter((BufferedImage) image, null);
             g.drawImage(image, box.x, box.y, null);
         }
         g.setClip(before);
@@ -454,8 +446,8 @@ public class GameView extends JPanel {
         int southEast = getZ(point.getX() + 1, point.getY() + 1);
         int our = point.getZ();
 
-        Point tCenter = transform(point);
-        tCenter.y -= TILE_SIZE / 2;
+        Point top = transform(point);
+        top.y -= TILE_SIZE / 2;
 
         int y2 = TILE_SIZE / 2 + (our - east) * 4;
         int y3 = TILE_SIZE     + (our - southEast) * 4;
@@ -467,20 +459,11 @@ public class GameView extends JPanel {
         }
 
         dest.reset();
-        dest.addPoint(tCenter.x, tCenter.y);
-        dest.addPoint(tCenter.x + TILE_SIZE / 2, tCenter.y + y2);
-        dest.addPoint(tCenter.x, tCenter.y + y3);
-        dest.addPoint(tCenter.x - TILE_SIZE / 2, tCenter.y + y4);
+        dest.addPoint(top.x, top.y); // top
+        dest.addPoint(top.x + TILE_SIZE / 2, top.y + y2); // right
+        dest.addPoint(top.x, top.y + y3); // bottom
+        dest.addPoint(top.x - TILE_SIZE / 2, top.y + y4); // left
         return 0.0;
-    }
-
-    protected void drawSlopes(Graphics g) {
-        Polygon poly = new Polygon();
-        Double theta = getPointPolygon(poly, sceneCenter);
-        if(theta != null) {
-            g.setColor(Color.yellow);
-            g.drawPolygon(poly);
-        }
     }
 
     // game -> screen, returns center of tile

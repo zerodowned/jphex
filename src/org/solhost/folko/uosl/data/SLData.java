@@ -164,6 +164,16 @@ public class SLData {
 
         dest.setZ(map.getElevation(dest));
 
+        int resX = dest.getX();
+        int resY = dest.getY();
+        int resZ = dest.getZ();
+
+        // blacklist because of map errors where players can escape the test area
+        if((resX == 432 && (resY == 724 || resY == 723 || resY == 722) && resZ == -15) ||
+            (resX == 334 && resY == 707)) {
+            return null;
+        }
+
         return dest;
     }
 
