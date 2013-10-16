@@ -7,6 +7,9 @@ http://jphex.googlecode.com/svn/wiki/images/client_shop.png
 Original client with a combat scene
 http://jphex.googlecode.com/svn/wiki/images/client_fight.png
 
+A cold night in Britain
+http://jphex.googlecode.com/svn/wiki/images/night.png
+
 = ViewSL =
 Looking at static tiles (items)
 http://jphex.googlecode.com/svn/wiki/images/viewsl_static.png
