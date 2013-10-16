@@ -29,7 +29,6 @@ import org.solhost.folko.uosl.network.packets.*;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Items;
-import org.solhost.folko.uosl.types.Mobiles;
 import org.solhost.folko.uosl.types.Point3D;
 import org.solhost.folko.uosl.types.Spell;
 
@@ -151,7 +150,6 @@ public class PacketHandler implements IPacketHandler {
 
         player.setGraphic(packet.getGender());
         player.setFacing(Direction.EAST);
-        player.setMale(player.getGraphic() == Mobiles.MOBTYPE_HUMAN_MALE);
 
         playerClients.put(client, player);
         player.setClient(client);

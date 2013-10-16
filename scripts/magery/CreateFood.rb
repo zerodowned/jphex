@@ -19,22 +19,26 @@
 require './scripts/magery/BaseSpellHandler'
 class CreateFood < BaseSpellHandler
 
-  @@delay = 1500
+  @@min_skill  = 0
+  @@gain_until = 20.0
+  @@delay      = 1500
+  @@mana       = 5
+
   @@food = [
       {:graphic => 0x0011, :name => 'an apple'},
       {:graphic => 0x0039, :name => 'a peach'},
-      {:graphic => 0x012C, :name => 'ham'},
-      {:graphic => 0x0136, :name => 'bread'},
+      {:graphic => 0x012C, :name => 'a ham'},
+      {:graphic => 0x0136, :name => 'a loaf of bread'},
       {:graphic => 0x0137, :name => 'a pie'},
-      {:graphic => 0x02FF, :name => 'grapes'},
+      {:graphic => 0x02FF, :name => 'some grapes'},
     ]
 
   def cast(player, scroll)
-    beginCast(player, Spell::CREATEFOOD, scroll, 10, @@delay, 0, 200) do
+    beginCast(player, Spell::CREATEFOOD, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       $api.playSoundNearObj(player, 0x9F)
       entry = @@food.sample
       $api.createItemInBackpack(player, entry[:graphic], "food")
-      $api.sendSysMessage(player, "You magically created some food: " + entry[:name])
+      $api.sendSysMessage(player, "You magically created #{entry[:name]}")
     end
   end
 end

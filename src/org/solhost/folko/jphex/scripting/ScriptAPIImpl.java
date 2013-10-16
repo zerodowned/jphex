@@ -498,4 +498,15 @@ public class ScriptAPIImpl implements ScriptAPI {
             p.sendPacket(packet);
         }
     }
+
+    @Override
+    public Collection<Mobile> getMobilesInRange(SLObject rangeObj, int range) {
+        List<Mobile> res = new LinkedList<Mobile>();
+        for(SLObject obj : world.getObjectsInRange(rangeObj.getLocation(), range)) {
+            if(obj instanceof Mobile && obj.isVisible()) {
+                res.add((Mobile) obj);
+            }
+        }
+        return res;
+    }
 }

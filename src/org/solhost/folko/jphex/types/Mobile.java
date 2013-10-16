@@ -209,7 +209,7 @@ public abstract class Mobile extends SLObject implements SendableMobile {
         }
         boolean gain = Util.tryChance(gainChance);
 
-        if(gain) {
+        if(gain && getAttribute(skill) < 1000) {
             log.fine(String.format("%s: Checking %s for %d -> success chance %.2f, gain chance %.2f -> gain", getName(), skill, minRequired, successChance, gainChance));
             setAttribute(skill, value + 1);
         } else {

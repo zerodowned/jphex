@@ -86,6 +86,7 @@ public interface ScriptAPI {
     public void refreshStats(Mobile mob);
     public void lookAt(Mobile who, SLObject what);
     public Collection<Player> getNearbyPlayers(Mobile who);
+    public Collection<Mobile> getMobilesInRange(SLObject obj, int range);
 
     public int randomHairStyle(int graphic);
     public int randomHairHue();

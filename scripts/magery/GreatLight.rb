@@ -16,8 +16,47 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class GreatLight < SpellHandler
-  def cast(player)
-    $api.sendSysMessage(player, "Great Light is not implemented yet.")
+require './scripts/magery/BaseSpellHandler'
+class GreatLight < BaseSpellHandler
+  
+  @@min_skill  = 90.0
+  @@gain_until = 100.0
+  @@delay      = 4000
+  @@mana       = 50
+
+  @@damage_delay = 750
+  @@radius = 4
+
+  def cast(player, scroll)
+    beginCast(player, Spell::GREATLIGHT, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
+      fire = $api.createItemAtMobile(player, 0x03BC)
+      duration = player.getAttribute(Attribute::INTELLIGENCE) / 4 * 1000
+      damage =  player.getAttribute(Attribute::INTELLIGENCE) / 5
+      $api.setObjectProperty(fire, "duration", duration)
+      $api.playSoundNearObj(player, 0x9F)
+      fire.setBehavior("tempitem")
+      $api.addTimer(@@damage_delay) do
+        damageTimer(fire, player, damage)
+      end
+    end
+  end
+  
+  def damageTimer(fire, owner, damage)
+    return if fire.isDeleted()
+
+    for mob in $api.getMobilesInRange(fire, @@radius)
+      next if mob == owner
+      if $api.checkSkill(mob, Attribute::MAGIC_DEFENSE, 0, 1100)
+        $api.sendSysMessage(target, "You feel yourself resisting magical energy!")
+        mob.dealDamage(damage * 0.3)
+      else
+        mob.dealDamage(damage)
+      end
+      $api.playSoundNearObj(mob, 0x86)
+    end
+    
+    $api.addTimer(@@damage_delay) do
+      damageTimer(fire, owner, damage)
+    end
   end
 end

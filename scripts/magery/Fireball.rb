@@ -19,10 +19,15 @@
 require './scripts/magery/BaseSpellHandler'
 class Fireball < BaseSpellHandler
 
-  @@delay = 2000
+  @@min_skill  = 50.0
+  @@gain_until = 75.0
+  @@delay      = 2500
+  @@mana       = 25
+
+  @@range      = 10
   
   def castOn(player, scroll, target)
-    if player.distanceTo(target) > 10
+    if player.distanceTo(target) > @@range
       $api.sendSysMessage(player, "That is too far away.")
       return
     end
@@ -31,7 +36,7 @@ class Fireball < BaseSpellHandler
       return
     end    
 
-    beginCast(player, Spell::FIREBALL, scroll, 20, @@delay, 100, 300) do
+    beginCast(player, Spell::FIREBALL, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       damage = player.getAttribute(Attribute::INTELLIGENCE) / 5
       sound = 0xA2
       if $api.checkSkill(target, Attribute::MAGIC_DEFENSE, 0, 1100)

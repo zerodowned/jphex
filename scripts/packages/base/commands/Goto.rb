@@ -18,12 +18,16 @@
 #-------------------------------------------------------------------------------
 class Goto < TextCommand
   def invoke(player, line)
-    x, y = line.split(" ")
+    x, y, z = line.split(" ")
     if x == nil or y == nil
-      $api.sendSysMessage(player, "Usage: #goto x y")
+      $api.sendSysMessage(player, "Usage: #goto x y [z]")
       return
     end
     
-    $api.moveObject(player, x.to_i, y.to_i)
+    if z == nil
+      $api.moveObject(player, x.to_i, y.to_i)
+    else
+      $api.moveObject(player, x.to_i, y.to_i, z.to_i)
+    end
   end
 end
