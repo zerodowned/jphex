@@ -181,6 +181,10 @@ public class Player extends Mobile {
 
         if(!item.isOnGround()) {
             SLObject root = item.getRoot();
+            if(!root.inRange(getLocation(), ACCESS_ITEM_RANGE)) {
+                sendSysMessage("That is too far away.");
+                return false;
+            }
             if(root instanceof Mobile && root != this) {
                 sendSysMessage("That doesn't belong to you.");
                 return false;
