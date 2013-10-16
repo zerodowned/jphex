@@ -18,7 +18,10 @@
  ******************************************************************************/
 package org.solhost.folko.jphex;
 
-public class Timer implements Comparable<Timer> {
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
+
+public class Timer implements Delayed {
     private final Runnable what;
     private final long delay;
     private long when;
@@ -30,59 +33,36 @@ public class Timer implements Comparable<Timer> {
         this.what = what;
     }
 
-    public void reset() {
-        this.when = getCurrentTicks() + delay;
-    }
-
     // base reference for timers
     public static long getCurrentTicks() {
         return System.currentTimeMillis();
     }
 
-    public boolean hasExpired() {
-        return getExpirationDelta() <= 0;
+    public void reset() {
+        this.when = getCurrentTicks() + delay;
     }
 
-    public long getExpirationDelta() {
-        return when - getCurrentTicks();
-    }
-
-    public void invoke() {
+    public void run() {
         what.run();
     }
 
     @Override
-    public int compareTo(Timer o) {
-        if(this.when < o.when) return -1;
-        else if(this.when > o.when) return 1;
-        else return 0;
+    public long getDelay(TimeUnit unit) {
+        long delta = when - getCurrentTicks();
+        return unit.convert(delta, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((what == null) ? 0 : what.hashCode());
-        result = prime * result + (int) (when ^ (when >>> 32));
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Timer other = (Timer) obj;
-        if (what == null) {
-            if (other.what != null)
-                return false;
-        } else if (!what.equals(other.what))
-            return false;
-        if (when != other.when)
-            return false;
-        return true;
+    public int compareTo(Delayed o) {
+        long delta = this.getDelay(TimeUnit.MILLISECONDS) - o.getDelay(TimeUnit.MILLISECONDS);
+        if(delta > 0) {
+            // We should expire later
+            return 1;
+        } else if(delta < 0) {
+            // We should expire sooner
+            return -1;
+        } else {
+            return 0;
+        }
     }
 }

@@ -87,7 +87,7 @@ public class Player extends Mobile {
         return client != null;
     }
 
-    public Client getClient() {
+    public Client getClientEx() {
         return client;
     }
 
@@ -302,5 +302,9 @@ public class Player extends Mobile {
     @Override
     public boolean canRefresh() {
         return super.canRefresh() && isOnline();
+    }
+
+    public void kick() {
+        client.disconnect();
     }
 }

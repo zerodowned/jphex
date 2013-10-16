@@ -48,6 +48,15 @@ public class Items {
     public static final int GFX_HAIR_START          = 0x0424;
     public static final int GFX_HAIR_END            = 0x0429;
 
+    // Corpses
+    public static final int GFX_CORPSE_HUMAN        = 0x3D67;
+    public static final int GFX_CORPSE_SKELETON     = 0x3D66;
+    public static final int GFX_CORPSE_DEER         = 0x3D69;
+    public static final int GFX_CORPSE_ORC          = 0x3D65;
+    public static final int GFX_CORPSE_ORC_CAPTAIN  = 0x3D64;
+    public static final int GFX_CORPSE_RABBIT       = 0x3D6B;
+    public static final int GFX_CORPSE_WOLF         = 0x3D6A;
+
     // Misc
     public static final int GFX_GOLD                = 0x01F8;
 }

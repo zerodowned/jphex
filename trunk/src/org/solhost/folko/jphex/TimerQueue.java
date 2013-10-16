@@ -18,19 +18,19 @@
  ******************************************************************************/
 package org.solhost.folko.jphex;
 
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.DelayQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class TimerQueue {
+    private final DelayQueue<Timer> timers;
     private static final Logger log = Logger.getLogger("jphex.timerqueue");
     private static TimerQueue instance;
-    private final PriorityBlockingQueue<Timer> timers;
     private final Thread timerThread;
     private boolean wantStop;
 
     private TimerQueue() {
-        this.timers = new PriorityBlockingQueue<Timer>();
+        this.timers = new DelayQueue<Timer>();
         this.timerThread = getTimerThread();
     }
 
@@ -41,11 +41,7 @@ public class TimerQueue {
         return instance;
     }
 
-    public static boolean isInitialized() {
-        return instance != null;
-    }
-
-    public static void init() {
+    public static void start() {
         if(instance != null) {
             log.severe("timer queue initialized twice");
             return;
@@ -54,43 +50,41 @@ public class TimerQueue {
         instance.startTimerThread();
     }
 
+    public static void stop() {
+        if(instance == null) {
+            return;
+        }
+        instance.wantStop = true;
+        if(instance.timerThread != null) {
+            instance.timerThread.interrupt();
+        }
+        try {
+            instance.timerThread.join();
+        } catch (InterruptedException e) {
+            // doesn't matter as we're stopping anyways
+        }
+    }
+
+
     public void addTimer(Timer timer) {
         timers.add(timer);
-        timerThread.interrupt();
     }
 
     private void timerLoop() {
         log.fine("TimerQueue active");
         while(!wantStop) {
-            Timer first = null;
             try {
-                first = timers.take();
-                // log.finest("queue took timer expiring in " + first.getExpirationDelta());
-            } catch (InterruptedException e1) {
+                Timer first = timers.take();
+                first.run();
+            } catch (InterruptedException e) {
                 if(wantStop) {
-                    return;
-                } else if(first == null) {
-                    continue;
+                    break;
                 }
-            }
-
-            // check first timer
-            if(first.hasExpired()) {
-                // log.finest("running timer");
-                try {
-                    first.invoke();
-                } catch(Exception e) {
-                    log.log(Level.SEVERE, "Exception in timer: " + e, e);
-                }
-            } else {
-                timers.add(first);
-                try {
-                    Thread.sleep(first.getExpirationDelta());
-                } catch (InterruptedException e) {
-                    // a new timer has been added or want to stop -> both ok to continue
-                }
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Exception in timer: " + e, e);
             }
         }
+        log.fine("TimerQueue inactive");
     }
 
     private Thread getTimerThread() {
@@ -104,15 +98,5 @@ public class TimerQueue {
 
     private void startTimerThread() {
         timerThread.start();
-    }
-
-    public void stop() {
-        wantStop = true;
-        timerThread.interrupt();
-        try {
-            timerThread.join();
-        } catch (InterruptedException e) {
-            // doesn't matter as we're stopping anyways
-        }
     }
 }
