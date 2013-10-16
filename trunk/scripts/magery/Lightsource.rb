@@ -19,15 +19,18 @@
 require './scripts/magery/BaseSpellHandler'
 class Lightsource < BaseSpellHandler
   
-  @@delay = 2000
+  @@min_skill  = 20.0
+  @@gain_until = 45.0
+  @@delay      = 2000
+  @@mana       = 15
   
   def castAt(player, scroll, target)
-    beginCast(player, Spell::LIGHTSOURCE, scroll, 20, @@delay, 300, 500) do
+    beginCast(player, Spell::LIGHTSOURCE, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       lightsource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B3)
       duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3
-      $api.addTimer(duration) do
-        lightsource.delete()
-      end
+      $api.setObjectProperty(lightsource, "duration", duration)
+      lightsource.setBehavior("tempitem")
+      $api.playSoundNearObj(player, 0xA0)
     end
   end
 end

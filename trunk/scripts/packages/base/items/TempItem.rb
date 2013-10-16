@@ -16,30 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-require './scripts/magery/BaseSpellHandler'
-class Healing < BaseSpellHandler
-  @@min_skill  = 10.0
-  @@gain_until = 30.0
-  @@delay      = 1500
-  @@mana       = 10
 
-  @@range = 10
+# An item that destroys itself after the property "duration" run up (milliseconds of existance)
+# Usage: create item without behavior, setup properties, then set behavior
+class TempItem
+  include ItemBehavior
 
-  def castOn(player, scroll, target)
-    if player.distanceTo(target) > @@range
-      $api.sendSysMessage(player, "That is too far away.")
-      return
+  def onCreate(item)
+  end
+
+  def onBehaviorChange(item)
+    duration = $api.getObjectProperty(item, "duration")
+    $api.addTimer(duration) do
+      $api.deleteObject(item)
     end
+  end
 
-    if !player.canSee(target)
-      $api.sendSysMessage(player, "You can't see that.")
-      return
-    end    
-
-    beginCast(player, Spell::HEALING, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
-      hits = player.getAttribute(Attribute::INTELLIGENCE) / 3
-      $api.playSoundNearObj(target, 0xA4)
-      target.rewardAttribute(Attribute::HITS, hits)
-    end
+  def onLoad(item)
+    $api.deleteObject(item)
+  end
+    
+  def onUse(player, item)
   end
 end

@@ -154,7 +154,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 registry.removeObject(obj.getSerial());
                 continue;
             }
-            if(obj instanceof Mobile) {
+            if(obj instanceof Player) {
+                // thaw if save happened during casting or so
+                ((Player) obj).thaw();
+            } else if(obj instanceof Mobile) {
                 Mobile mob = (Mobile) obj;
                 mob.setOpponent(null);
                 mob.setRefreshRunning(false);
@@ -288,7 +291,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized  boolean onPlayerRequestMove(Player player, Direction dir) {
-        if(player.getFacing() != dir) {
+        if(player.isFrozen()) {
+            // Nothing permitted if frozen
+            player.sendSysMessage("You are frozen and cannot move!");
+            return false;
+        } else if(player.getFacing() != dir) {
             // player is only turning and not actually moving -> always allow
             player.setWalking(true);
             player.setFacing(dir);

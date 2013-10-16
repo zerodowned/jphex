@@ -45,7 +45,7 @@ public class Player extends Mobile {
     private transient TargetLocationHandler targetLocation;
     private transient TargetObjectHandler targetObject;
     private transient Map<Long, List<Item>> shopList; // current shop listing with amount etc for certain shop npc
-    private boolean isWalking, male;
+    private boolean isWalking, frozen;
     private CommandLevel commandLevel;
     private long seed;
     private int dragAmount;
@@ -55,12 +55,16 @@ public class Player extends Mobile {
         super(serial);
     }
 
-    public void setMale(boolean male) {
-        this.male = male;
+    public void freeze() {
+        this.frozen = true;
     }
 
-    public boolean isMale() {
-        return male;
+    public void thaw() {
+        this.frozen = false;
+    }
+
+    public boolean isFrozen() {
+        return frozen;
     }
 
     public void setWalking(boolean walking) {

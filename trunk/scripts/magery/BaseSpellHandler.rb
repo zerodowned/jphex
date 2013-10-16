@@ -29,15 +29,22 @@ class BaseSpellHandler < SpellHandler
       return
     end
     
+    hitsBefore = player.getAttribute(Attribute::HITS)
     $api.setObjectProperty(player, "noCastBefore", $api.getTimerTicks() + delay)
     $api.speakPowerWords(player, spell)
-
+    player.freeze()
+    
     $api.addTimer(delay) do
-      if !$api.checkSkill(player, Attribute::MAGIC, minSkill, noGainAfter)
+      player.thaw()
+      if !$api.checkSkill(player, Attribute::MAGIC, (minSkill * 10).to_i, (noGainAfter * 10).to_i)
         # On failure: Require half the mana and notice player
         $api.playSoundNearObj(player, 0x18)
         player.consumeAttribute(Attribute::MANA, mana / 2)
         $api.sendSysMessage(player, "You fail to cast the spell.")
+      elsif player.getAttribute(Attribute::HITS) < hitsBefore
+        # Interrupted casting by damage
+        $api.sendSysMessage(player, "You were interrupted while casting.")
+        $api.playSoundNearObj(player, 0x18)
       else
         # On success: consume mana (if he still has it), call spell and destroy scroll
         if not player.consumeAttribute(Attribute::MANA, mana)
