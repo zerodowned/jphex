@@ -115,4 +115,26 @@ public class NPC extends Mobile {
             }
         }
     }
+
+    public void onAttacked(Mobile attacker) {
+        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
+        if(be != null) {
+            try {
+                be.onAttacked(this, attacker);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onAttacked: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    public void onDeath(Item corpse) {
+        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
+        if(be != null) {
+            try {
+                be.onDeath(this, corpse);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onDeath: " + e.getMessage(), e);
+            }
+        }
+    }
 }

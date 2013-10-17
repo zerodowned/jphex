@@ -403,20 +403,32 @@ public class ScriptAPIImpl implements ScriptAPI {
     }
 
     @Override
-    public void runToward(Mobile who, Mobile to) {
+    public boolean runToward(Mobile who, Mobile to) {
         int distance = who.distanceTo(to);
-        if(distance > 0 && distance < World.VISIBLE_RANGE) {
+        if(distance <= 1) {
+            // already there
+            return true;
+        } else if(distance > World.VISIBLE_RANGE) {
+            // too far away
+            return false;
+        } else {
+            System.out.println("distance: " + distance);
+            // try running next step
             Pathfinder finder = new Pathfinder(who.getLocation(), to.getLocation(), world);
-            if(finder.findPath(500)) {
-                Direction dir = finder.getPath().get(0);
-                who.setFacing(dir);
-                Point3D newLoc = world.canWalk(who, dir);
-                if(newLoc == null) {
-                    log.severe("Pathfinder returned illegal path");
-                    return;
-                }
-                who.setLocation(newLoc);
+            if(!finder.findPath(500)) {
+                // couldn't find a path
+                return false;
             }
+            Direction dir = finder.getPath().get(0);
+            who.setFacing(dir);
+            Point3D newLoc = world.canWalk(who, dir);
+            if(newLoc == null) {
+                log.severe("Pathfinder returned illegal path");
+                return false;
+            }
+            who.setLocation(newLoc);
+            // found a path and walked toward
+            return true;
         }
     }
 

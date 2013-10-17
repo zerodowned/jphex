@@ -40,7 +40,7 @@ public interface ScriptAPI {
     public void kill(Mobile what);
 
     public int getDistance(SLObject o1, SLObject o2);
-    public void runToward(Mobile who, Mobile to);
+    public boolean runToward(Mobile who, Mobile to);
     public void attack(Mobile attacker, Mobile defender);
 
     public void sendSysMessage(Mobile mob, String message);

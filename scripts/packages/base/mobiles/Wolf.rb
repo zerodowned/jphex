@@ -16,33 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Wolf
+require './scripts/packages/base/mobiles/BaseMobile'
+class Wolf < BaseMobile
   include MobileBehavior
   
   def onSpawn(mob)
     $api.setName(mob, "a wolf")
     $api.setGraphic(mob, 0x32)
 
-    $api.setAttribute(mob, Attribute::STRENGTH, 25)
-    $api.setAttribute(mob, Attribute::FATIGUE, 10)
-    $api.setAttribute(mob, Attribute::INTELLIGENCE, 25)
+    setStats(mob, :str => 50, :fatigue => 80, :int => 25)
 
-    $api.setAttribute(mob, Attribute::MELEE, 250)
-    $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 300)
-
-    $api.refreshStats(mob)
+    $api.setAttribute(mob, Attribute::MELEE, 700)
+    $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 600)
+    $api.setAttribute(mob, Attribute::MAGIC_DEFENSE, 100)
   end
 
-  def onDoubleClick(me, player)
-    return false
+  def onEnterArea(me, player)
+    beAggressiveToThemAndAll(me, player)
   end
 
-  def onSpeech(mob, player, line)
-  end
-
-  def onHello(me, player)
-  end
-
-  def onEnterArea(mob, player)
+  def onAttacked(me, attacker)
+    beAggressiveToThemAndAll(me, attacker)
   end
 end

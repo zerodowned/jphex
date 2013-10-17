@@ -18,6 +18,7 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.scripting;
 
+import org.solhost.folko.jphex.types.Item;
 import org.solhost.folko.jphex.types.Mobile;
 import org.solhost.folko.jphex.types.Player;
 
@@ -27,4 +28,6 @@ public interface MobileBehavior {
     public void onHello(Mobile mob, Player player); // when a player says "Hello" and we're the nearest NPC
     public boolean onDoubleClick(Mobile mob, Player player); // return true if paperdoll should be opened
     public void onSpeech(Mobile mob, Player player, String line);
+    public void onAttacked(Mobile mob, Mobile attacker);
+    public void onDeath(Mobile mob, Item corpse);
 }
