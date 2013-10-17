@@ -285,6 +285,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 SLStatic dynamic = new SLStatic(obj.getSerial());
                 dynamic.setLocation(obj.getLocation());
                 dynamic.setStaticID(obj.getGraphic());
+                res.add(dynamic);
             }
         }
         return res;
@@ -819,10 +820,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     private synchronized boolean doFightRound(Mobile attacker, Mobile defender) {
         int deltaZ = Math.abs(attacker.getLocation().getZ() - defender.getLocation().getZ());
         if(deltaZ > SLData.CHARACHTER_HEIGHT / 2) {
-            return false;
+            return true;
         }
         if(attacker.distanceTo(defender) > 1 || !defender.isVisible()) {
-            return false;
+            return true;
         }
         log.finer("fight ongoing between " + attacker.getName() + " and " + defender.getName());
         attacker.lookAt(defender);
@@ -836,10 +837,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             }
         }
 
+        boolean defenderDied = false;
         if(damage > 0) {
             attackSound = attacker.getHitSound();
             painSound = defender.getPainSound();
-            defender.dealDamage(damage);
+            defenderDied = defender.dealDamage(damage);
         } else {
             attackSound = attacker.getMissSound();
         }
@@ -854,8 +856,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         if(painSound != null) {
             playSound(painSound, defender.getLocation());
         }
-        return true;
 
+        // can't go on if defender died
+        return !defenderDied;
     }
 
     public synchronized void playSound(int id, Point2D where) {
@@ -1120,6 +1123,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
             player.setLocation(new Point3D(RESURRECT_POSITION_X, RESURRECT_POSITION_Y, 0));
             playSound(0xA4, mob.getLocation()); // resurrect sound
+        } else if (mob instanceof NPC) {
+            ((NPC) mob).onDeath(corpse);
+            mob.delete();
         } else {
             mob.delete();
         }
@@ -1136,6 +1142,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         } else if(defender == oldDefender) {
             // already doing this fight
             return;
+        }
+
+        if(defender instanceof NPC) {
+            ((NPC) defender).onAttacked(attacker);
         }
 
         Runnable fight = new Runnable() {

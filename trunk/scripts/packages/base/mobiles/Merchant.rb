@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Merchant
+require './scripts/packages/base/mobiles/BaseMobile'
+class Merchant < BaseMobile
   include MobileBehavior
   
   def onSpawn(me)
@@ -30,10 +31,10 @@ class Merchant
     $api.createClothes(me)
     me.setSuffix("the Merchant")
 
-    $api.setAttribute(me, Attribute::STRENGTH, 25)
-    $api.setAttribute(me, Attribute::FATIGUE, 10)
-    $api.setAttribute(me, Attribute::INTELLIGENCE, 25)
-    $api.refreshStats(me)
+    setStats(me, :str => 50, :fatigue => 50, :int => 25)
+
+    $api.setAttribute(mob, Attribute::MELEE, 200)
+    $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 100)
     
     setupMerchant(me)
   end
@@ -64,5 +65,9 @@ class Merchant
   
   def onSpeech(me, player, line)
     $api.lookAt(me, player)
+  end
+
+  def onAttacked(mob, attacker)
+    $api.say(mob, "Guards! Help!")
   end
 end

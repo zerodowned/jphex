@@ -133,7 +133,7 @@ public class Pathfinder {
         return cost;
     }
 
-    // A*
+    // A* implementation
     public boolean findPath(int maxIter) {
         iterations = 0;
         PriorityQueue<PathEntry> openList = new PriorityQueue<PathEntry>();

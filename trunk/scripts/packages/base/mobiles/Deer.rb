@@ -16,33 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Deer
+require './scripts/packages/base/mobiles/BaseMobile'
+class Deer < BaseMobile
   include MobileBehavior
   
   def onSpawn(mob)
     $api.setName(mob, "a deer")
     $api.setGraphic(mob, 0x34)
 
-    $api.setAttribute(mob, Attribute::STRENGTH, 25)
-    $api.setAttribute(mob, Attribute::FATIGUE, 10)
-    $api.setAttribute(mob, Attribute::INTELLIGENCE, 25)
+    setStats(mob, :str => 25, :fatigue => 10, :int => 24)
 
     $api.setAttribute(mob, Attribute::MELEE, 250)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 300)
-
-    $api.refreshStats(mob)
-  end
-
-  def onDoubleClick(me, player)
-    return false
-  end
-  
-  def onSpeech(mob, player, line)
-  end
-
-  def onHello(me, player)
-  end
-  
-  def onEnterArea(mob, player)
   end
 end

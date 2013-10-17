@@ -16,33 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-class Guard
+require './scripts/packages/base/mobiles/BaseMobile'
+class Guard < BaseMobile
   include MobileBehavior
   
   def onSpawn(mob)
     $api.setName(mob, "a guard")
     $api.setGraphic(mob, 0x2E)
 
-    $api.setAttribute(mob, Attribute::STRENGTH, 25)
-    $api.setAttribute(mob, Attribute::FATIGUE, 10)
-    $api.setAttribute(mob, Attribute::INTELLIGENCE, 25)
+    setStats(mob, :str => 100, :fatigue => 100, :int => 25)
 
-    $api.setAttribute(mob, Attribute::MELEE, 250)
-    $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 300)
-
-    $api.refreshStats(mob)
-  end
-  
-  def onDoubleClick(me, player)
-    return false
-  end
-  
-  def onSpeech(mob, player, line)
+    $api.setAttribute(mob, Attribute::MELEE, 800)
+    $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 1000)
+    $api.setAttribute(mob, Attribute::MAGIC_DEFENSE, 500)
   end
 
-  def onHello(me, player)
+  def onEnterArea(me, player)
+    $api.say(me, "Greetings, citizen #{player.getName()}!")
   end
-  
-  def onEnterArea(mob, player)
+
+  def onAttacked(me, attacker)
+    beAggressiveToThemOnly(me, attacker)
   end
 end

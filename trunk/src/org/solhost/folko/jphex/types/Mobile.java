@@ -340,12 +340,15 @@ public abstract class Mobile extends SLObject implements SendableMobile {
         for(ObjectObserver o : observers) o.onDeath(this);
     }
 
-    public void dealDamage(int damage) {
+    // returns whether it died from the damage
+    public boolean dealDamage(int damage) {
         long oldHits = getAttribute(Attribute.HITS);
         if(damage >= oldHits) {
             kill();
+            return true;
         } else {
             setAttribute(Attribute.HITS, oldHits - damage);
+            return false;
         }
     }
 
