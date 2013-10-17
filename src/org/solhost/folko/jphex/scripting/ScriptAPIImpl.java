@@ -436,7 +436,6 @@ public class ScriptAPIImpl implements ScriptAPI {
             // too far away
             return false;
         } else {
-            System.out.println("distance: " + distance);
             // try running next step
             Pathfinder finder = new Pathfinder(who.getLocation(), to.getLocation(), world);
             if(!finder.findPath(500)) {
