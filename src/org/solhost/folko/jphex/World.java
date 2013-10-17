@@ -65,6 +65,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     private final String savePath;
 
     private ObjectRegistry registry;
+    private BulletinBoard board;
     private final Set<Player> onlinePlayers;
     private final DayNightCycle dayNightCycle;
 
@@ -81,6 +82,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         Map<SLObject, Long> orphans = new HashMap<SLObject, Long>();
         if(!file.exists()) {
             log.config("Creating a fresh save");
+            world.board = new BulletinBoard();
         } else {
             log.config("Loading an existing save");
             FileInputStream saveFile = new FileInputStream(file);
@@ -92,6 +94,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 long parentSerial = objIn.readLong();
                 orphans.put(obj, parentSerial);
             }
+            world.board = (BulletinBoard) objIn.readObject();
             objIn.close();
             saveFile.close();
         }
@@ -135,6 +138,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                     objOut.writeLong(-1);
                 }
             }
+            objOut.writeObject(board);
             objOut.close();
             saveFile.close();
         } catch (IOException e) {
@@ -905,6 +909,18 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         };
         mob.setRefreshRunning(true);
         TimerQueue.get().addTimer(new Timer(STAT_REFRESH_DELAY, refreshAction));
+    }
+
+    public void onBBoardList(Player player) {
+        board.sendList(player);
+    }
+
+    public void onBBoardPost(Player player, String subject, String message) {
+        board.postMessage(player, subject, message);
+    }
+
+    public void onBBoardRead(Player player, int index) {
+        board.sendPost(player, index);
     }
 
     @Override

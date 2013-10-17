@@ -59,6 +59,7 @@ public class PacketHandler implements IPacketHandler {
         case EquipReqPacket.ID:         onEquip(client, (EquipReqPacket) packet);  break;
         case ActionPacket.ID:           onAction(client, (ActionPacket) packet); break;
         case ShopPacket.ID:             onShopAction(client, (ShopPacket) packet); break;
+        case BoardAddPostPacket.ID:     onBoardPost(client, (BoardAddPostPacket) packet); break;
         default:
             log.fine("Unknown packet from " + client.getRemoteAddress() + ": " + packet);
         }
@@ -354,9 +355,21 @@ public class PacketHandler implements IPacketHandler {
             default:
                 log.warning("Unknown scroll item: " + action + " from " + player.getSerial());
             }
+        } else if(packet.getMode() == ActionPacket.MODE_BBOARD) {
+            if(action.equals("list")) {
+                world.onBBoardList(player);
+            } else if(action.startsWith("read")) {
+                int index = Integer.valueOf(parts[1]);
+                world.onBBoardRead(player, index);
+            }
         } else {
             log.finer("Player " + player.getName() + " requesting unknown action: " + action + " (mode " + packet.getMode() + ")");
         }
+    }
+
+    private void onBoardPost(Client client, BoardAddPostPacket packet) {
+        Player player = playerClients.get(client);
+        world.onBBoardPost(player, packet.getSubject(), packet.getMessage());
     }
 
     private void onShopAction(Client client, ShopPacket packet) {
