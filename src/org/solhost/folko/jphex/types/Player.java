@@ -205,13 +205,21 @@ public class Player extends Mobile {
     }
 
     public void targetObject(TargetObjectHandler handler) {
-        sendSysMessage("Target an object by doubleclicking it");
-        this.targetObject = handler;
+        if(targetObject == null) {
+            sendSysMessage("Target an object by doubleclicking it");
+            this.targetObject = handler;
+        } else {
+            sendSysMessage("You are already targeting something");
+        }
     }
 
     public void targetLocation(TargetLocationHandler handler) {
-        sendSysMessage("Target a location using Quas In Lor");
-        this.targetLocation = handler;
+        if(targetLocation == null) {
+            sendSysMessage("Target a location using Quas In Lor");
+            this.targetLocation = handler;
+        } else {
+            sendSysMessage("You are already targeting something");
+        }
     }
 
     public boolean hasObjectTarget() {
@@ -314,5 +322,9 @@ public class Player extends Mobile {
 
     public void kick() {
         client.disconnect();
+    }
+
+    @Override
+    public void onLoad() {
     }
 }

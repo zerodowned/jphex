@@ -49,6 +49,11 @@ public class Item extends SLObject implements SendableItem {
     private int amount, price, height;
     private String behavior;
 
+    {
+        this.children = new CopyOnWriteArrayList<Item>();
+        this.amount = 1;
+    }
+
     public Item(long serial, int graphic) {
         super(serial);
         this.graphic = graphic;
@@ -79,9 +84,7 @@ public class Item extends SLObject implements SendableItem {
         setBasicAttributes();
     }
 
-    protected void setBasicAttributes() {
-        this.children = new CopyOnWriteArrayList<Item>();
-        this.amount = 1;
+    protected final void setBasicAttributes() {
         StaticTile tile = SLData.get().getTiles().getStaticTile(graphic);
         if(tile != null) {
             this.name = tile.name;
@@ -108,7 +111,6 @@ public class Item extends SLObject implements SendableItem {
 
     @Override
     public void onLoad() {
-        super.onLoad();
         ItemBehavior ib = ScriptManager.instance().getItemBehavior(behavior);
         if(ib != null) {
             try {

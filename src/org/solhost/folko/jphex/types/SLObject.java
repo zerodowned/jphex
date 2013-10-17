@@ -47,7 +47,6 @@ public abstract class SLObject implements Serializable, SendableObject {
         this.deleted = false;
         this.scriptProperties = new HashMap<String, RubyObject>();
         this.observers = new CopyOnWriteArraySet<ObjectObserver>();
-        this.onLoad();
     }
 
     public void addObserver(ObjectObserver o) {
@@ -59,8 +58,7 @@ public abstract class SLObject implements Serializable, SendableObject {
     }
 
     // called on first creation and after loading on server start
-    public void onLoad() {
-    }
+    public abstract void onLoad();
 
     public void setVisible(boolean visible) {
         this.hidden = !visible;
@@ -171,10 +169,33 @@ public abstract class SLObject implements Serializable, SendableObject {
         return scriptProperties.get(name);
     }
 
-    public abstract void foundOrphan(SLObject orphan);
-
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         this.observers = new CopyOnWriteArraySet<ObjectObserver>();
+    }
+
+    // at startup
+    public abstract void foundOrphan(SLObject orphan);
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (int) (serial ^ (serial >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SLObject other = (SLObject) obj;
+        if (serial != other.serial)
+            return false;
+        return true;
     }
 }

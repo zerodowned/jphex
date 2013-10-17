@@ -50,7 +50,8 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public static final int ENTER_AREA_RANGE = 5;
     public static final int STAT_REFRESH_DELAY = 1200;
 
-    public static final int SECONDS_PER_INGAME_HOUR = 120;
+    // Make an ingame day be one real hour
+    public static final int SECONDS_PER_INGAME_HOUR = 150;
 
     // Sweet Dreams Inn
     public static final int NEW_CHAR_X = 553;
@@ -282,9 +283,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         List<SLStatic> res = new LinkedList<SLStatic>(SLData.get().getStatics().getStatics(loc));
         for(SLObject obj : getObjectsInRange(loc, 0)) {
             if(obj instanceof Item && loc.equals(obj.getLocation())) {
-                SLStatic dynamic = new SLStatic(obj.getSerial());
-                dynamic.setLocation(obj.getLocation());
-                dynamic.setStaticID(obj.getGraphic());
+                SLStatic dynamic = new SLStatic(obj.getSerial(), obj.getGraphic(), obj.getLocation(), 0);
                 res.add(dynamic);
             }
         }
@@ -499,6 +498,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     public synchronized void cancelDrag(Player player, Item item) {
         player.setDragAmount(0);
+        if(item == null) {
+            return;
+        }
         item.dropped();
         item.restoreParent();
         // trigger observers
@@ -576,7 +578,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         }
     }
 
-    // who can "see" an item?
+    // who can "see" an object?
     public synchronized Collection<Player> getInterestedPlayers(SLObject obj) {
         List<Player> empty = new LinkedList<Player>();
 
@@ -584,7 +586,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             return empty;
         }
 
-        // a player is always interested in itself
+        // a player is always interested in itself, even if invisible
         if(!obj.isVisible()) {
             if(obj instanceof Player && ((Player) obj).isOnline()) {
                 List<Player> res = new LinkedList<Player>();

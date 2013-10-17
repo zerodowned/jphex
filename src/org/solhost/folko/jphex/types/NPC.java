@@ -137,4 +137,9 @@ public class NPC extends Mobile {
             }
         }
     }
+
+    @Override
+    public void onLoad() {
+        // There is no script handler for this yet
+    }
 }
