@@ -68,6 +68,8 @@ public interface ScriptAPI {
     public Item createItemInBackpack(Mobile mob, int graphic, String behavior);
     public Item createItemAtMobile(Mobile mob, int graphic, String behavior);
     public Item createItemAtLocation(int x, int y, int z, int graphic, String behavior);
+    public Item createItemInContainer(Item container, int graphic);
+    public Item createItemInContainer(Item container, int graphic, String behavior);
     public boolean setItemBehavior(Item item, String behavior);
     public String getItemBehavior(Item item);
 
