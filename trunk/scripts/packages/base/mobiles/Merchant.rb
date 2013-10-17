@@ -33,8 +33,8 @@ class Merchant < BaseMobile
 
     setStats(me, :str => 50, :fatigue => 50, :int => 25)
 
-    $api.setAttribute(mob, Attribute::MELEE, 200)
-    $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 100)
+    $api.setAttribute(me, Attribute::MELEE, 200)
+    $api.setAttribute(me, Attribute::BATTLE_DEFENSE, 100)
     
     setupMerchant(me)
   end

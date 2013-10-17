@@ -53,6 +53,7 @@ public class SLMap {
         return mapFile.readUDWord();
     }
 
+    // get the actual height as specified in the map file
     public byte getTileElevation(int x, int y) {
         if(x < 0 || x >= 1024 || y < 0 || y >= 1024) {
             return 0;
@@ -61,6 +62,7 @@ public class SLMap {
         return tile.elevation;
     }
 
+    // get the average elevation based on the surrounding
     public byte getElevation(int x, int y) {
         if(x < 0 || x >= 1024 || y < 0 || y >= 1024) {
             return 0;
@@ -68,6 +70,7 @@ public class SLMap {
         return getElevation(new Point2D(x, y));
     }
 
+    // get the average elevation based on the surrounding
     public byte getElevation(Point2D pos) {
         Tile tile = readTile(pos);
 

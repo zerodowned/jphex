@@ -58,10 +58,8 @@ public class SLStatics implements ObjectLister {
             byte z = staticsFile.readSByte();
             int hue = staticsFile.readUWord();
 
-            SLStatic sta = new SLStatic(serial);
-            sta.setStaticID(staticID);
-            sta.setLocation(new Point3D(Point2D.fromCell(cell, xOffset, yOffset), z));
-            sta.setHue(hue);
+            Point3D location = new Point3D(Point2D.fromCell(cell, xOffset, yOffset), z);
+            SLStatic sta = new SLStatic(serial, staticID, location, hue);
             res.add(sta);
         }
         return res;

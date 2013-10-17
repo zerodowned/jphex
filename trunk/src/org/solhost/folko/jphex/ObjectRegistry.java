@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.types.Item;
 import org.solhost.folko.jphex.types.Mobile;
+import org.solhost.folko.jphex.types.Player;
 import org.solhost.folko.jphex.types.SLObject;
 import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.types.Items;
@@ -52,6 +53,7 @@ public class ObjectRegistry {
         this.nextItemSerial = Items.SERIAL_FIRST;
         this.nextMobileSerial = Mobiles.SERIAL_FIRST;
 
+        // count stuff so we know the next free serials
         for(SLStatic stat : statics.values()) {
             long serial = stat.getSerial();
             if(serial >= nextItemSerial) {
@@ -90,7 +92,7 @@ public class ObjectRegistry {
         return instance;
     }
 
-    public void addObserver(SerialObserver observer) {
+    public synchronized void addObserver(SerialObserver observer) {
         observers.add(observer);
     }
 
@@ -136,6 +138,15 @@ public class ObjectRegistry {
         }
     }
 
+    public synchronized Player findPlayer(long serial) {
+        SLObject obj = objects.get(serial);
+        if(obj instanceof Player) {
+            return (Player) obj;
+        } else {
+            return null;
+        }
+    }
+
     public synchronized SLObject findObject(long serial) {
         return objects.get(serial);
     }
@@ -146,9 +157,8 @@ public class ObjectRegistry {
     }
 
     // only World should use this, others should have a serial reference or something
-    Collection<SLObject> allObjects() {
-        Collection<SLObject> res = new ArrayList<SLObject>(objects.values());
-        return res;
+    synchronized Collection<SLObject> allObjects() {
+        return new ArrayList<SLObject>(objects.values());
     }
 
     public synchronized SLStatic findStatic(long serial) {
