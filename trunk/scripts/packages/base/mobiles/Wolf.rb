@@ -41,7 +41,7 @@ class Wolf < BaseMobile
   
   def onDeath(me, corpse)
     $api.createItemInContainer(corpse, 0x12C, "food") # ham
-    gold = $api.createItemInContainer(corpse, 0x01F8, "food") # gold
+    gold = $api.createItemInContainer(corpse, 0x01F8) # gold
     gold.setAmount((rand * 99 + 1).to_i)
   end
 end
