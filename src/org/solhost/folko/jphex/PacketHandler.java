@@ -345,8 +345,8 @@ public class PacketHandler implements IPacketHandler {
             }
             case Items.GFX_POTION_YELLOW: {
                 long serial = Long.valueOf(parts[1]);
-                SLObject target = registry.findObject(serial);
-                if(target != null && target instanceof Mobile) {
+                Mobile target = registry.findMobile(serial);
+                if(target != null) {
                     world.onYellowPotion(player, target);
                 }
                 break;
