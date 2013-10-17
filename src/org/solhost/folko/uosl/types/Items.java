@@ -59,4 +59,5 @@ public class Items {
 
     // Misc
     public static final int GFX_GOLD                = 0x01F8;
+    public static final int GFX_POTION_YELLOW       = 0x0383;
 }

@@ -804,6 +804,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         }
     }
 
+    public synchronized void onYellowPotion(Player player, SLObject target) {
+        // TODO: find out what yellow potions did
+        player.sendSysMessage("Yellow Potions not implemented yet");
+    }
+
     public synchronized void doOpenSpellbook(Player player) {
         Item spellbook = player.getSpellbook();
         if(spellbook == null) {
