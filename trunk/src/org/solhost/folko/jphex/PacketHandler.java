@@ -291,10 +291,13 @@ public class PacketHandler implements IPacketHandler {
                 } else {
                     world.onCastSpell(player, Spell.LIGHTSOURCE, null, new Point3D(x, y, z), null);
                 }
+            } else {
+                log.warning("Unknown cast: " + action + " from " + player.getSerial());
             }
         } else if(packet.getMode() == ActionPacket.MODE_USE_SCROLL) {
             Item scroll = registry.findItem(Long.valueOf(parts[0]));
             if(scroll == null) {
+                log.warning("Unknown scroll action: " + action + " from " + player.getSerial());
                 return;
             }
             switch(scroll.getGraphic()) {
@@ -339,7 +342,18 @@ public class PacketHandler implements IPacketHandler {
                 int z = Integer.valueOf(parts[3]);
                 world.onCastSpell(player, Spell.LIGHTSOURCE, scroll, new Point3D(x, y, z), null);
                 break;
-            }}
+            }
+            case Items.GFX_POTION_YELLOW: {
+                long serial = Long.valueOf(parts[1]);
+                SLObject target = registry.findObject(serial);
+                if(target != null && target instanceof Mobile) {
+                    world.onYellowPotion(player, target);
+                }
+                break;
+            }
+            default:
+                log.warning("Unknown scroll item: " + action + " from " + player.getSerial());
+            }
         } else {
             log.finer("Player " + player.getName() + " requesting unknown action: " + action + " (mode " + packet.getMode() + ")");
         }

@@ -138,15 +138,19 @@ public class JPhex {
     public static void main(String[] args) throws IOException {
         JPhex phex = new JPhex(Level.INFO);
         if(!phex.loadData("data/")) {
+            phex.halt();
             return;
         }
         if(!phex.loadScripts("scripts/")) {
+            phex.halt();
             return;
         }
         if(!phex.loadWorld("saves/")) {
+            phex.halt();
             return;
         }
         if(!phex.runServer(2590)) {
+            phex.halt();
             return;
         }
 
