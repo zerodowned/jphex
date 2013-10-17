@@ -38,4 +38,10 @@ class Wolf < BaseMobile
   def onAttacked(me, attacker)
     beAggressiveToThemAndAll(me, attacker)
   end
+  
+  def onDeath(me, corpse)
+    $api.createItemInContainer(corpse, 0x12C, "food") # ham
+    gold = $api.createItemInContainer(corpse, 0x01F8, "food") # gold
+    gold.setAmount((rand * 99 + 1).to_i)
+  end
 end

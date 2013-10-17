@@ -130,7 +130,7 @@ public class ScriptAPIImpl implements ScriptAPI {
         if(backpack != null) {
             Item item = new Item(registry.registerItemSerial(), graphic);
             registry.registerObject(item);
-            backpack.addChild(item, new Point2D(50, 50));
+            backpack.addChild(item, new Point2D(0, 0));
             return item;
         } else {
             return createItemAtMobile(mob, graphic);
@@ -160,7 +160,7 @@ public class ScriptAPIImpl implements ScriptAPI {
             try {
                 Item item = new Item(registry.registerItemSerial(), graphic, behavior);
                 registry.registerObject(item);
-                backpack.addChild(item, new Point2D(50, 50));
+                backpack.addChild(item, new Point2D(0, 0));
                 return item;
             } catch (Exception e) {
                 return null;
@@ -190,6 +190,30 @@ public class ScriptAPIImpl implements ScriptAPI {
             registry.registerObject(item);
             return item;
         } catch(Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Item createItemInContainer(Item container, int graphic) {
+        try {
+            Item item = new Item(registry.registerItemSerial(), graphic);
+            registry.registerObject(item);
+            container.addChild(item, new Point2D(0, 0));
+            return item;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
+    public Item createItemInContainer(Item container, int graphic, String behavior) {
+        try {
+            Item item = new Item(registry.registerItemSerial(), graphic, behavior);
+            registry.registerObject(item);
+            container.addChild(item, new Point2D(0, 0));
+            return item;
+        } catch (Exception e) {
             return null;
         }
     }
