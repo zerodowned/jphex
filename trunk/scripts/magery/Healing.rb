@@ -31,7 +31,7 @@ class Healing < BaseSpellHandler
       return
     end
 
-    if !player.canSee(target)
+    if not $api.canSee(player, target)
       $api.sendSysMessage(player, "You can't see that.")
       return
     end    

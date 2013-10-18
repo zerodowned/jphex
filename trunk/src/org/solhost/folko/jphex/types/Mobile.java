@@ -98,8 +98,8 @@ public abstract class Mobile extends SLObject implements SendableMobile {
             // levelup, will work recursively on high values and low levels
             value -= getAttribute(Attribute.NEXT_LEVEL);
             setAttribute(Attribute.LEVEL, getAttribute(Attribute.LEVEL) + 1);
-            setAttribute(Attribute.EXPERIENCE, value);
             onLevelup();
+            setAttribute(Attribute.EXPERIENCE, value);
             return;
         }
 
@@ -108,19 +108,19 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     }
 
     protected void onLevelup() {
-        rewardAttribute(Attribute.STRENGTH, Math.min(1, Math.round(getAttribute(Attribute.STRENGTH) * 0.06)));
-        rewardAttribute(Attribute.DEXTERITY, Math.min(1, Math.round(getAttribute(Attribute.DEXTERITY) * 0.06)));
-        rewardAttribute(Attribute.INTELLIGENCE, Math.min(1, Math.round(getAttribute(Attribute.INTELLIGENCE) * 0.06)));
+        rewardAttribute(Attribute.STRENGTH, Math.max(1, Math.round(getAttribute(Attribute.STRENGTH) * 0.05)));
+        rewardAttribute(Attribute.DEXTERITY, Math.max(1, Math.round(getAttribute(Attribute.DEXTERITY) * 0.05)));
+        rewardAttribute(Attribute.INTELLIGENCE, Math.max(1, Math.round(getAttribute(Attribute.INTELLIGENCE) * 0.05)));
     }
 
     public long getAttribute(Attribute a) {
         switch(a) {
         case MAX_HITS:
-            return 50 + getAttribute(Attribute.STRENGTH) / 2;
+            return 50 + getAttribute(Attribute.STRENGTH) / 2 + getAttribute(Attribute.LEVEL);
         case MAX_FATIGUE:
-            return getAttribute(Attribute.DEXTERITY);
+            return getAttribute(Attribute.DEXTERITY) + getAttribute(Attribute.LEVEL);
         case MAX_MANA:
-            return getAttribute(Attribute.INTELLIGENCE);
+            return getAttribute(Attribute.INTELLIGENCE) + getAttribute(Attribute.LEVEL);
         case NEXT_LEVEL:
             // observations from screenshots:
             // 1  -> next 2400
@@ -480,6 +480,7 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     }
 
     public synchronized void rewardAttribute(Attribute stat, long amount) {
+        System.out.println("reawarding " + stat + ": " + amount);
         if(amount > 0) {
             setAttribute(stat, getAttribute(stat) + amount);
         }
