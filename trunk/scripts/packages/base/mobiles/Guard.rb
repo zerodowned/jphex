@@ -29,7 +29,7 @@ class Guard < BaseMobile
     $api.setName(mob, "a guard")
     $api.setGraphic(mob, 0x2E)
 
-    setStats(mob, :str => 100, :fatigue => 100, :int => 25)
+    setStats(mob, :str => 90..110, :fatigue => 90..110, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 800)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 1000)
