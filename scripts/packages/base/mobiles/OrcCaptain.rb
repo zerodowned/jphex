@@ -38,7 +38,7 @@ class OrcCaptain < BaseMobile
     $api.setName(mob, "an orc captain")
     $api.setGraphic(mob, 0x29)
 
-    setStats(mob, :str => 150, :fatigue => 150, :int => 25)
+    setStats(mob, :str => 120..160, :fatigue => 120..160, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 1000)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 1000)
