@@ -35,6 +35,8 @@ class Set < TextCommand
         when "magic"    then obj.setAttribute(Attribute::MAGIC, Integer(value))
         when "int"      then obj.setAttribute(Attribute::INTELLIGENCE, Integer(value))
         when "mana"     then obj.setAttribute(Attribute::MANA, Integer(value))
+        when "hits"     then obj.setAttribute(Attribute::HITS, Integer(value))
+        when "fatigue"  then obj.setAttribute(Attribute::FATIGUE, Integer(value))
       end
     end
   end

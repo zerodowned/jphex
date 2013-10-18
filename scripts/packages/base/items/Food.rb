@@ -43,9 +43,19 @@ class Food
   end
     
   def onUse(player, food)
+    if player.getAttribute(Attribute::FATIGUE) >= player.getAttribute(Attribute::MAX_FATIGUE)
+      $api.sendSysMessage(player, "You are not feeling hungry.")
+      return
+    end
+    
     if(player.tryAccess(food))
       food.consume(1)
-      $api.sendSysMessage(player, "You feel less hungry")
+      player.setAttribute(Attribute::FATIGUE, player.getAttribute(Attribute::FATIGUE) + rand(7..15))
+      if player.getAttribute(Attribute::FATIGUE) >= player.getAttribute(Attribute::MAX_FATIGUE)
+        $api.sendSysMessage(player, "You are stuffed")
+      else
+        $api.sendSysMessage(player, "You feel less hungry")
+      end
     end
   end
 end
