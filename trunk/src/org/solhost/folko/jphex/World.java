@@ -49,6 +49,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public static final int SPEECH_RANGE = 10;
     public static final int ENTER_AREA_RANGE = 5;
     public static final int STAT_REFRESH_DELAY = 1200;
+    public static final int DECAY_MINUTES = 1;
 
     // Make an ingame day be one real hour
     public static final int SECONDS_PER_INGAME_HOUR = 150;
@@ -152,7 +153,6 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     // must be called after creating a new world or after loading a world, do initialization here
     // scripts must be able to execute when calling this
     public synchronized void init() {
-        // second pass: call init scripts etc.
         for(SLObject obj : registry.allObjects()) {
             obj.onLoad();
             if(obj.isDeleted()) {
@@ -167,10 +167,35 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 mob.setOpponent(null);
                 mob.setRefreshRunning(false);
                 runRefresh(mob);
+            } else if(obj instanceof Item) {
+                Item itm = (Item) obj;
+                if(itm.shouldDecay()) {
+                    registry.removeObject(itm.getSerial());
+                    itm.delete();
+                    continue;
+                }
             }
             obj.addObserver(this);
         }
         dayNightCycle.start();
+        startDecayTimer();
+    }
+
+    public synchronized void startDecayTimer() {
+        Runnable decay = new Runnable() {
+            public void run() {
+                log.fine("Running decay loop...");
+                for(SLObject obj : registry.allObjects()) {
+                    if(obj instanceof Item && ((Item) obj).shouldDecay()) {
+                        log.finer(obj.getName() + " decayed");
+                        obj.delete();
+                    }
+                }
+                TimerQueue.get().addTimer(new Timer(DECAY_MINUTES * 30 * 1000, this));
+            }
+        };
+        // run decay timer each decay_minutes / 2 minutes
+        TimerQueue.get().addTimer(new Timer(DECAY_MINUTES * 30 * 1000, decay));
     }
 
     public synchronized Collection<Player> getOnlinePlayersInRange(Point2D point, int range) {
@@ -446,6 +471,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         if(item.getAmount() < amount) {
             return false;
         }
+        item.stopDecay();
         item.setDragged(player);
         player.setDragAmount(amount);
 
@@ -485,8 +511,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             // to groud
             item.clearParent();
             item.setLocation(loc);
+            item.decayInMillis(DECAY_MINUTES * 60 * 1000);
         } else {
             // to container or stack
+            item.stopDecay();
             if(player.tryAccess(dropOn)) {
                 if(dropOn.isContainer()) {
                     if(dropOn.acceptsChild(item)) {
@@ -1145,6 +1173,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         }
 
         Item corpse = Item.createAtLocation(mob.getLocation(), mob.getCorpseGraphic(), 1);
+        corpse.decayInMillis(DECAY_MINUTES * 60 * 1000);
         if(mob instanceof Player) {
             log.fine(mob.getName() + " died");
             Player player = (Player) mob;

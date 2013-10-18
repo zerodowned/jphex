@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.ObjectRegistry;
+import org.solhost.folko.jphex.Timer;
 import org.solhost.folko.jphex.Util;
 import org.solhost.folko.jphex.scripting.ItemBehavior;
 import org.solhost.folko.jphex.scripting.ScriptManager;
@@ -51,6 +52,7 @@ public class Item extends SLObject implements SendableItem {
     private Player draggedBy;
     private int amount, price, height;
     private String behavior;
+    private long decayAt;
 
     {
         this.children = new CopyOnWriteArrayList<Item>();
@@ -126,6 +128,18 @@ public class Item extends SLObject implements SendableItem {
 
     public int getHeight() {
         return height;
+    }
+
+    public void decayInMillis(long millis) {
+        this.decayAt = Timer.getCurrentTicks() + millis;
+    }
+
+    public boolean shouldDecay() {
+        return !locked && this.decayAt > 0 && Timer.getCurrentTicks() >= this.decayAt;
+    }
+
+    public void stopDecay() {
+        this.decayAt = 0;
     }
 
     public void setBehavior(String behavior) {

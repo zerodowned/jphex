@@ -37,7 +37,7 @@ class Fireball < BaseSpellHandler
     end
 
     beginCast(player, Spell::FIREBALL, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
-      damage = player.getAttribute(Attribute::INTELLIGENCE) / 5
+      damage = player.getAttribute(Attribute::INTELLIGENCE) / 3
       sound = 0xA2
       if $api.checkSkill(target, Attribute::MAGIC_DEFENSE, 0, 1100)
         $api.sendSysMessage(target, "You feel yourself resisting magical energy!")
