@@ -48,9 +48,9 @@ class Light < BaseSpellHandler
       next if mob == owner or not $api.canSee(fire, mob)
       if $api.checkSkill(mob, Attribute::MAGIC_DEFENSE, 0, 1100)
         $api.sendSysMessage(target, "You feel yourself resisting magical energy!")
-        mob.dealDamage(damage * 0.3)
+        mob.dealDamage(damage * 0.3, owner)
       else
-        mob.dealDamage(damage)
+        mob.dealDamage(damage, owner)
       end
       $api.playSoundNearObj(mob, 0x86)
     end

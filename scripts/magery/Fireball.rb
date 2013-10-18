@@ -48,7 +48,7 @@ class Fireball < BaseSpellHandler
       
       $api.throwFireball(player, target)
       $api.playSoundNearObj(player, sound)
-      target.dealDamage(damage)      
+      target.dealDamage(damage, player)      
     end
   end
 end

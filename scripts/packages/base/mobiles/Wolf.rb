@@ -29,7 +29,7 @@ class Wolf < BaseMobile
     $api.setName(mob, "a wolf")
     $api.setGraphic(mob, 0x32)
 
-    setStats(mob, :str => 40..60, :fatigue => 70..90, :int => 20..30)
+    setStats(mob, :str => 40..60, :dex => 70..90, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 700)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 600)

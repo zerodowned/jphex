@@ -28,7 +28,7 @@ class Rabbit < BaseMobile
     def onSpawn(mob)
     $api.setName(mob, "a rabbit")
     $api.setGraphic(mob, 0x35)
-    setStats(mob, :str => 10..15, :fatigue => 10..20, :int => 2..8)
+    setStats(mob, :str => 10..15, :dex => 10..20, :int => 2..8)
   end
 
   def onDeath(me, corpse)

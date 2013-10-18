@@ -46,15 +46,15 @@ class BaseMobile
 
   def setStats(mob, stats)
     str = stats[:str] || 1
+    dex = stats[:dex] || 1
     int = stats[:int] || 1
-    fatigue = stats[:fatigue] || 1
 
     if str.is_a?(Range)
       str = rand(stats[:str])
     end
 
-    if fatigue.is_a?(Range)
-      fatigue = rand(stats[:fatigue])
+    if dex.is_a?(Range)
+      dex = rand(stats[:dex])
     end
 
     if int.is_a?(Range)
@@ -62,7 +62,7 @@ class BaseMobile
     end
 
     $api.setAttribute(mob, Attribute::STRENGTH, str)
-    $api.setAttribute(mob, Attribute::FATIGUE, fatigue)
+    $api.setAttribute(mob, Attribute::DEXTERITY, dex)
     $api.setAttribute(mob, Attribute::INTELLIGENCE, int)
     $api.refreshStats(mob)
   end

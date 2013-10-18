@@ -51,6 +51,7 @@ class Food
     if(player.tryAccess(food))
       food.consume(1)
       player.setAttribute(Attribute::FATIGUE, player.getAttribute(Attribute::FATIGUE) + rand(7..15))
+      $api.playSoundNearObj(player, [0x0D, 0x0E, 0x0F, 0x20].sample)
       if player.getAttribute(Attribute::FATIGUE) >= player.getAttribute(Attribute::MAX_FATIGUE)
         $api.sendSysMessage(player, "You are stuffed")
       else

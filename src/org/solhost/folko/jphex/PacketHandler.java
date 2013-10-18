@@ -139,8 +139,6 @@ public class PacketHandler implements IPacketHandler {
         player.setHairHue(packet.getHairHue());
         player.setHairStyle(packet.getHairStyle());
 
-        player.setAttribute(Attribute.EXPERIENCE, 0);
-        player.setAttribute(Attribute.LEVEL, 1);
         player.refreshStats();
 
         player.setGraphic(packet.getGender());
