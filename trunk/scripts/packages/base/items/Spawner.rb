@@ -36,6 +36,7 @@ class Spawner
   }
   
   def onCreate(spawner)
+    spawner.lock()
   end
 
   def onBehaviorChange(spawner)
@@ -49,6 +50,7 @@ class Spawner
       return
     end
     $api.setObjectProperty(spawner, "spawned", [])
+    spawner.lock()
     spawnLoop(spawner)
   end
 

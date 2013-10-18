@@ -59,9 +59,12 @@ class Door
     if door.getGraphic() == 0
       $api.setGraphic(door, 0x3EEC)
     end
+    # locking means "can't be dragged" in this context, actually locking doesn't exist because there are no keys
+    door.lock()
   end
 
   def onBehaviorChange(door)
+    door.lock()
   end
 
   def onLoad(door)
