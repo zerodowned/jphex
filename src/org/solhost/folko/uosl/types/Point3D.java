@@ -20,34 +20,33 @@ package org.solhost.folko.uosl.types;
 
 public class Point3D extends Point2D {
     private static final long serialVersionUID = 1L;
-    public static int MIN_ELEVATION = -128;
-    public static int MAX_ELEVATION = 127;
-    protected int z;
+    public static final int MIN_ELEVATION = -128;
+    public static final int MAX_ELEVATION = 127;
+    protected final int z;
 
     public Point3D(int x, int y) {
         super(x, y);
-        setZ(0);
+        this.z = 0;
     }
 
     public Point3D(int x, int y, int z) {
         super(x, y);
-        setZ(z);
-    }
-
-    public Point3D(Point2D d2, int z) {
-        super(d2.x, d2.y);
-        setZ(z);
-    }
-
-    public int getZ() {
-        return z;
-    }
-
-    private final void setZ(int z) {
         if(z < MIN_ELEVATION || z > MAX_ELEVATION) {
             throw new IllegalArgumentException("invalid z coordinate: " + z);
         }
         this.z = z;
+    }
+
+    public Point3D(Point2D d2, int z) {
+        super(d2.x, d2.y);
+        if(z < MIN_ELEVATION || z > MAX_ELEVATION) {
+            throw new IllegalArgumentException("invalid z coordinate: " + z);
+        }
+        this.z = z;
+    }
+
+    public int getZ() {
+        return z;
     }
 
     @Override

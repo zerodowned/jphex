@@ -24,7 +24,7 @@ public class Point2D implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final int MAP_WIDTH = 1024;
     public static final int MAP_HEIGHT = 1024;
-    protected int x, y;
+    protected final int x, y;
 
     public Point2D(int x, int y) {
         if(x < 0 || x > MAP_WIDTH) {
