@@ -18,6 +18,7 @@
  ******************************************************************************/
 package org.solhost.folko.jphex.types;
 
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.ObjectRegistry;
+import org.solhost.folko.jphex.Util;
 import org.solhost.folko.jphex.scripting.ItemBehavior;
 import org.solhost.folko.jphex.scripting.ScriptManager;
 import org.solhost.folko.uosl.data.SLData;
@@ -166,10 +168,18 @@ public class Item extends SLObject implements SendableItem {
         return null;
     }
 
+    public Point3D getRandomContainerLocation() {
+        Rectangle rect = Gumps.getGumpDimensions(Gumps.getItemGump(graphic));
+        int x = Util.random(rect.x, rect.x + rect.width);
+        int y = Util.random(rect.y, rect.y + rect.height);
+
+        return new Point3D(x, y, 0);
+    }
+
     public void addChild(Item child, Point2D location) {
         child.setParent(this);
         if(location.getX() == 0 && location.getY() == 0) {
-            location = new Point2D(50, 50);
+            location = getRandomContainerLocation();
         }
         if(this.graphic == Items.GFX_SPELLBOOK) {
             child.setAmount(Spell.fromScrollGraphic(child.getGraphic()).toByte());
@@ -297,25 +307,6 @@ public class Item extends SLObject implements SendableItem {
         }
     }
 
-    public int getGumpID() {
-        switch(graphic) {
-        case Items.GFX_BACKPACK:      return Gumps.ID_BACKPACK;
-
-        case Items.GFX_CORPSE_DEER:
-        case Items.GFX_CORPSE_HUMAN:
-        case Items.GFX_CORPSE_ORC:
-        case Items.GFX_CORPSE_ORC_CAPTAIN:
-        case Items.GFX_CORPSE_RABBIT:
-        case Items.GFX_CORPSE_SKELETON:
-        case Items.GFX_CORPSE_WOLF:
-                                      return Gumps.ID_CORPSE;
-
-        case Items.GFX_SPELLBOOK:     return Gumps.ID_SPELLBOOK;
-
-        default:                      return 0;
-        }
-    }
-
     public void setDragged(Player who) {
         this.draggedBy = who;
         for(ObjectObserver o : observers) o.onDragItem(this, who);
@@ -394,7 +385,7 @@ public class Item extends SLObject implements SendableItem {
         }
 
         Item item = new Item(serial, graphic);
-        item.setLocation(new Point3D(50, 50, 0));
+        item.setLocation(container.getRandomContainerLocation());
         item.setParent(container);
         item.setAmount(amount);
         ObjectRegistry.get().registerObject(item);

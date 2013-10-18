@@ -19,7 +19,12 @@
 require './scripts/packages/base/mobiles/BaseMobile'
 class Wolf < BaseMobile
   include MobileBehavior
-  
+
+  @@loot_table = [
+      {:graphic => 0, :behavior => "food", :chance => 1.0, :count => 1..3},
+      {:graphic => 0x01F8, :chance => 1.0, :amount => 10..60, :count => 1} # gold
+    ]
+
   def onSpawn(mob)
     $api.setName(mob, "a wolf")
     $api.setGraphic(mob, 0x32)
@@ -38,10 +43,8 @@ class Wolf < BaseMobile
   def onAttacked(me, attacker)
     beAggressiveToThemAndAll(me, attacker)
   end
-  
+
   def onDeath(me, corpse)
-    $api.createItemInContainer(corpse, 0x12C, "food") # ham
-    gold = $api.createItemInContainer(corpse, 0x01F8) # gold
-    gold.setAmount((rand * 99 + 1).to_i)
+    generateLoot(corpse, @@loot_table)
   end
 end

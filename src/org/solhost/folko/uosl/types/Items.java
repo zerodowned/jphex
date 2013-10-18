@@ -25,8 +25,16 @@ public class Items {
 
     // Containers
     public static final int GFX_BACKPACK            = 0x0348;
+    public static final int GFX_BAG                 = 0x0349;
+    public static final int GFX_BASKET              = 0x034A;
+    public static final int GFX_BOX                 = 0x034B;
+    public static final int GFX_SMALL_BOX           = 0x034C;
+    public static final int GFX_BUSHEL_BASKET       = 0x034D;
+    public static final int GFX_METAL_CHEST         = 0x034E;
+    public static final int GFX_WOOD_CHEST          = 0x034F;
     public static final int GFX_SHOP_CONTAINER      = 0x00A7;
     public static final int GFX_INVIS_PACK          = 0x01B7;
+    public static final int GFX_BARREL              = 0x01A3;
 
     // Magery
     public static final int GFX_SPELLBOOK           = 0x0386;
@@ -59,5 +67,6 @@ public class Items {
 
     // Misc
     public static final int GFX_GOLD                = 0x01F8;
+    public static final int GFX_SEXTANT             = 0x0461;
     public static final int GFX_POTION_YELLOW       = 0x0383;
 }

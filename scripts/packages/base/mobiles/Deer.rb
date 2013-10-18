@@ -19,7 +19,12 @@
 require './scripts/packages/base/mobiles/BaseMobile'
 class Deer < BaseMobile
   include MobileBehavior
-  
+
+  @@loot_table = [
+      {:graphic => 0, :behavior => "food", :chance => 1.0, :count => 1..3},
+      {:graphic => 0x01F8, :chance => 1.0, :amount => 10..20, :count => 1} # gold
+    ]
+
   def onSpawn(mob)
     $api.setName(mob, "a deer")
     $api.setGraphic(mob, 0x34)
@@ -28,5 +33,9 @@ class Deer < BaseMobile
 
     $api.setAttribute(mob, Attribute::MELEE, 250)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 300)
+  end
+
+  def onDeath(me, corpse)
+    generateLoot(corpse, @@loot_table)
   end
 end

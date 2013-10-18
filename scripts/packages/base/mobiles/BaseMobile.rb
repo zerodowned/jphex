@@ -97,4 +97,28 @@ class BaseMobile
     end
   end
 
+  def generateLoot(corpse, table)
+    for entry in table
+      next if rand() > entry[:chance]
+      amount = entry[:amount] || 1
+      if amount.is_a?(Range)
+        amount = rand(amount)
+      end 
+      count = entry[:count] || 1
+      if count.is_a?(Range)
+        count = rand(count)
+      end
+        
+      1.upto(count) do
+        graphic = entry[:graphic] || 0
+        if entry[:behavior] != nil
+          item = $api.createItemInContainer(corpse, graphic, entry[:behavior])
+        else
+          item = $api.createItemInContainer(corpse, graphic)
+        end
+        item.setAmount(amount)
+      end
+    end
+  end
+  
 end
