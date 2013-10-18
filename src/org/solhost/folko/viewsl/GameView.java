@@ -197,13 +197,10 @@ public class GameView extends JPanel {
         g.fillRect(0, 0, getWidth(), getHeight());
         int drawDist = Math.max(getWidth() / TILE_SIZE - 1, getHeight() / TILE_SIZE - 1);
 
-        Point3D point = new Point3D(0, 0, 0);
         for(int y = sceneCenter.getY() - drawDist; y <= sceneCenter.getY() + drawDist; y++) {
             for(int x = sceneCenter.getX() - drawDist; x <= sceneCenter.getX() + drawDist; x++) {
                 if(x >= 0 && x < 1024 && y >= 0 && y < 1024) {
-                    point.setX(x);
-                    point.setY(y);
-                    point.setZ(getZ(x, y));
+                    Point3D point = new Point3D(x, y, getZ(x, y));
                     //drawGrid(g, point, Color.blue);
                     drawMapTile(g, point);
                     drawStatics(g, point);
@@ -290,9 +287,7 @@ public class GameView extends JPanel {
     private void moveCenter(Direction dir) {
         if(hackMover) {
             Point2D hackDest = sceneCenter.getTranslated(dir);
-            sceneCenter.setX(hackDest.getX());
-            sceneCenter.setY(hackDest.getY());
-            sceneCenter.setZ(0);
+            sceneCenter = new Point3D(hackDest, 0);
         } else {
             Point3D dest = data.getElevatedPoint(sceneCenter, dir, statics);
             if(dest != null) {
@@ -502,8 +497,6 @@ public class GameView extends JPanel {
         if(resX >= 1024) resX = 1023;
         if(resY >= 1024) resY = 1023;
 
-        Point3D res = new Point3D(resX, resY, 0);
-        res.setZ(getZ(resX, resY));
-        return res;
+        return new Point3D(resX, resY, getZ(resX, resY));
     }
 }

@@ -43,7 +43,7 @@ public class Point3D extends Point2D {
         return z;
     }
 
-    public void setZ(int z) {
+    private final void setZ(int z) {
         if(z < MIN_ELEVATION || z > MAX_ELEVATION) {
             throw new IllegalArgumentException("invalid z coordinate: " + z);
         }
