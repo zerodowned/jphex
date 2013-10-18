@@ -32,6 +32,7 @@ class Lightsource < BaseSpellHandler
 
     beginCast(player, Spell::LIGHTSOURCE, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       lightsource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B3)
+      lightsource.lock()
       duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3
       $api.setObjectProperty(lightsource, "duration", duration)
       lightsource.setBehavior("tempitem")

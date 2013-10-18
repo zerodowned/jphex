@@ -30,6 +30,7 @@ class Light < BaseSpellHandler
   def cast(player, scroll)
     beginCast(player, Spell::LIGHT, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       fire = $api.createItemAtMobile(player, 0x03BC)
+      fire.lock()
       duration = player.getAttribute(Attribute::INTELLIGENCE) / 4 * 1000
       damage =  player.getAttribute(Attribute::INTELLIGENCE) / 8
       $api.setObjectProperty(fire, "duration", duration)

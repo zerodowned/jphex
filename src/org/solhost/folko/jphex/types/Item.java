@@ -44,6 +44,7 @@ public class Item extends SLObject implements SendableItem {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.types");
     private boolean isContainer, isWearable, isStackable;
+    private boolean locked;
     private short weight, defaultLayer;
     private byte lightLevel;
     private transient List<Item> children;
@@ -435,5 +436,17 @@ public class Item extends SLObject implements SendableItem {
     @Override
     public int getLookingHeight() {
         return height;
+    }
+
+    public void lock() {
+        this.locked = true;
+    }
+
+    public void unlock() {
+        this.locked = false;
+    }
+
+    public boolean isLocked() {
+        return locked;
     }
 }

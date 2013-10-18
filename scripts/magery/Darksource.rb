@@ -32,6 +32,7 @@ class Darksource < BaseSpellHandler
 
     beginCast(player, Spell::DARKSOURCE, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       darksource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B2)
+      darksource.lock()
       duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3
       $api.setObjectProperty(darksource, "duration", duration)
       darksource.setBehavior("tempitem")

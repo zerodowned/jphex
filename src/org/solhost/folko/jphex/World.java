@@ -436,6 +436,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized boolean onDrag(Player player, Item item, int amount) {
+        if(item.isLocked()) {
+            player.sendSysMessage("That is locked.");
+            return false;
+        }
         if(!player.tryAccess(item)) {
             return false;
         }

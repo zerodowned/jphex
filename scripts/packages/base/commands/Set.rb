@@ -38,6 +38,7 @@ class Set < TextCommand
         when "hits"     then obj.setAttribute(Attribute::HITS, Integer(value))
         when "fatigue"  then obj.setAttribute(Attribute::FATIGUE, Integer(value))
         when "exp"      then obj.rewardAttribute(Attribute::EXPERIENCE, Integer(value))
+        when "locked"   then if value == "1" then obj.lock() else obj.unlock() end
       end
     end
   end
