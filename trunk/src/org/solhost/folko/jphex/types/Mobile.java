@@ -39,6 +39,7 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.mobile");
     protected transient Set<Item> equipped;
+    protected transient Map<Mobile, Integer> damagers;
     protected boolean refreshRunning;
     protected Direction facing;
     protected Map<Attribute, Long> attributes;
@@ -51,6 +52,8 @@ public abstract class Mobile extends SLObject implements SendableMobile {
         this.facing = Direction.SOUTH_EAST;
         this.attributes = new HashMap<Attribute, Long>();
         this.equipped = new CopyOnWriteArraySet<Item>();
+        this.damagers = new HashMap<Mobile, Integer>();
+        setAttribute(Attribute.LEVEL, 1);
     }
 
     @Override
@@ -83,15 +86,31 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     public void setAttribute(Attribute a, long value) {
         if(a == Attribute.MAX_HITS || a == Attribute.MAX_FATIGUE || a == Attribute.MAX_MANA || a == Attribute.NEXT_LEVEL) {
             throw new IllegalArgumentException("not writable");
-        } else if(a == Attribute.HITS && value > getAttribute(Attribute.MAX_HITS)) {
+        } else if(a == Attribute.HITS && value >= getAttribute(Attribute.MAX_HITS)) {
             value = getAttribute(Attribute.MAX_HITS);
-        } else if(a == Attribute.MANA && value > getAttribute(Attribute.MAX_MANA)) {
+            // when hits are fully restored, forget previous damagers
+            damagers.clear();
+        } else if(a == Attribute.MANA && value >= getAttribute(Attribute.MAX_MANA)) {
             value = getAttribute(Attribute.MAX_MANA);
-        } else if(a == Attribute.FATIGUE && value > getAttribute(Attribute.MAX_FATIGUE)) {
+        } else if(a == Attribute.FATIGUE && value >= getAttribute(Attribute.MAX_FATIGUE)) {
             value = getAttribute(Attribute.MAX_FATIGUE);
+        } else if(a == Attribute.EXPERIENCE && value >= getAttribute(Attribute.NEXT_LEVEL)) {
+            // levelup, will work recursively on high values and low levels
+            value -= getAttribute(Attribute.NEXT_LEVEL);
+            setAttribute(Attribute.LEVEL, getAttribute(Attribute.LEVEL) + 1);
+            setAttribute(Attribute.EXPERIENCE, value);
+            onLevelup();
+            return;
         }
+
         attributes.put(a,  value);
         for(ObjectObserver o : observers) o.onAttributeChanged(this, a);
+    }
+
+    protected void onLevelup() {
+        rewardAttribute(Attribute.STRENGTH, Math.min(1, Math.round(getAttribute(Attribute.STRENGTH) * 0.06)));
+        rewardAttribute(Attribute.DEXTERITY, Math.min(1, Math.round(getAttribute(Attribute.DEXTERITY) * 0.06)));
+        rewardAttribute(Attribute.INTELLIGENCE, Math.min(1, Math.round(getAttribute(Attribute.INTELLIGENCE) * 0.06)));
     }
 
     public long getAttribute(Attribute a) {
@@ -103,7 +122,15 @@ public abstract class Mobile extends SLObject implements SendableMobile {
         case MAX_MANA:
             return getAttribute(Attribute.INTELLIGENCE);
         case NEXT_LEVEL:
-            return getAttribute(Attribute.LEVEL) * 10;
+            // observations from screenshots:
+            // 1  -> next 2400
+            // 2  -> next 5024
+            // 3  -> next 7880
+            // 5  -> next 14320
+            // 7  -> next 21784
+            // 17 -> next 76704
+            // for now, just a bad approximation until I get further details
+            return (long) (getAttribute(Attribute.LEVEL) * 1500 * 1.7);
         default:
             if(attributes.containsKey(a)) {
                 return attributes.get(a);
@@ -341,8 +368,17 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     }
 
     // returns whether it died from the damage
-    public boolean dealDamage(int damage) {
+    public boolean dealDamage(int damage, Mobile source) {
         long oldHits = getAttribute(Attribute.HITS);
+
+        // register total damage done by this attacker
+        Integer total = damagers.get(source);
+        if(total == null) {
+            total = 0;
+        }
+        total += damage;
+        damagers.put(source, total);
+
         if(damage >= oldHits) {
             kill();
             return true;
@@ -350,6 +386,21 @@ public abstract class Mobile extends SLObject implements SendableMobile {
             setAttribute(Attribute.HITS, oldHits - damage);
             return false;
         }
+    }
+
+    // get the mobile that did the most damage to this mobile
+    // can be null
+    public Mobile getMostDamager() {
+        int most = Integer.MIN_VALUE;
+        Mobile res = null;
+        for(Mobile mob : damagers.keySet()) {
+            int damage = damagers.get(mob);
+            if(damage >= most) {
+                most = damage;
+                res = mob;
+            }
+        }
+        return res;
     }
 
     public int getCorpseGraphic() {
@@ -416,6 +467,7 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         this.equipped = new CopyOnWriteArraySet<Item>();
+        this.damagers = new HashMap<Mobile, Integer>();
     }
 
     public synchronized boolean consumeAttribute(Attribute stat, long amount) {

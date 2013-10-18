@@ -856,7 +856,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         if(damage > 0) {
             attackSound = attacker.getHitSound();
             painSound = defender.getPainSound();
-            defenderDied = defender.dealDamage(damage);
+            defenderDied = defender.dealDamage(damage, attacker);
         } else {
             attackSound = attacker.getMissSound();
         }
@@ -1159,6 +1159,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         } else if (mob instanceof NPC) {
             ((NPC) mob).onDeath(corpse);
             mob.delete();
+            Mobile mostDamager = mob.getMostDamager();
+            if(mostDamager instanceof Player) {
+                long exp = mob.getAttribute(Attribute.STRENGTH) + mob.getAttribute(Attribute.DEXTERITY) + mob.getAttribute(Attribute.INTELLIGENCE);
+                mostDamager.rewardAttribute(Attribute.EXPERIENCE, exp);
+            }
         } else {
             mob.delete();
         }

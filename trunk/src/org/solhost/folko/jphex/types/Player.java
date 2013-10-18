@@ -327,4 +327,11 @@ public class Player extends Mobile {
     @Override
     public void onLoad() {
     }
+
+    @Override
+    protected void onLevelup() {
+        super.onLevelup();
+        sendSysMessage("Your level has increased to " + getAttribute(Attribute.LEVEL));
+        sendSound(0x17);
+    }
 }

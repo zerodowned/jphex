@@ -29,7 +29,7 @@ class Deer < BaseMobile
     $api.setName(mob, "a deer")
     $api.setGraphic(mob, 0x34)
 
-    setStats(mob, :str => 20..30, :fatigue => 10..15, :int => 20..30)
+    setStats(mob, :str => 20..30, :dex => 10..15, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 250)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 300)

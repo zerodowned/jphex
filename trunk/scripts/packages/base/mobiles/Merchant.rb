@@ -36,7 +36,7 @@ class Merchant < BaseMobile
     $api.createClothes(me)
     me.setSuffix("the Merchant")
 
-    setStats(me, :str => 40..60, :fatigue => 40..50, :int => 20..30)
+    setStats(me, :str => 40..60, :dex => 40..50, :int => 20..30)
 
     $api.setAttribute(me, Attribute::MELEE, 200)
     $api.setAttribute(me, Attribute::BATTLE_DEFENSE, 100)

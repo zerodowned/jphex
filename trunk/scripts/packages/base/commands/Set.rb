@@ -37,6 +37,7 @@ class Set < TextCommand
         when "mana"     then obj.setAttribute(Attribute::MANA, Integer(value))
         when "hits"     then obj.setAttribute(Attribute::HITS, Integer(value))
         when "fatigue"  then obj.setAttribute(Attribute::FATIGUE, Integer(value))
+        when "exp"      then obj.rewardAttribute(Attribute::EXPERIENCE, Integer(value))
       end
     end
   end
