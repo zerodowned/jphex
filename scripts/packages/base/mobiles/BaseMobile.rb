@@ -63,7 +63,7 @@ class BaseMobile
     if not attackAndChase(me, victim)
       # No Success: Search others
       me.setOpponent(nil)
-      searchVictims()
+      searchVictims(me)
     end
   end
   

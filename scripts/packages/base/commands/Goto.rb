@@ -24,7 +24,7 @@ class Goto < TextCommand
       return
     end
     
-    if z == nil
+    if z == nil || z == ""
       $api.moveObject(player, x.to_i, y.to_i)
     else
       $api.moveObject(player, x.to_i, y.to_i, z.to_i)

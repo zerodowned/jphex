@@ -20,11 +20,11 @@ require './scripts/packages/base/mobiles/BaseMobile'
 class Skeleton < BaseMobile
   include MobileBehavior
   
-  def onSpawn(me)
-    $api.setName(me, "a skeleton")
-    $api.setGraphic(me, 0x2A)
+  def onSpawn(mob)
+    $api.setName(mob, "a skeleton")
+    $api.setGraphic(mob, 0x2A)
 
-    setStats(me, :str => 40, :fatigue => 50, :int => 25)
+    setStats(mob, :str => 40, :fatigue => 50, :int => 25)
 
     $api.setAttribute(mob, Attribute::MELEE, 500)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 500)
