@@ -209,7 +209,8 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public synchronized void sendInitSequence(Player player) {
         SLPacket init = new InitPlayerPacket(player, player.getSeed());
         player.sendPacket(init);
-        player.sendPacket(new SendInitialStatsPacket(player));
+
+        sendStats(player, player);
 
         SLPacket locationPacket = new LocationPacket(player);
         player.sendPacket(locationPacket);
@@ -358,7 +359,22 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized void onStatusRequest(Player player, Mobile what) {
-        sendStats(player, what);
+        StatsReplyPacket stats;
+        if(player == what) {
+            stats = new StatsReplyPacket(player);
+        } else {
+            int hits = (int) what.getAttribute(Attribute.HITS);
+            int maxHits = (int) what.getAttribute(Attribute.MAX_HITS);
+            stats = new StatsReplyPacket(what, hits * 100 / maxHits, 100);
+        }
+        player.sendPacket(stats);
+    }
+
+    public synchronized void sendStats(Player player, Mobile what) {
+        // if we're sending the status of someone else, send it in percent so you can't spy the actual values
+        boolean relativeOnly = (player != what);
+        StatsUpdatePacket packet = new StatsUpdatePacket(what, relativeOnly);
+        player.sendPacket(packet);
     }
 
     public synchronized void onDoubleClickStatic(Player player, SLStatic stat) {
@@ -374,18 +390,6 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public synchronized void sendSkills(Player player,  boolean openWindow) {
         SkillsPacket skills = new SkillsPacket(player, openWindow);
         player.sendPacket(skills);
-    }
-
-    public synchronized void sendStats(Player player, Mobile obj) {
-        StatsPacket stats;
-        if(player == obj) {
-            stats = new StatsPacket(player);
-        } else {
-            int hits = (int) obj.getAttribute(Attribute.HITS);
-            int maxHits = (int) obj.getAttribute(Attribute.MAX_HITS);
-            stats = new StatsPacket(obj, hits * 100 / maxHits, 100);
-        }
-        player.sendPacket(stats);
     }
 
     public synchronized void sendObject(Player player, SLObject obj) {
@@ -1085,12 +1089,18 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     @Override
     public synchronized void onAttributeChanged(Mobile mob, Attribute a) {
         if(a == Attribute.HITS || a == Attribute.MAX_HITS) {
+            // Someone's hit points changed -> tell everyone that can see them
             for(Player player : getInterestedPlayers(mob)) {
                 sendStats(player, mob);
             }
         } else if(a.isSkill() && mob instanceof Player) {
+            // Skill changed: Only send to self
             sendSkills((Player) mob, false);
-        } else if(a.isStat() && mob instanceof Player) {
+        } else if(a.isBasicStat() && mob instanceof Player) {
+            // Something that's not in the update packet changed -> need to send request reply packet
+            onStatusRequest((Player) mob, mob);
+        } else if(a.isDynamicStat() && mob instanceof Player) {
+            // Something other than hits changed: Only send basic stat update packet to self
             sendStats((Player) mob, mob);
         }
         runRefresh(mob);

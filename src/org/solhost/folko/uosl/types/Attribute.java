@@ -50,20 +50,28 @@ public enum Attribute {
         }
     }
 
-    public boolean isStat() {
+    public boolean isBasicStat() {
         switch(this) {
         case STRENGTH:
         case DEXTERITY:
         case INTELLIGENCE:
+        case EXPERIENCE:
+        case LEVEL:
+        case NEXT_LEVEL:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    public boolean isDynamicStat() {
+        switch(this) {
         case HITS:
         case FATIGUE:
         case MANA:
-        case EXPERIENCE:
-        case LEVEL:
         case MAX_HITS:
         case MAX_MANA:
         case MAX_FATIGUE:
-        case NEXT_LEVEL:
             return true;
         default:
             return false;
