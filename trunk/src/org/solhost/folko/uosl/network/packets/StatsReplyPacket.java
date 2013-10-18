@@ -21,11 +21,11 @@ package org.solhost.folko.uosl.network.packets;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.types.Attribute;
 
-public class StatsPacket extends SLPacket {
+public class StatsReplyPacket extends SLPacket {
     public static final short ID = 0x33;
 
     // Send someone else's stats
-    public StatsPacket(SendableMobile mob, int hits, int maxHits) {
+    public StatsReplyPacket(SendableMobile mob, int hits, int maxHits) {
         initWrite(ID, 0x2B);
         addUDWord(mob.getSerial());
         addString(mob.getName(), 30);
@@ -35,7 +35,7 @@ public class StatsPacket extends SLPacket {
     }
 
     // Send own stats
-    public StatsPacket(SendableMobile mob) {
+    public StatsReplyPacket(SendableMobile mob) {
         initWrite(ID, 0x44);
         addUDWord(mob.getSerial());
         addString(mob.getName(), 30);
