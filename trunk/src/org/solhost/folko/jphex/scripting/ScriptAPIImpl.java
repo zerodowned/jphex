@@ -554,4 +554,23 @@ public class ScriptAPIImpl implements ScriptAPI {
     public boolean canSee(SLObject o1, Point3D location) {
         return o1.canSee(location, World.VISIBLE_RANGE, world);
     }
+
+    @Override
+    public Point3D getRandomPointInRange(Point3D src, int range) {
+        if(range == 0) {
+            return src;
+        }
+
+        Point3D cur = src, last = src;
+        for(int i = 0; i < range; i++) {
+            Direction dir = Util.randomElement(Direction.values());
+            cur = SLData.get().getElevatedPoint(cur, dir, world);
+            if(cur == null) {
+                break;
+            } else {
+                last = cur;
+            }
+        }
+        return last;
+    }
 }

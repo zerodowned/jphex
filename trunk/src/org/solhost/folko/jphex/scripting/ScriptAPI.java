@@ -41,10 +41,9 @@ public interface ScriptAPI {
     public void kill(Mobile what);
 
     public int getDistance(SLObject o1, SLObject o2);
-    public boolean runToward(Mobile who, Mobile to);
     public boolean canSee(SLObject o1, SLObject o2);
     public boolean canSee(SLObject o1, Point3D location);
-    public void attack(Mobile attacker, Mobile defender);
+    public Point3D getRandomPointInRange(Point3D src, int range);
 
     public void sendSysMessage(Mobile mob, String message);
 
@@ -82,6 +81,8 @@ public interface ScriptAPI {
     public void playSoundNearObj(SLObject obj, int soundID);
     public void sendSound(Player player, int soundID);
 
+    public Collection<Player> getNearbyPlayers(Mobile who);
+    public Collection<Mobile> getMobilesInRange(SLObject obj, int range);
     public NPC spawnMobileAtPlayer(Player near, String behavior);
     public NPC spawnMobileAtLocation(int x, int y, int z, String behavior);
     public void assignRandomName(Mobile mob, String suffix);
@@ -90,8 +91,8 @@ public interface ScriptAPI {
     public void offerShop(Mobile mob, Player player);
     public void refreshStats(Mobile mob);
     public void lookAt(Mobile who, SLObject what);
-    public Collection<Player> getNearbyPlayers(Mobile who);
-    public Collection<Mobile> getMobilesInRange(SLObject obj, int range);
+    public boolean runToward(Mobile who, Mobile to);
+    public void attack(Mobile attacker, Mobile defender);
 
     public int randomHairStyle(int graphic);
     public int randomHairHue();

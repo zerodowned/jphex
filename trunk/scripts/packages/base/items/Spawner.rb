@@ -22,6 +22,8 @@ class Spawner
   include ItemBehavior
 
   @@spawn_types = {
+    0x0439 => "orc",
+    0x043A => "orccaptain",
     0x043B => "skeleton",
     0x043C => "wolf",
     0x043E => "deer",
@@ -87,7 +89,7 @@ class Spawner
     range = $api.getObjectProperty(spawner, "range")
     duration = $api.getObjectProperty(spawner, "duration")
     spawnList = $api.getObjectProperty(spawner, "spawned")
-    
+
     if behavior == nil or count == nil or range == nil or duration == nil or spawnList == nil
       puts "deleting invalid spawner #{spawner.getSerial()}"
       $api.deleteObject(spawner)
@@ -100,9 +102,11 @@ class Spawner
         newSpawnList << serial
       end
     end
-        
+
     if newSpawnList.count < count
-      npc = $api.spawnMobileAtLocation(spawner.getLocation().getX(), spawner.getLocation().getY(), spawner.getLocation().getZ(), behavior)
+      location = $api.getRandomPointInRange(spawner.getLocation(), range)
+      puts "spawning #{behavior} at #{location}"
+      npc = $api.spawnMobileAtLocation(location.getX(), location.getY(), location.getZ(), behavior)
       newSpawnList << npc.getSerial()
     end
     $api.setObjectProperty(spawner, "spawned", newSpawnList)
