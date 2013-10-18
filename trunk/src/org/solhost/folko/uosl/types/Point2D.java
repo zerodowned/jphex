@@ -26,9 +26,16 @@ public class Point2D implements Serializable {
     public static final int MAP_HEIGHT = 1024;
     protected int x, y;
 
-    public Point2D(int i, int j) {
-        setX(i);
-        setY(j);
+    public Point2D(int x, int y) {
+        if(x < 0 || x > MAP_WIDTH) {
+            throw new IllegalArgumentException("invalid x coordinate: " + x);
+        }
+        this.x = x;
+
+        if(y < 0 || y > MAP_HEIGHT) {
+            throw new IllegalArgumentException("invalid y coordinate: " + y);
+        }
+        this.y = y;
     }
 
     public int distanceTo(Point2D other) {
@@ -79,22 +86,8 @@ public class Point2D implements Serializable {
         return x;
     }
 
-    public void setX(int x) {
-        if(x < 0 || x > MAP_WIDTH) {
-            throw new IllegalArgumentException("invalid x coordinate: " + x);
-        }
-        this.x = x;
-    }
-
     public int getY() {
         return y;
-    }
-
-    public void setY(int y) {
-        if(y < 0 || y > MAP_HEIGHT) {
-            throw new IllegalArgumentException("invalid y coordinate: " + y);
-        }
-        this.y = y;
     }
 
     public Point2D getTranslated(Direction dir) {

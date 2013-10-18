@@ -73,7 +73,7 @@ public class SLData {
     // that the semantic doesn't change. Otherwise, client and server would
     // become out of sync and NPCs could walk through statics or bad things like that
     private Point3D getElevatedPointReal(Point3D source, Direction dir, ObjectLister lister) {
-        Point3D dest = new Point3D(source.getTranslated(dir), 0);
+        Point2D dest = source.getTranslated(dir);
 
         int currentZ = source.getZ();
         int currZp9 = currentZ + 9;
@@ -149,8 +149,7 @@ public class SLData {
         if(edi > -128) {
             // there are statics in our way
             if(staticsAllowWalking) {
-                dest.setZ(finalZ);
-                return dest;
+                return new Point3D(dest, finalZ);
             } else {
                 return null;
             }
@@ -165,11 +164,11 @@ public class SLData {
             return null;
         }
 
-        dest.setZ(map.getElevation(dest));
+        finalZ = map.getElevation(dest);
 
         int resX = dest.getX();
         int resY = dest.getY();
-        int resZ = dest.getZ();
+        int resZ = finalZ;
 
         // blacklist because of map errors where players can escape the test area
         if((resX == 432 && (resY == 724 || resY == 723 || resY == 722) && resZ == -15) ||
@@ -177,7 +176,7 @@ public class SLData {
             return null;
         }
 
-        return dest;
+        return new Point3D(resX, resY, resZ);
     }
 
     // my own attempt before reverse engineering, but it wasn't behaving correctly
