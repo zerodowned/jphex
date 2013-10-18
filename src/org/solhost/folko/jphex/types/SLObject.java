@@ -27,9 +27,11 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.jruby.RubyObject;
+import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.network.SendableObject;
 import org.solhost.folko.uosl.types.Point2D;
 import org.solhost.folko.uosl.types.Point3D;
+import org.solhost.folko.uosl.util.ObjectLister;
 
 public abstract class SLObject implements Serializable, SendableObject {
     private static final long serialVersionUID = 1L;
@@ -176,6 +178,33 @@ public abstract class SLObject implements Serializable, SendableObject {
 
     // at startup
     public abstract void foundOrphan(SLObject orphan);
+
+    // checks if this object can see another object
+    public boolean canSee(SLObject other, int maxDistance, ObjectLister lister) {
+        Point3D location;
+        if(other instanceof Item && !((Item) other).isOnGround()) {
+            SLObject parent = other.getParent();
+            if(parent instanceof Mobile) {
+                // item is worn -> can be seen if mobile can be seen
+                location = parent.getLocation();
+            } else {
+                // item is in container -> can't be seen
+                return false;
+            }
+        } else {
+            location = other.getLocation();
+        }
+        return canSee(location, maxDistance, lister);
+    }
+
+    // checks if this object can see a location
+    public boolean canSee(Point3D loc, int maxDistance, ObjectLister lister) {
+        Point3D start = new Point3D(this.getLocation(), this.getLocation().getZ() + this.getLookingHeight());
+        return SLData.get().hasLineOfSight(start, loc, maxDistance, lister);
+    }
+
+    // height of the location that "looks" at other objects, e.g. eyes for mobiles
+    public abstract int getLookingHeight();
 
     @Override
     public int hashCode() {

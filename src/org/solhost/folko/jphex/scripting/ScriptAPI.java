@@ -29,6 +29,7 @@ import org.solhost.folko.jphex.types.Player;
 import org.solhost.folko.jphex.types.SLObject;
 import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.types.Attribute;
+import org.solhost.folko.uosl.types.Point3D;
 import org.solhost.folko.uosl.types.Spell;
 
 public interface ScriptAPI {
@@ -41,6 +42,8 @@ public interface ScriptAPI {
 
     public int getDistance(SLObject o1, SLObject o2);
     public boolean runToward(Mobile who, Mobile to);
+    public boolean canSee(SLObject o1, SLObject o2);
+    public boolean canSee(SLObject o1, Point3D location);
     public void attack(Mobile attacker, Mobile defender);
 
     public void sendSysMessage(Mobile mob, String message);

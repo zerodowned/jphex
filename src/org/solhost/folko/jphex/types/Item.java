@@ -440,4 +440,9 @@ public class Item extends SLObject implements SendableItem {
     public void foundOrphan(SLObject orphan) {
         addChild((Item) orphan, orphan.getLocation());
     }
+
+    @Override
+    public int getLookingHeight() {
+        return height;
+    }
 }

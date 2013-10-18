@@ -18,7 +18,12 @@
 #-------------------------------------------------------------------------------
 class Test < TextCommand
   def invoke(player, line)
-    #                                 serial      graphic   unk    amount   x         y    facing   z        hue
-    $api.sendHexPacket(player, 0x35, "40428DCD" + "01B2" + "00" + "0000" + "0000" + "0000" + "01" + "00" + "0000")
+    $api.targetObject(player) do |mob|
+      if $api.canSee(player, mob)
+        $api.sendSysMessage(player, "You can see that.")
+      else
+        $api.sendSysMessage(player, "You can't see that.")
+      end
+    end
   end
 end

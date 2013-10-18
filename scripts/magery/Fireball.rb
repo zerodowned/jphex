@@ -31,10 +31,10 @@ class Fireball < BaseSpellHandler
       $api.sendSysMessage(player, "That is too far away.")
       return
     end
-    if !player.canSee(target)
-      $api.sendSysMessage(player, "You can't see that.")
+    if not $api.canSee(player, target)
+      $api.sendSysMessage(player, "You can't see that")
       return
-    end    
+    end
 
     beginCast(player, Spell::FIREBALL, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       damage = player.getAttribute(Attribute::INTELLIGENCE) / 5

@@ -433,13 +433,25 @@ public abstract class Mobile extends SLObject implements SendableMobile {
         }
     }
 
-    // TODO
-    public boolean canSee(SLObject what) {
-        return true;
-    }
-
     @Override
     public void foundOrphan(SLObject orphan) {
         equipItem((Item) orphan);
+    }
+
+    @Override
+    public int getLookingHeight() {
+        switch(graphic) {
+        case Mobiles.MOBTYPE_DEER:          return 4;
+        case Mobiles.MOBTYPE_GUARD:
+        case Mobiles.MOBTYPE_HUMAN_FEMALE:
+        case Mobiles.MOBTYPE_HUMAN_MALE:
+        case Mobiles.MOBTYPE_LORD_BRITISH:  return 9;
+        case Mobiles.MOBTYPE_ORC:           return 6;
+        case Mobiles.MOBTYPE_ORC_CAPTAIN:   return 7;
+        case Mobiles.MOBTYPE_RABBIT:        return 1;
+        case Mobiles.MOBTYPE_SKELETON:      return 8;
+        case Mobiles.MOBTYPE_WOLF:          return 3;
+        default:                            return 1;
+        }
     }
 }
