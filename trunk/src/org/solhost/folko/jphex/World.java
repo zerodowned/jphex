@@ -541,7 +541,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     public synchronized void sendContainer(Player player, Item container, boolean open) {
         if(open) {
-            OpenGumpPacket gump = new OpenGumpPacket(container, container.getGumpID());
+            OpenGumpPacket gump = new OpenGumpPacket(container, Gumps.getItemGump(container.getGraphic()));
             player.sendPacket(gump);
         }
 

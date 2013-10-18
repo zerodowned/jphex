@@ -21,7 +21,19 @@
 class Food
   include ItemBehavior
 
+  @@food = [
+      {:graphic => 0x0011, :name => 'an apple'},
+      {:graphic => 0x0039, :name => 'a peach'},
+      {:graphic => 0x012C, :name => 'a ham'},
+      {:graphic => 0x0136, :name => 'a loaf of bread'},
+      {:graphic => 0x0137, :name => 'a pie'},
+      {:graphic => 0x02FF, :name => 'some grapes'},
+    ]
+
   def onCreate(food)
+    if food.getGraphic() == 0
+      food.setGraphic(@@food.sample[:graphic])
+    end
   end
 
   def onBehaviorChange(food)

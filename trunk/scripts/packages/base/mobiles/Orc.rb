@@ -19,6 +19,15 @@
 require './scripts/packages/base/mobiles/BaseMobile'
 class Orc < BaseMobile
   include MobileBehavior
+
+  @@loot_table = [
+      {:graphic => 0, :behavior => "food", :chance => 1.0, :count => 1..3},
+      {:graphic => 0, :behavior => "sextant", :chance => 0.3, :count => 1},
+      {:graphic => 0x387, :chance => 0.2, :count => 1}, # light source scroll
+      {:graphic => 0x447, :chance => 0.2, :count => 1}, # healing scroll
+      {:graphic => 0x449, :chance => 0.2, :count => 1}, # create food scroll
+      {:graphic => 0x01F8, :chance => 1.0, :amount => 150..200, :count => 1} # gold
+    ]
   
   def onSpawn(mob)
     $api.setName(mob, "an orc")
@@ -37,5 +46,9 @@ class Orc < BaseMobile
 
   def onAttacked(me, attacker)
     beAggressiveToThemAndAll(me, attacker)
+  end
+
+  def onDeath(me, corpse)
+    generateLoot(corpse, @@loot_table)
   end
 end

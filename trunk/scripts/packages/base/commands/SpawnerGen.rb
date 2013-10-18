@@ -56,7 +56,7 @@ class SpawnerGen < TextCommand
       {:x => 74,  :y => 818, :z => 0, :type => 0x043A, :count => 1, :duration => 5, :range => 3},
       # Skeleton
       {:x => 363, :y => 857, :z => 0, :type => 0x043B, :count => 4, :duration => 3, :range => 3},
-      {:x => 372, :y => 874, :z => 0, :type => 0x043B, :count => 4, :duration => 3, :range => 3},
+      {:x => 372, :y => 874, :z =>   0, :type => 0x043B, :count => 4, :duration => 3, :range => 3},
       {:x => 363, :y => 867, :z => -22, :type => 0x043B, :count => 2, :duration => 3, :range => 3},
       {:x => 380, :y => 860, :z => -22, :type => 0x043B, :count => 2, :duration => 3, :range => 3},
       {:x => 400, :y => 866, :z => -22, :type => 0x043B, :count => 5, :duration => 3, :range => 3},

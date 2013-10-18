@@ -20,6 +20,11 @@ require './scripts/packages/base/mobiles/BaseMobile'
 class Guard < BaseMobile
   include MobileBehavior
   
+  @@loot_table = [
+      {:graphic => 0, :behavior => "food", :chance => 1.0, :count => 1..3},
+      {:graphic => 0x01F8, :chance => 1.0, :amount => 75..150, :count => 1} # gold
+    ]
+  
   def onSpawn(mob)
     $api.setName(mob, "a guard")
     $api.setGraphic(mob, 0x2E)
@@ -37,5 +42,9 @@ class Guard < BaseMobile
 
   def onAttacked(me, attacker)
     beAggressiveToThemOnly(me, attacker)
+  end
+
+  def onDeath(me, corpse)
+    generateLoot(corpse, @@loot_table)
   end
 end

@@ -20,9 +20,18 @@ require './scripts/packages/base/mobiles/BaseMobile'
 class Rabbit < BaseMobile
   include MobileBehavior
   
-  def onSpawn(mob)
+  @@loot_table = [
+      {:graphic => 0, :behavior => "food", :chance => 1.0, :count => 1},
+      {:graphic => 0x01F8, :chance => 1.0, :amount => 3..10, :count => 1} # gold
+    ]
+
+    def onSpawn(mob)
     $api.setName(mob, "a rabbit")
     $api.setGraphic(mob, 0x35)
     setStats(mob, :str => 15, :fatigue => 20, :int => 5)
+  end
+
+  def onDeath(me, corpse)
+    generateLoot(corpse, @@loot_table)
   end
 end
