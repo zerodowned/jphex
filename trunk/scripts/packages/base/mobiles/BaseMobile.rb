@@ -62,6 +62,7 @@ class BaseMobile
     return if me.getOpponent() != nil and me.getOpponent() != victim
     if not attackAndChase(me, victim)
       # No Success: Search others
+      me.setOpponent(nil)
       searchVictims()
     end
   end
@@ -69,15 +70,15 @@ class BaseMobile
   def attackAndChase(me, victim)
     # Make sure we don't walk too fast
     no_action_before = $api.getObjectProperty(me, "noActionBefore") || 0
-    return if $api.getTimerTicks() < no_action_before
+    return false if $api.getTimerTicks() < no_action_before
     
     $api.attack(me, victim)
     distance = $api.getDistance(me, victim)
-    if(distance > @@range or !victim.isVisible())
+    if(distance > @@range or !victim.isVisible() || !$api.canSee(me, victim))
       return false
     elsif distance > 1
       # victim not arrived yet, run after him
-      $api.runToward(me, victim)
+      return false if not $api.runToward(me, victim)
     end
 
     # Check again (we might arrive the victim or it ran from us, so need another action)

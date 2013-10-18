@@ -25,6 +25,11 @@ class Darksource < BaseSpellHandler
   @@mana       = 30
   
   def castAt(player, scroll, target)
+    if not $api.canSee(player, target)
+      $api.sendSysMessage(player, "You can't see that")
+      return
+    end
+
     beginCast(player, Spell::DARKSOURCE, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       darksource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B2)
       duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3

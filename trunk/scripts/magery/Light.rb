@@ -45,7 +45,7 @@ class Light < BaseSpellHandler
     return if fire.isDeleted()
 
     for mob in $api.getMobilesInRange(fire, @@radius)
-      next if mob == owner
+      next if mob == owner or not $api.canSee(fire, mob)
       if $api.checkSkill(mob, Attribute::MAGIC_DEFENSE, 0, 1100)
         $api.sendSysMessage(target, "You feel yourself resisting magical energy!")
         mob.dealDamage(damage * 0.3)

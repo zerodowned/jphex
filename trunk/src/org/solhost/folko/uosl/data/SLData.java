@@ -19,6 +19,9 @@
 package org.solhost.folko.uosl.data;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.solhost.folko.uosl.data.SLTiles.LandTile;
 import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 import org.solhost.folko.uosl.types.Direction;
@@ -335,5 +338,58 @@ public class SLData {
 
     public SLStatics getStatics() {
         return statics;
+    }
+
+    // get all points on a direct path from src to dest
+    public List<Point3D> getDirectPath(Point3D src, Point3D dest) {
+        List<Point3D> path = new LinkedList<Point3D>();
+
+        double dirVec[] = {dest.getX() - src.getX(), dest.getY() - src.getY(), dest.getZ() - src.getZ()};
+        double norm = Math.sqrt(dirVec[0] * dirVec[0] + dirVec[1] * dirVec[1] + dirVec[2] * dirVec[2]);
+        dirVec[0] /= norm;
+        dirVec[1] /= norm;
+        dirVec[2] /= norm;
+
+        double x = src.getX(),
+               y = src.getY(),
+               z = src.getZ();
+
+        Point3D addedLast = src;
+        while(!addedLast.equals(dest)) {
+            Point3D next = new Point3D((int) Math.round(x), (int) Math.round(y), (int) Math.round(z));
+
+            if(!addedLast.equals(next)) {
+                path.add(next);
+                addedLast = next;
+            }
+
+            x += dirVec[0];
+            y += dirVec[1];
+            z += dirVec[2];
+        }
+
+        return path;
+    }
+
+    public boolean hasLineOfSight(Point3D src, Point3D dest, int maxDistance, ObjectLister lister) {
+        int distance = src.distanceTo(dest);
+        if(distance > maxDistance) {
+            return false;
+        } else if(distance == 0) {
+            return true;
+        }
+
+        List<Point3D> path = getDirectPath(src, dest);
+        for(Point3D point : path) {
+            for(SLStatic obj : lister.getStaticAndDynamicsAtLocation(point)) {
+                StaticTile stat = tiles.getStaticTile(obj.getStaticID());
+                int lowerZ = obj.getLocation().getZ();
+                int upperZ = lowerZ + stat.height;
+                if(lowerZ <= point.getZ() && upperZ >= point.getZ() && !stat.isSurface()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

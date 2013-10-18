@@ -25,6 +25,11 @@ class Lightsource < BaseSpellHandler
   @@mana       = 15
   
   def castAt(player, scroll, target)
+    if not $api.canSee(player, target)
+      $api.sendSysMessage(player, "You can't see that")
+      return
+    end
+
     beginCast(player, Spell::LIGHTSOURCE, scroll, @@mana, @@delay, @@min_skill, @@gain_until) do
       lightsource = $api.createItemAtLocation(target.getX(), target.getY(), target.getZ(), 0x1B3)
       duration = player.getAttribute(Attribute::INTELLIGENCE) * 1000 / 3

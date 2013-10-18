@@ -544,4 +544,14 @@ public class ScriptAPIImpl implements ScriptAPI {
         }
         return res;
     }
+
+    @Override
+    public boolean canSee(SLObject o1, SLObject o2) {
+        return o1.canSee(o2, World.VISIBLE_RANGE, world);
+    }
+
+    @Override
+    public boolean canSee(SLObject o1, Point3D location) {
+        return o1.canSee(location, World.VISIBLE_RANGE, world);
+    }
 }
