@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import org.solhost.folko.jphex.Util;
 import org.solhost.folko.uosl.data.SLTiles;
+import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.types.Attribute;
 import org.solhost.folko.uosl.types.Direction;
@@ -523,5 +524,114 @@ public abstract class Mobile extends SLObject implements SendableMobile {
 
         default:                            return false;
         }
+    }
+
+    // returns speed in ticks, i.e. units of 250ms
+    public int getWeaponSpeed() {
+        Item weapon = getEquipmentByLayer(StaticTile.LAYER_WEAPON);
+        if(weapon != null) {
+            return weapon.getWeaponSpeed();
+        }
+
+        // no weapon: bare hands
+        switch(graphic) {
+        case Mobiles.MOBTYPE_GUARD:
+        case Mobiles.MOBTYPE_LORD_BRITISH:
+        case Mobiles.MOBTYPE_HUMAN_FEMALE:
+        case Mobiles.MOBTYPE_HUMAN_MALE:    return 10;
+
+        case Mobiles.MOBTYPE_ORC:           return 9;
+        case Mobiles.MOBTYPE_ORC_CAPTAIN:   return 8;
+        case Mobiles.MOBTYPE_SKELETON:      return 12;
+
+        case Mobiles.MOBTYPE_WOLF:          return 8;
+        case Mobiles.MOBTYPE_RABBIT:        return 14;
+        case Mobiles.MOBTYPE_DEER:          return 11;
+
+        default:
+            log.warning("Unknown attacker graphic in getWeaponSpeed: " + graphic);
+            return 10;
+        }
+    }
+
+    public int getWeaponDamage() {
+        Item weapon = getEquipmentByLayer(StaticTile.LAYER_WEAPON);
+        if(weapon != null) {
+            return weapon.getWeaponDamage();
+        }
+
+        // no weapon: bare hands
+        switch(graphic) {
+        case Mobiles.MOBTYPE_GUARD:
+        case Mobiles.MOBTYPE_LORD_BRITISH:
+        case Mobiles.MOBTYPE_HUMAN_FEMALE:
+        case Mobiles.MOBTYPE_HUMAN_MALE:    return Util.random(1, 5);
+
+        case Mobiles.MOBTYPE_ORC:           return Util.random(15, 20);
+        case Mobiles.MOBTYPE_ORC_CAPTAIN:   return Util.random(18, 23);
+        case Mobiles.MOBTYPE_SKELETON:      return Util.random(10, 20);
+
+        case Mobiles.MOBTYPE_WOLF:          return Util.random(5, 15);
+        case Mobiles.MOBTYPE_RABBIT:        return Util.random(1, 4);
+        case Mobiles.MOBTYPE_DEER:          return Util.random(2, 8);
+
+        default:
+            log.warning("Unknown attacker graphic in getWeaponDamage: " + graphic);
+            return Util.random(1, 10);
+        }
+    }
+
+    // returns swing delay in ms
+    public int getSwingSpeed() {
+        int dex = (int) getAttribute(Attribute.DEXTERITY);
+
+        int weaponTicks = getWeaponSpeed();
+        int dexBonus = dex / 30;
+
+        int ticks = Math.max(5, weaponTicks - dexBonus);
+
+        return ticks * 250;
+    }
+
+    // return damage to deal
+    public int getAttackRating() {
+        int weaponDamge = getWeaponDamage();
+        double skillFactor = Math.max(0.2, getAttribute(Attribute.MELEE) / 1000.0);
+        int strBonus = (int) (getAttribute(Attribute.STRENGTH) / 30);
+        int damage = (int) Math.max(1, weaponDamge * skillFactor + strBonus);
+
+        return damage;
+    }
+
+    // return damage reduction factor
+    public double getDefenseRating() {
+        double armorRating = 0.0;
+
+        Item shield = getEquipmentByLayer(StaticTile.LAYER_SHIELD);
+        if(shield != null) armorRating += shield.getArmorRating();
+
+        Item braces = getEquipmentByLayer(StaticTile.LAYER_BRACES);
+        if(braces != null) armorRating += braces.getArmorRating();
+
+        Item legProt = getEquipmentByLayer(StaticTile.LAYER_LEG);
+        if(legProt != null) armorRating += legProt.getArmorRating();
+
+        Item breastProt = getEquipmentByLayer(StaticTile.LAYER_BREAST);
+        if(breastProt != null) armorRating += breastProt.getArmorRating();
+
+        Item headProt = getEquipmentByLayer(StaticTile.LAYER_HEAD);
+        if(headProt != null) armorRating += headProt.getArmorRating();
+
+        Item neckProt = getEquipmentByLayer(StaticTile.LAYER_NECK);
+        if(neckProt != null) armorRating += neckProt.getArmorRating();
+
+        Item skirt = getEquipmentByLayer(StaticTile.LAYER_SKIRT);
+        if(skirt != null) armorRating += skirt.getArmorRating();
+
+        double factor = armorRating + getAttribute(Attribute.DEXTERITY) / 150.0 + getAttribute(Attribute.STRENGTH) / 150.0;
+
+        if(factor > 0.9) factor = 0.9;
+
+        return factor;
     }
 }

@@ -52,9 +52,31 @@ public class Items {
     public static final int GFX_TUNIC               = 0x02F1;
     public static final int GFX_PANTS               = 0x02F2;
     public static final int GFX_SKIRT               = 0x02F3;
-    public static final int GFX_DAGGER              = 0x02A0;
     public static final int GFX_HAIR_START          = 0x0424;
     public static final int GFX_HAIR_END            = 0x0429;
+
+    // Weapons
+    public static final int GFX_GREAT_AXE           = 0x0293;
+    public static final int GFX_EXECUTIONER_AXE     = 0x0294;
+    public static final int GFX_HAND_AXE            = 0x0296;
+    public static final int GFX_BATTLE_AXE          = 0x0298;
+    public static final int GFX_WAR_AXE             = 0x029A;
+    public static final int GFX_DAGGER              = 0x02A1;
+    public static final int GFX_MACE                = 0x02A2;
+    public static final int GFX_SHORT_SWORD         = 0x02A4;
+    public static final int GFX_BROAD_SWORD         = 0x02A6;
+
+    // Armor
+    public static final int GFX_VAMBRACES           = 0x02EC;
+    public static final int GFX_BREASTPLATE         = 0x02ED;
+    public static final int GFX_GORGET              = 0x02EE;
+    public static final int GFX_HELMET              = 0x02EF;
+    public static final int GFX_GREAVES             = 0x02F0;
+    public static final int GFX_HEATER              = 0x3D58;
+    public static final int GFX_BRACERS             = 0x0442;
+    public static final int GFX_JERKIN              = 0x0441;
+    public static final int GFX_LEGGINGS            = 0x0443;
+    public static final int GFX_LEATHER_CAP         = 0x044A;
 
     // Corpses
     public static final int GFX_CORPSE_HUMAN        = 0x3D67;

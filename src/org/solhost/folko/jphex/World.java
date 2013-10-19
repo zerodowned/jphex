@@ -320,7 +320,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         return res;
     }
 
-    public synchronized  boolean onPlayerRequestMove(Player player, Direction dir) {
+    public synchronized  boolean onPlayerRequestMove(Player player, Direction dir, boolean running) {
         if(player.isFrozen()) {
             // Nothing permitted if frozen
             player.sendSysMessage("You are frozen and cannot move!");
@@ -331,11 +331,14 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             player.setFacing(dir);
             player.setWalking(false);
         } else {
+            // player is actually moving, calculate new location
             Point3D dest = canWalk(player, dir);
             if(dest == null) {
                 return false;
             }
-            // player is actually moving, calculate new location
+            if(running && !player.consumeAttribute(Attribute.FATIGUE, 1)) {
+                return false;
+            }
             player.setWalking(true);
             player.setLocation(dest);
             player.setWalking(false);
@@ -346,9 +349,6 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     // if yes, returns dest point, otherwise null
     public Point3D canWalk(Mobile who, Direction dir) {
         Point3D dest = SLData.get().getElevatedPoint(who.getLocation(), dir, this);
-        if(dest == null) {
-            log.finer("can't walk");
-        }
         return dest;
     }
 
@@ -802,10 +802,10 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             boolean increase;
             if(action % 2 == 0) {
                 increase = false;
-                index = items.size() - 1 - ((action - 100) / 2);
+                index = (action - 100) / 2;
             } else {
                 increase = true;
-                index = items.size() - 1 - ((action - 101) / 2);
+                index = (action - 101) / 2;
             }
             if(index < 0 || index >= items.size()) {
                 log.warning(String.format("Player %s sent invalid shop list index %d", player.getName(), index));
@@ -875,15 +875,18 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         if(attacker.distanceTo(defender) > 1 || !defender.isVisible()) {
             return true;
         }
-        log.finer("fight ongoing between " + attacker.getName() + " and " + defender.getName());
+        log.fine("fight ongoing between " + attacker.getName() + " and " + defender.getName());
         attacker.lookAt(defender);
 
         int damage = 0;
         Integer attackSound = null, painSound = null;
         if(attacker.checkSkill(Attribute.MELEE, 0, 1100)) {
-            damage = Util.random(10, 20); // TODO: something smart
+            damage = attacker.getAttackRating();
+            log.finer("attack rating of " + attacker.getName() + ": " + damage);
             if(defender.checkSkill(Attribute.BATTLE_DEFENSE, 0, 1100)) {
-                damage = damage / 3;
+                double defRating = defender.getDefenseRating();
+                damage = (int) (damage * defRating);
+                log.finer("defense rating of " + defender.getName() + ": " + defRating);
             }
         }
 
@@ -1229,14 +1232,14 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                     if(!canGoOn || !defender.canFight() || !attacker.canFight()) {
                         attacker.setOpponent(null);
                     } else {
-                        TimerQueue.get().addTimer(new Timer(1500, this));
+                        TimerQueue.get().addTimer(new Timer(attacker.getSwingSpeed(), this));
                     }
                 }
             }
         };
 
-        // start first round delayed to avoid exploiting by opponent switching
-        TimerQueue.get().addTimer(new Timer(200, fight));
+        // the first attack is also a little delayed so that you can't abuse the system by switching victims
+        TimerQueue.get().addTimer(new Timer(attacker.getSwingSpeed() / 2, fight));
     }
 
     @Override

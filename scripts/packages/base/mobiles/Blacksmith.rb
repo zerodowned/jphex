@@ -35,5 +35,7 @@ class Blacksmith < Merchant
     $api.createItemInBackpack(me, 0x02ED) # breastplate
     $api.createItemInBackpack(me, 0x02EE) # gorget
     $api.createItemInBackpack(me, 0x02EF) # helmet
+    $api.createItemInBackpack(me, 0x02F0) # greaves
+    $api.createItemInBackpack(me, 0x3D58) # heater
   end
 end
