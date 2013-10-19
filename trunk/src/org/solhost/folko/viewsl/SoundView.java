@@ -22,12 +22,14 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
-import javax.swing.DefaultListModel;
+import javax.swing.AbstractListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -43,25 +45,17 @@ import org.solhost.folko.uosl.data.SLSound.SoundEntry;
 public class SoundView extends JPanel {
     private static final long serialVersionUID = 534689691557745487L;
     private SLSound sound;
-    private JList<String> soundList;
+    private JList<SoundListEntry> soundList;
     private JLabel soundLabel;
     private JButton soundButton;
-
-    private static final int MAX_SOUNDS = 0xFF;
 
     public SoundView(SLSound sound) {
         this.sound = sound;
 
         setLayout(new BorderLayout());
 
-        DefaultListModel<String> model = new DefaultListModel<String>();
-        soundList = new JList<String>(model);
-        for(int i = 0; i < MAX_SOUNDS; i++)  {
-            SoundEntry entry = sound.getEntry(i);
-            if(entry != null) {
-                model.addElement(String.format("0x%02X: %s", entry.id, entry.fileName));
-            }
-        }
+        SoundListModel model = new SoundListModel(sound);
+        soundList = new JList<SoundListEntry>(model);
 
         JPanel soundInfoPanel = new JPanel();
         soundInfoPanel.setLayout(new FlowLayout());
@@ -91,13 +85,13 @@ public class SoundView extends JPanel {
     }
 
     private void selectSound(int listIndex) {
-        int id = Integer.parseInt(soundList.getSelectedValue().substring(2, 4), 16);
+        int id = soundList.getModel().getElementAt(listIndex).id;
         SoundEntry entry = sound.getEntry(id);
         soundLabel.setText(String.format("0x%02X", entry.id));
     }
 
     private void playSound(int listIndex) {
-        int id = Integer.parseInt(soundList.getSelectedValue().substring(2, 4), 16);
+        int id = soundList.getModel().getElementAt(listIndex).id;
         SoundEntry entry = sound.getEntry(id);
         AudioFormat format = new AudioFormat(22050, 16, 1, true, false);
         DataLine.Info info = new DataLine.Info(Clip.class, format);
@@ -110,4 +104,44 @@ public class SoundView extends JPanel {
             return;
         }
     }
+}
+
+class SoundListEntry {
+    int id;
+    String name;
+
+    @Override
+    public String toString() {
+        return String.format("%02X: %s", id, name);
+    }
+}
+
+class SoundListModel extends AbstractListModel<SoundListEntry> {
+    private static final long serialVersionUID = 1L;
+    private final List<SoundListEntry> entries;
+
+    public SoundListModel(SLSound sound) {
+        entries = new ArrayList<SoundListEntry>(sound.getNumEntries());
+        for(int i = 0; i < sound.getNumEntries(); i++) {
+            SoundListEntry listEntry = new SoundListEntry();
+            SoundEntry soundEntry = sound.getEntry(i);
+            if(soundEntry != null) {
+                listEntry.id = (int) soundEntry.id;
+                listEntry.name = soundEntry.fileName;
+                entries.add(listEntry);
+            }
+        }
+    }
+
+
+    @Override
+    public int getSize() {
+        return entries.size();
+    }
+
+    @Override
+    public SoundListEntry getElementAt(int index) {
+        return entries.get(index);
+    }
+
 }
