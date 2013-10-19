@@ -21,14 +21,19 @@ package org.solhost.folko.viewsl;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.util.LinkedList;
+import java.util.List;
 
+import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -41,14 +46,14 @@ import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 public class ArtView extends JPanel {
     private static final long serialVersionUID = 4594116320550647856L;
     private ImagePanel imagePanel;
-    private JList<String> artList;
+    private JList<ListEntry> artList;
     private StaticInfoPanel staticPanel;
     private LandInfoPanel landPanel;
+    private JTextField searchField;
+    private TileModel listModel;
     private SLArt art;
     private SLTiles tiles;
     private boolean landOrStatic;
-
-    private static final int NUM_ENTRIES = 0x4000;
 
     public ArtView(boolean landOrStatic, SLArt art, SLTiles tiles) {
         this.landOrStatic = landOrStatic;
@@ -57,31 +62,12 @@ public class ArtView extends JPanel {
         this.imagePanel = new ImagePanel(200, 200);
         this.staticPanel = new StaticInfoPanel();
         this.landPanel = new LandInfoPanel();
+        this.searchField = new JTextField();
 
         setLayout(new BorderLayout());
 
-        DefaultListModel<String> model = new DefaultListModel<String>();
-        artList = new JList<String>(model);
-        for(int i = 0; i < NUM_ENTRIES; i++)  {
-            String name = null;
-            ArtEntry entry;
-            long flags = 0;
-            if(landOrStatic) {
-                LandTile tile = tiles.getLandTile(i);
-                name = tile.name;
-                flags = tile.flags;
-                entry = art.getLandArt(i);
-            } else {
-                StaticTile tile = tiles.getStaticTile(i);
-                name = tile.name;
-                flags = tile.flags;
-                entry = art.getStaticArt(i, (flags & StaticTile.FLAG_TRANSLUCENT) != 0);
-            }
-            String info = String.format("0x%04X: %s", i, name);
-            if(entry != null || name.length() > 0 || flags != 0) {
-                model.addElement(info);
-            }
-        }
+        this.listModel = new TileModel(tiles, art, landOrStatic);
+        this.artList = new JList<ListEntry>(listModel);
 
         JPanel artInfoPanel = new JPanel();
         artInfoPanel.setLayout(new GridLayout(2, 1));
@@ -102,14 +88,39 @@ public class ArtView extends JPanel {
         });
         artList.setSelectedIndex(0);
 
-        add(new JScrollPane(artList), BorderLayout.WEST);
+        JPanel listPanel = new JPanel(new BorderLayout());
+        JScrollPane scrollPanel = new JScrollPane(artList);
+        listPanel.add(searchField, BorderLayout.NORTH);
+        listPanel.add(scrollPanel, BorderLayout.CENTER);
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void removeUpdate(DocumentEvent e) {
+                onSearch(searchField.getText());
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                onSearch(searchField.getText());
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                onSearch(searchField.getText());
+            }
+        });
+
+        add(listPanel, BorderLayout.WEST);
         add(artInfoPanel, BorderLayout.CENTER);
     }
 
+    private void onSearch(String what) {
+        ((TileModel) artList.getModel()).search(what);
+    }
+
     private void selectArt(int idx) {
+        if(artList.getSelectedValue() == null) {
+            return;
+        }
+        int id = artList.getModel().getElementAt(idx).id;
         ArtEntry entry;
         String name = "";
-        int id = Integer.parseInt(artList.getSelectedValue().substring(2, 6), 16);
         if(landOrStatic) {
             LandTile tile = tiles.getLandTile(id);
             landPanel.setTile(tile);
@@ -141,6 +152,71 @@ public class ArtView extends JPanel {
     }
 }
 
+class ListEntry {
+    public int id;
+    public String name;
+    public long flags;
+
+    @Override
+    public String toString() {
+        return String.format("%04X: %s", id, name);
+    }
+}
+
+class TileModel extends AbstractListModel<ListEntry> {
+    private static final int NUM_ENTRIES = 0x4000;
+    private static final long serialVersionUID = 1L;
+
+    private final List<ListEntry> allEntries, displayEntries;
+
+    public TileModel(SLTiles tiles, SLArt art, boolean landOrStatic) {
+        allEntries = new LinkedList<ListEntry>();
+        displayEntries = new LinkedList<ListEntry>();
+        for(int i = 0; i < NUM_ENTRIES; i++)  {
+            ArtEntry artEntry;
+            ListEntry listEntry = new ListEntry();
+            listEntry.id = i;
+            if(landOrStatic) {
+                LandTile tile = tiles.getLandTile(i);
+                listEntry.name = tile.name;
+                listEntry.flags = tile.flags;
+                artEntry = art.getLandArt(i);
+            } else {
+                StaticTile tile = tiles.getStaticTile(i);
+                listEntry.name = tile.name;
+                listEntry.flags = tile.flags;
+                artEntry = art.getStaticArt(i, false);
+            }
+            if(artEntry != null || listEntry.name.length() > 0 || listEntry.flags != 0) {
+                allEntries.add(listEntry);
+                displayEntries.add(listEntry);
+            }
+        }
+    }
+
+    public void search(String what) {
+        String str = what.toLowerCase();
+        displayEntries.clear();
+        for(int i = 0; i < allEntries.size(); i++) {
+            ListEntry entry = allEntries.get(i);
+            if(entry.name.toLowerCase().contains(str)) {
+                displayEntries.add(entry);
+            }
+        }
+        fireContentsChanged(this, 0, allEntries.size());
+    }
+
+    @Override
+    public int getSize() {
+        return displayEntries.size();
+    }
+
+    @Override
+    public ListEntry getElementAt(int index) {
+        return displayEntries.get(index);
+    }
+}
+
 class StaticInfoPanel extends JPanel {
     private static final long serialVersionUID = -6607340640593973648L;
     private final JLabel height, layer, price, weight, animation, unk1, unk2;
@@ -155,7 +231,6 @@ class StaticInfoPanel extends JPanel {
         "NoDiagonal",   "Container",    "Wearable",     "Light",
         "Animation",    "Unknown 3",    "Unknown 4",    "Armor",
         "Roof",         "Door",         "Unknown 8",    "Unknown 9" };
-
 
     public StaticInfoPanel() {
         height = new JLabel();
@@ -210,7 +285,7 @@ class LandInfoPanel extends JPanel {
     private static final String[] staticFlags = {
         //  1               2               4             8
         "Unknown",      "Unknown",      "Unknown",      "Unknown",
-        "Unknown",      "Unknown",      "Unknown",      "Unknown",
+        "Unknown",      "Unknown",      "Impassable",   "Unknown",
         "Unknown",      "Unknown",      "Unknown",      "Unknown",
         "Unknown",      "Unknown",      "Unknown",      "Unknown",
         "Unknown",      "Unknown",      "Unknown",      "Unknown",

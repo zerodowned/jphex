@@ -22,8 +22,10 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.LinkedList;
+import java.util.List;
 
-import javax.swing.DefaultListModel;
+import javax.swing.AbstractListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -40,7 +42,7 @@ import org.solhost.folko.uosl.data.SLArt.AnimationEntry;
 public class AnimationView extends JPanel {
     private static final long serialVersionUID = -225672106193952019L;
     private ImagePanel imagePanel;
-    private JList<String> artList;
+    private JList<ArtListEntry> artList;
     private JLabel artLabel;
     private JButton animationButton;
     private SLArt art;
@@ -48,7 +50,6 @@ public class AnimationView extends JPanel {
     private int currentFrame;
     private AnimationEntry currentAnimation;
 
-    private static final int MAX_FRAMES = 32768;
     private static final int ANIMATION_DELAY = 80;
 
     public AnimationView(SLArt art) {
@@ -57,15 +58,8 @@ public class AnimationView extends JPanel {
 
         setLayout(new BorderLayout());
 
-        DefaultListModel<String> model = new DefaultListModel<String>();
-        artList = new JList<String>(model);
-        for(int i = 0; i < MAX_FRAMES; i++)  {
-            AnimationEntry entry = art.getAnimationEntry(i);
-            if(entry != null) {
-                model.addElement(String.format("0x%04X", entry.id));
-                i += entry.frames.size() - 1; // -1 because loop will do ++
-            }
-        }
+        ArtListModel model = new ArtListModel(art);
+        artList = new JList<ArtListEntry>(model);
 
         JPanel artInfoPanel = new JPanel();
         artInfoPanel.setLayout(new FlowLayout());
@@ -115,7 +109,7 @@ public class AnimationView extends JPanel {
             timer.stop();
             timer = null;
         }
-        int id = Integer.parseInt(artList.getSelectedValue().substring(2, 6), 16);
+        int id = artList.getModel().getElementAt(idx).id;
         currentAnimation = art.getAnimationEntry(id);
         currentFrame = 0;
         artLabel.setText(String.format("0x%04X: %d frames", currentAnimation.id, currentAnimation.frames.size()));
@@ -128,5 +122,43 @@ public class AnimationView extends JPanel {
         if(currentFrame == currentAnimation.frames.size()) {
             currentFrame = 0;
         }
+    }
+}
+
+class ArtListEntry {
+    public int id;
+
+    @Override
+    public String toString() {
+        return String.format("%04X", id);
+    }
+}
+
+class ArtListModel extends AbstractListModel<ArtListEntry> {
+    private static final long serialVersionUID = 1L;
+    private static final int MAX_FRAMES = 32768;
+    private final List<ArtListEntry> entries;
+
+    public ArtListModel(SLArt art) {
+        entries = new LinkedList<ArtListEntry>();
+        for(int i = 0; i < MAX_FRAMES; i++)  {
+            AnimationEntry artEntry = art.getAnimationEntry(i);
+            if(artEntry != null) {
+                i += artEntry.frames.size() - 1; // -1 because loop will do ++
+                ArtListEntry listEntry = new ArtListEntry();
+                listEntry.id = i;
+                entries.add(listEntry);
+            }
+        }
+    }
+
+    @Override
+    public int getSize() {
+        return entries.size();
+    }
+
+    @Override
+    public ArtListEntry getElementAt(int index) {
+        return entries.get(index);
     }
 }

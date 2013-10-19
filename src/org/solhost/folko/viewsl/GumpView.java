@@ -53,7 +53,7 @@ public class GumpView extends JPanel {
         DefaultListModel<String> model = new DefaultListModel<String>();
         gumpList = new JList<String>(model);
         for(int i = 0; i < NUM_GUMPS; i++)  {
-            model.addElement(String.format("0x%04X", i));
+            model.addElement(String.format("%02X", i));
         }
 
         JPanel gumpInfoPanel = new JPanel(new BorderLayout());
