@@ -1,6 +1,14 @@
 #summary Some screenshots to show the project status
 
 = Server =
+Fighting some skeletons
+
+http://jphex.googlecode.com/svn/wiki/images/client_skeletons.png
+
+Collecting loot
+
+http://jphex.googlecode.com/svn/wiki/images/client_loot.png
+
 Original client with working shop gump
 
 http://jphex.googlecode.com/svn/wiki/images/client_shop.png
