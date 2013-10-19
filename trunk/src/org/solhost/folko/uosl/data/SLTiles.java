@@ -62,8 +62,14 @@ public class SLTiles {
 
         public static final short LAYER_WEAPON      = 0x01;
         public static final short LAYER_SHIELD      = 0x02;
+        public static final short LAYER_BRACES      = 0x03;
+        public static final short LAYER_LEG         = 0x04;
+        public static final short LAYER_BREAST      = 0x05;
+        public static final short LAYER_HEAD        = 0x06;
         public static final short LAYER_BACKPACK    = 0x09;
+        public static final short LAYER_NECK        = 0x0A;
         public static final short LAYER_HAIR        = 0x0B;
+        public static final short LAYER_SKIRT       = 0x0C;
 
         public long flags;
         public short weight;

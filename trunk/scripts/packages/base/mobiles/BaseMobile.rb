@@ -165,7 +165,7 @@ class BaseMobile
       case type
       when :shy
         $api.setObjectProperty(mob, "state", :getting_away)
-        runAway(mob, attacker)
+        runAway(mob)
       when :aggressive
         beAggressive(mob)
       when :responding

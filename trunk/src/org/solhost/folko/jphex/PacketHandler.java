@@ -154,7 +154,7 @@ public class PacketHandler implements IPacketHandler {
 
     private void onMoveRequest(Client client, MoveRequestPacket packet) {
         Player player = playerClients.get(client);
-        if(world.onPlayerRequestMove(player, packet.getDirection())) {
+        if(world.onPlayerRequestMove(player, packet.getDirection(), packet.isRunning())) {
             client.send(new AllowMovePacket(packet.getSequence()));
         } else {
             client.send(new DenyMovePacket(player, packet.getSequence()));

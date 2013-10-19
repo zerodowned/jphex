@@ -198,6 +198,10 @@ public class Item extends SLObject implements SendableItem {
         }
         if(this.graphic == Items.GFX_SPELLBOOK) {
             child.setAmount(Spell.fromScrollGraphic(child.getGraphic()).toByte());
+        } else if(this.graphic == Items.GFX_SHOP_CONTAINER) {
+            // the client sorts the shop list by location and uses that as index
+            int index = children.size();
+            location = new Point2D(index, index);
         }
 
         child.location = new Point3D(location, 0);
@@ -431,6 +435,59 @@ public class Item extends SLObject implements SendableItem {
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
         this.children = new CopyOnWriteArrayList<Item>();
+    }
+
+    public int getWeaponDamage() {
+        switch(graphic) {
+        case Items.GFX_GREAT_AXE:           return Util.random(16, 20);
+        case Items.GFX_EXECUTIONER_AXE:     return Util.random(15, 19);
+        case Items.GFX_HAND_AXE:            return Util.random(13, 17);
+        case Items.GFX_BATTLE_AXE:          return Util.random(17, 20);
+        case Items.GFX_WAR_AXE:             return Util.random(14, 18);
+        case Items.GFX_DAGGER:              return Util.random(10, 13);
+        case Items.GFX_MACE:                return Util.random(11, 16);
+        case Items.GFX_SHORT_SWORD:         return Util.random(11, 16);
+        case Items.GFX_BROAD_SWORD:         return Util.random(13, 18);
+        default: log.warning("Unknown base damage for graphic " + graphic);
+            return Util.random(1, 10);
+        }
+    }
+
+    // in ticks, i.e. units of 250ms
+    public int getWeaponSpeed() {
+        switch(graphic) {
+        case Items.GFX_GREAT_AXE:           return 14;
+        case Items.GFX_EXECUTIONER_AXE:     return 13;
+        case Items.GFX_HAND_AXE:            return 11;
+        case Items.GFX_BATTLE_AXE:          return 12;
+        case Items.GFX_WAR_AXE:             return 13;
+        case Items.GFX_DAGGER:              return 8;
+        case Items.GFX_MACE:                return 11;
+        case Items.GFX_SHORT_SWORD:         return 11;
+        case Items.GFX_BROAD_SWORD:         return 13;
+        default: log.warning("Unknown weapon speed for graphic " + graphic);
+            return 12;
+        }
+    }
+
+    public double getArmorRating() {
+        switch(graphic) {
+            case Items.GFX_HEATER:      return 0.2;
+            case Items.GFX_BRACERS:     return 0.05;
+            case Items.GFX_VAMBRACES:   return 0.1;
+            case Items.GFX_PANTS:       return 0.01;
+            case Items.GFX_LEGGINGS:    return 0.05;
+            case Items.GFX_GREAVES:     return 0.15;
+            case Items.GFX_TUNIC:       return 0.01;
+            case Items.GFX_JERKIN:      return 0.05;
+            case Items.GFX_BREASTPLATE: return 0.15;
+            case Items.GFX_LEATHER_CAP: return 0.05;
+            case Items.GFX_HELMET:      return 0.1;
+            case Items.GFX_GORGET:      return 0.1;
+            default:
+                log.warning("Unknown armor rating for graphic " + graphic);
+                return 0;
+        }
     }
 
     @Override
