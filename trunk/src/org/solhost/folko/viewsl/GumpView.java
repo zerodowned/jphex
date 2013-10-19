@@ -19,7 +19,9 @@
 package org.solhost.folko.viewsl;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
@@ -38,7 +40,7 @@ public class GumpView extends JPanel {
     private SLGumps gumps;
     private ImagePanel imagePanel;
     private JList<String> gumpList;
-    private JLabel gumpLabel;
+    private JLabel gumpLabel, coordsLabel;
 
     private static final int NUM_GUMPS = 77;
 
@@ -54,11 +56,12 @@ public class GumpView extends JPanel {
             model.addElement(String.format("0x%04X", i));
         }
 
-        JPanel gumpInfoPanel = new JPanel();
-        gumpInfoPanel.setLayout(new FlowLayout());
+        JPanel gumpInfoPanel = new JPanel(new BorderLayout());
         gumpLabel = new JLabel("0x0000");
-        gumpInfoPanel.add(gumpLabel);
-        gumpInfoPanel.add(imagePanel);
+        this.coordsLabel = new JLabel("Gump Coordinates: ");
+        gumpInfoPanel.add(gumpLabel, BorderLayout.NORTH);
+        gumpInfoPanel.add(coordsLabel, BorderLayout.SOUTH);
+        gumpInfoPanel.add(imagePanel, BorderLayout.CENTER);
 
         gumpList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         gumpList.addListSelectionListener(new ListSelectionListener() {
@@ -72,11 +75,26 @@ public class GumpView extends JPanel {
 
         add(new JScrollPane(gumpList), BorderLayout.WEST);
         add(gumpInfoPanel, BorderLayout.CENTER);
+
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                mouseChanged();
+            }
+        });
     }
 
     private void selectGump(int listIndex) {
         GumpEntry entry = gumps.getGump(listIndex);
         gumpLabel.setText(String.format("0x%04X", entry.id));
         imagePanel.setImage(entry.image);
+    }
+
+    private void mouseChanged() {
+        Point p = imagePanel.getMouseImagePosition();
+        if(p == null) {
+            return;
+        }
+        coordsLabel.setText(String.format("Gump Coordinates: %d, %d", p.x, p.y));
     }
 }

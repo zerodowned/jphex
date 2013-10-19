@@ -44,7 +44,7 @@ public class MapView extends JPanel {
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                mouseChanged(e.getX(), e.getY());
+                mouseChanged();
             }
         });
 
@@ -76,7 +76,7 @@ public class MapView extends JPanel {
         }
     }
 
-    public void mouseChanged(int mouseX, int mouseY) {
+    public void mouseChanged() {
         Point p = imagePanel.getMouseImagePosition();
         if(p == null) {
             return;
