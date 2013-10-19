@@ -29,19 +29,12 @@ class Wolf < BaseMobile
     $api.setName(mob, "a wolf")
     $api.setGraphic(mob, 0x32)
 
+    setType(mob, :aggressive)
     setStats(mob, :str => 40..60, :dex => 70..90, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 700)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 600)
     $api.setAttribute(mob, Attribute::MAGIC_DEFENSE, 100)
-  end
-
-  def onEnterArea(me, player)
-    beAggressiveToThemAndAll(me, player)
-  end
-
-  def onAttacked(me, attacker)
-    beAggressiveToThemAndAll(me, attacker)
   end
 
   def onDeath(me, corpse)

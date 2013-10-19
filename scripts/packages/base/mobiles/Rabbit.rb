@@ -25,9 +25,10 @@ class Rabbit < BaseMobile
       {:graphic => 0x01F8, :chance => 1.0, :amount => 3..10, :count => 1} # gold
     ]
 
-    def onSpawn(mob)
+  def onSpawn(mob)
     $api.setName(mob, "a rabbit")
     $api.setGraphic(mob, 0x35)
+    setType(mob, :shy)
     setStats(mob, :str => 10..15, :dex => 10..20, :int => 2..8)
   end
 

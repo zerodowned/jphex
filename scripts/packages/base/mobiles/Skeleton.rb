@@ -28,23 +28,16 @@ class Skeleton < BaseMobile
       {:graphic => 0x01F8, :chance => 1.0, :amount => 30..90, :count => 1} # gold
     ]
 
-    def onSpawn(mob)
+  def onSpawn(mob)
     $api.setName(mob, "a skeleton")
     $api.setGraphic(mob, 0x2A)
-
+    
+    setType(mob, :aggressive)
     setStats(mob, :str => 30..40, :dex => 30..50, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 500)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 500)
     $api.setAttribute(mob, Attribute::MAGIC_DEFENSE, 200)
-  end
-
-  def onEnterArea(me, player)
-    beAggressiveToThemAndAll(me, player)
-  end
-
-  def onAttacked(me, attacker)
-    beAggressiveToThemAndAll(me, attacker)
   end
 
   def onDeath(me, corpse)

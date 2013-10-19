@@ -92,7 +92,9 @@ public interface ScriptAPI {
     public void refreshStats(Mobile mob);
     public void lookAt(Mobile who, SLObject what);
     public boolean runToward(Mobile who, Mobile to);
+    public boolean runAway(Mobile who, Mobile from);
     public void attack(Mobile attacker, Mobile defender);
+    public Mobile getNearestMobile(Mobile from);
 
     public int randomHairStyle(int graphic);
     public int randomHairHue();

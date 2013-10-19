@@ -480,7 +480,6 @@ public abstract class Mobile extends SLObject implements SendableMobile {
     }
 
     public synchronized void rewardAttribute(Attribute stat, long amount) {
-        System.out.println("reawarding " + stat + ": " + amount);
         if(amount > 0) {
             setAttribute(stat, getAttribute(stat) + amount);
         }
@@ -505,6 +504,24 @@ public abstract class Mobile extends SLObject implements SendableMobile {
         case Mobiles.MOBTYPE_SKELETON:      return 8;
         case Mobiles.MOBTYPE_WOLF:          return 3;
         default:                            return 1;
+        }
+    }
+
+    public boolean hasFightAnimation() {
+        switch(graphic) {
+        case Mobiles.MOBTYPE_GUARD:
+        case Mobiles.MOBTYPE_HUMAN_FEMALE:
+        case Mobiles.MOBTYPE_HUMAN_MALE:
+        case Mobiles.MOBTYPE_LORD_BRITISH:
+        case Mobiles.MOBTYPE_ORC:
+        case Mobiles.MOBTYPE_ORC_CAPTAIN:
+        case Mobiles.MOBTYPE_SKELETON:      return true;
+
+        case Mobiles.MOBTYPE_WOLF:
+        case Mobiles.MOBTYPE_RABBIT:
+        case Mobiles.MOBTYPE_DEER:          return false;
+
+        default:                            return false;
         }
     }
 }

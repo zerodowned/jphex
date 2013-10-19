@@ -49,7 +49,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public static final int SPEECH_RANGE = 10;
     public static final int ENTER_AREA_RANGE = 5;
     public static final int STAT_REFRESH_DELAY = 1200;
-    public static final int DECAY_MINUTES = 1;
+    public static final int DECAY_MINUTES = 15;
 
     // Make an ingame day be one real hour
     public static final int SECONDS_PER_INGAME_HOUR = 150;
@@ -309,7 +309,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     @Override
-    public synchronized List<SLStatic> getStaticAndDynamicsAtLocation(Point2D loc) {
+    public synchronized List<SLStatic> getStaticsAndDynamicsAtLocation(Point2D loc) {
         List<SLStatic> res = new LinkedList<SLStatic>(SLData.get().getStatics().getStatics(loc));
         for(SLObject obj : getObjectsInRange(loc, 0)) {
             if(obj instanceof Item && loc.equals(obj.getLocation())) {
@@ -346,6 +346,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     // if yes, returns dest point, otherwise null
     public Point3D canWalk(Mobile who, Direction dir) {
         Point3D dest = SLData.get().getElevatedPoint(who.getLocation(), dir, this);
+        if(dest == null) {
+            log.finer("can't walk");
+        }
         return dest;
     }
 
@@ -893,13 +896,17 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             attackSound = attacker.getMissSound();
         }
 
-        FightPacket packet = new FightPacket(false, attacker, defender);
-        for(Player p : getInterestedPlayers(attacker)) {
-            p.sendPacket(packet);
+        if(attacker.hasFightAnimation()) {
+            FightPacket packet = new FightPacket(false, attacker, defender);
+            for(Player p : getInterestedPlayers(attacker)) {
+                p.sendPacket(packet);
+            }
         }
+
         if(attackSound != null)  {
             playSound(attackSound, attacker.getLocation());
         }
+
         if(painSound != null) {
             playSound(painSound, defender.getLocation());
         }
@@ -1213,10 +1220,6 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         } else if(defender == oldDefender) {
             // already doing this fight
             return;
-        }
-
-        if(defender instanceof NPC) {
-            ((NPC) defender).onAttacked(attacker);
         }
 
         Runnable fight = new Runnable() {

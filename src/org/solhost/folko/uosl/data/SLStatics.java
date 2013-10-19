@@ -86,7 +86,7 @@ public class SLStatics implements ObjectLister {
     }
 
     @Override
-    public List<SLStatic> getStaticAndDynamicsAtLocation(Point2D loc) {
+    public List<SLStatic> getStaticsAndDynamicsAtLocation(Point2D loc) {
         return getStatics(loc);
     }
 }

@@ -80,7 +80,7 @@ public class SLData {
         int finalZ = -128;
         int edi = -128;
         boolean staticsAllowWalking = false;
-        for(SLStatic stat : lister.getStaticAndDynamicsAtLocation(dest)) {
+        for(SLStatic stat : lister.getStaticsAndDynamicsAtLocation(dest)) {
             StaticTile tile = tiles.getStaticTile(stat.getStaticID());
             int eax = stat.getLocation().getZ();
             if(eax > currZp9) {
@@ -190,7 +190,7 @@ public class SLData {
         StaticTile walkOn = null;
         boolean canWalk = true;
         int finalZ = mapZ;
-        for(SLStatic stat : lister.getStaticAndDynamicsAtLocation(dest)) {
+        for(SLStatic stat : lister.getStaticsAndDynamicsAtLocation(dest)) {
             StaticTile staTile = tiles.getStaticTile(stat.getStaticID());
             int staHeight = tiles.getStaticHeight(stat.getStaticID());
             int staLowerZ = stat.getLocation().getZ();
@@ -380,7 +380,7 @@ public class SLData {
 
         List<Point3D> path = getDirectPath(src, dest);
         for(Point3D point : path) {
-            for(SLStatic obj : lister.getStaticAndDynamicsAtLocation(point)) {
+            for(SLStatic obj : lister.getStaticsAndDynamicsAtLocation(point)) {
                 StaticTile stat = tiles.getStaticTile(obj.getStaticID());
                 int lowerZ = obj.getLocation().getZ();
                 int upperZ = lowerZ + stat.height;
