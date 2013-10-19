@@ -24,6 +24,7 @@ import org.solhost.folko.jphex.types.Player;
 
 public interface MobileBehavior {
     public void onSpawn(Mobile mob);
+    public void onLoad(Mobile mob);
     public void onEnterArea(Mobile mob, Player player);
     public void onHello(Mobile mob, Player player); // when a player says "Hello" and we're the nearest NPC
     public boolean onDoubleClick(Mobile mob, Player player); // return true if paperdoll should be opened

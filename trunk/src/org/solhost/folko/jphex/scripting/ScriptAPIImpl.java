@@ -456,6 +456,25 @@ public class ScriptAPIImpl implements ScriptAPI {
     }
 
     @Override
+    public boolean runAway(Mobile who, Mobile from) {
+        int distance = who.distanceTo(from);
+        if(distance > World.VISIBLE_RANGE) {
+            // already away
+            return false;
+        } else {
+            // try running next step
+            Direction dir = who.getLocation().getDirectionTo(from.getLocation()).getOpposingDirection();
+            who.setFacing(dir);
+            Point3D newLoc = world.canWalk(who, dir);
+            if(newLoc == null) {
+                return false;
+            }
+            who.setLocation(newLoc);
+            return true;
+        }
+    }
+
+    @Override
     public void attack(Mobile attacker, Mobile defender) {
         attacker.setOpponent(defender);
     }
@@ -538,8 +557,24 @@ public class ScriptAPIImpl implements ScriptAPI {
     public Collection<Mobile> getMobilesInRange(SLObject rangeObj, int range) {
         List<Mobile> res = new LinkedList<Mobile>();
         for(SLObject obj : world.getObjectsInRange(rangeObj.getLocation(), range)) {
+            if(obj == rangeObj) continue;
             if(obj instanceof Mobile && obj.isVisible()) {
                 res.add((Mobile) obj);
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public Mobile getNearestMobile(Mobile from) {
+        int nearest = Integer.MAX_VALUE;
+        Mobile res = null;
+        for(Mobile mob : getMobilesInRange(from, World.VISIBLE_RANGE)) {
+            if(mob == from) continue;
+            int dist = from.distanceTo(mob);
+            if(dist < nearest) {
+                nearest = dist;
+                res = mob;
             }
         }
         return res;

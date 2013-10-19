@@ -29,6 +29,7 @@ class Guard < BaseMobile
     $api.setName(mob, "a guard")
     $api.setGraphic(mob, 0x2E)
 
+    setType(mob, :responding)
     setStats(mob, :str => 90..110, :dex => 90..110, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 800)
@@ -38,10 +39,6 @@ class Guard < BaseMobile
 
   def onEnterArea(me, player)
     $api.say(me, "Greetings, citizen #{player.getName()}!")
-  end
-
-  def onAttacked(me, attacker)
-    beAggressiveToThemOnly(me, attacker)
   end
 
   def onDeath(me, corpse)

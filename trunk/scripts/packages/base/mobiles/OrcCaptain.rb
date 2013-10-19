@@ -38,19 +38,12 @@ class OrcCaptain < BaseMobile
     $api.setName(mob, "an orc captain")
     $api.setGraphic(mob, 0x29)
 
+    setType(mob, :aggressive)
     setStats(mob, :str => 120..160, :dex => 120..160, :int => 20..30)
 
     $api.setAttribute(mob, Attribute::MELEE, 1000)
     $api.setAttribute(mob, Attribute::BATTLE_DEFENSE, 1000)
     $api.setAttribute(mob, Attribute::MAGIC_DEFENSE, 1000)
-  end
-
-  def onEnterArea(me, player)
-    beAggressiveToThemAndAll(me, player)
-  end
-
-  def onAttacked(me, attacker)
-    beAggressiveToThemAndAll(me, attacker)
   end
 
   def onDeath(me, corpse)

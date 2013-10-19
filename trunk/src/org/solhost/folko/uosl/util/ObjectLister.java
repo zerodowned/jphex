@@ -27,5 +27,5 @@ import org.solhost.folko.uosl.types.Point2D;
 // used to implement things like move checking for NPCs and path finding
 public interface ObjectLister {
     // return entries with all Z values, e.g. items and statics
-    public List<SLStatic> getStaticAndDynamicsAtLocation(Point2D loc);
+    public List<SLStatic> getStaticsAndDynamicsAtLocation(Point2D loc);
 }

@@ -36,6 +36,7 @@ class Merchant < BaseMobile
     $api.createClothes(me)
     me.setSuffix("the Merchant")
 
+    setType(mob, :shy)
     setStats(me, :str => 40..60, :dex => 40..50, :int => 20..30)
 
     $api.setAttribute(me, Attribute::MELEE, 200)
@@ -74,6 +75,7 @@ class Merchant < BaseMobile
 
   def onAttacked(mob, attacker)
     $api.say(mob, "Guards! Help!")
+    super
   end
 
   def onDeath(me, corpse)

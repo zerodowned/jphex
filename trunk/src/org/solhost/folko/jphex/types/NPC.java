@@ -139,7 +139,22 @@ public class NPC extends Mobile {
     }
 
     @Override
+    public boolean dealDamage(int damage, Mobile source) {
+        if(source != null) {
+            onAttacked(source);
+        }
+        return super.dealDamage(damage, source);
+    }
+
+    @Override
     public void onLoad() {
-        // There is no script handler for this yet
+        MobileBehavior be = ScriptManager.instance().getMobileBehaviour(behavior);
+        if(be != null) {
+            try {
+                be.onLoad(this);
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Script error in onDeath: " + e.getMessage(), e);
+            }
+        }
     }
 }

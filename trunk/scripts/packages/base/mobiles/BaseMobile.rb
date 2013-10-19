@@ -21,29 +21,13 @@ class BaseMobile
 
   @@range = 15
   @@run_delay = 500
-  
-  def onSpawn(mob)
-  end
 
-  def onDoubleClick(me, player)
-    return false
+  # supported: :aggressive, :responding, :shy
+  def setType(mob, type)
+    $api.setObjectProperty(mob, "type", type)
+    $api.setObjectProperty(mob, "state", :idle)
   end
   
-  def onSpeech(mob, player, line)
-  end
-
-  def onHello(me, player)
-  end
-  
-  def onEnterArea(mob, player)
-  end
-  
-  def onAttacked(mob, attacker)
-  end
-  
-  def onDeath(mob, corpse)
-  end
-
   def setStats(mob, stats)
     str = stats[:str] || 1
     dex = stats[:dex] || 1
@@ -66,50 +50,132 @@ class BaseMobile
     $api.setAttribute(mob, Attribute::INTELLIGENCE, int)
     $api.refreshStats(mob)
   end
-
-  def beAggressiveToThemOnly(me, victim)
-    # attack if not already fighting someone else
-    return if me.getOpponent() != nil and me.getOpponent() != victim
-    attackAndChase(me, victim)
-  end
-
-  def beAggressiveToThemAndAll(me, victim)
-    # attack if not already fighting someone else
-    return if me.getOpponent() != nil and me.getOpponent() != victim
-    if not attackAndChase(me, victim)
-      # No Success: Search others
-      me.setOpponent(nil)
-      searchVictims(me)
-    end
-  end
   
-  def attackAndChase(me, victim)
-    # Make sure we don't walk too fast
-    no_action_before = $api.getObjectProperty(me, "noActionBefore") || 0
-    return false if $api.getTimerTicks() < no_action_before
-    
-    $api.attack(me, victim)
-    distance = $api.getDistance(me, victim)
-    if(distance > @@range or !victim.isVisible() || !$api.canSee(me, victim))
-      return false
-    elsif distance > 1
-      # victim not arrived yet, run after him
-      return false if not $api.runToward(me, victim)
-    end
-
-    # Check again (we might arrive the victim or it ran from us, so need another action)
-    $api.setObjectProperty(me, "noActionBefore", $api.getTimerTicks() + @@run_delay)
-    $api.addTimer(@@run_delay) do 
-      attackAndChase(me, victim) if me.getOpponent() == victim
-    end
-    return true
+  def onLoad(mob)
+    $api.setObjectProperty(mob, "state", :idle)
   end
-  
-  def searchVictims(me)
-    # Check if there is a player to chase
-    for player in $api.getNearbyPlayers(me)
-      attackAndChase(me, player)
+
+  def onSpawn(mob)
+  end
+
+  def onDoubleClick(me, player)
+    return false
+  end
+
+  def onSpeech(mob, player, line)
+  end
+
+  def onHello(me, player)
+  end
+
+  def onDeath(mob, corpse)
+  end
+
+  def onEnterArea(mob, player)
+    # A mob enters the area: only react if idle, delegate player selection to methods
+    type = $api.getObjectProperty(mob, "type")
+    case $api.getObjectProperty(mob, "state")
+    when :idle
+      case type
+      when :shy
+        $api.setObjectProperty(mob, "state", :getting_away)
+        runAway(mob)
+      when :aggressive
+        beAggressive(mob)
+      when :responding
+        return
+      end 
+    end
+  end
+
+  def runAway(mob)
+    return if $api.getObjectProperty(mob, "state") != :getting_away or mob.isDeleted()
+    nearest = $api.getNearestMobile(mob)
+    if nearest == nil
+      # No more mobs in range, we can go idling again
+      $api.setObjectProperty(mob, "state", :idle)
       return
+    end
+    $api.runAway(mob, nearest)
+    # No matter if running away worked or not: try again after delay, opponent could change direction
+    $api.addTimer(@@run_delay) { runAway(mob) }
+  end
+
+  # Fight nearest victim
+  def beAggressive(mob)
+    return if mob.isDeleted()
+    nearest = $api.getNearestMobile(mob)
+    if nearest == nil
+      # No more mobs in range, we can go idling again
+      $api.setObjectProperty(mob, "state", :idle)
+    else
+      # Found a mobile, attack them
+      $api.setObjectProperty(mob, "state", :fighting)
+      doFight(mob, nearest)
+    end
+  end
+
+  # Fight chosen victim
+  def doFight(mob, victim)
+    return if $api.getObjectProperty(mob, "state") != :fighting or mob.isDeleted()
+    dist = $api.getDistance(mob, victim)
+    if dist > @@range
+      case $api.getObjectProperty(mob, "type")
+      when :shy
+        $api.setObjectProperty(mob, "state", :getting_away)
+        runAway(mob)
+      when :aggressive
+        beAggressive(mob)
+      when :responding
+        $api.setObjectProperty(mob, "state", :idle)
+      end
+      return 
+    end
+
+    if not victim.isVisible()
+      # Somehow got away, check what to do now
+      case $api.getObjectProperty(mob, "type")
+      when :shy
+        $api.setObjectProperty(mob, "state", :idle)
+      when :responding
+        $api.setObjectProperty(mob, "state", :idle)
+      when :aggressive
+        beAggressive(mob)
+      end
+      return
+    end
+
+    if dist > 1
+      # We need to run towards them because they are not out of range but not in attack range
+      $api.runToward(mob, victim)
+    else
+      # We are close enough to attack
+      $api.attack(mob, victim)
+    end
+    
+    # In both cases we need to check again because the victim could run away
+    $api.addTimer(@@run_delay) { doFight(mob, victim) }
+  end
+
+  def onAttacked(mob, attacker)
+    # A mob attacks us: only respond when not doing something else already
+    type = $api.getObjectProperty(mob, "type")
+    case $api.getObjectProperty(mob, "state")
+    when :idle
+      case type
+      when :shy
+        $api.setObjectProperty(mob, "state", :getting_away)
+        runAway(mob, attacker)
+      when :aggressive
+        beAggressive(mob)
+      when :responding
+        $api.setObjectProperty(mob, "state", :fighting)
+        doFight(mob, attacker)
+      end 
+    when :getting_away
+      # We are taking damage even though we were trying to run - be brave and fight back
+      $api.setObjectProperty(mob, "state", :fighting)
+      doFight(mob, attacker)
     end
   end
 
@@ -124,7 +190,7 @@ class BaseMobile
       if count.is_a?(Range)
         count = rand(count)
       end
-        
+
       1.upto(count) do
         graphic = entry[:graphic] || 0
         if entry[:behavior] != nil
@@ -135,6 +201,5 @@ class BaseMobile
         item.setAmount(amount)
       end
     end
-  end
-  
+  end 
 end
