@@ -4,15 +4,20 @@
 Working so far:
  * Character creation
  * Running around
- * Using items
- * Wearing items
- * Doing combat
+ * Using items (edible food, a sextant..)
+ * Wearing items (all wearable items are avaiable)
+ * Doing combat, hunting deers and rabbits
  * Magery
  * Merchant NPCs that sell items
- * Basic monsters that attack players
+ * Monsters that attack players
  * Stat regeneration
+ * Level and experience system
+ * Item decay
+ * Loot
  * Skill check and gain
  * Day-Night cycle
+ * Usable doors and a script that places them in the whole town
+ * Spawning system
 
 Missing:
  * Look at the issue tracker
