@@ -44,12 +44,12 @@ import org.solhost.folko.uosl.types.Spell;
 public class Item extends SLObject implements SendableItem {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.types");
+    private transient Player draggedBy;
+    private transient List<Item> children;
     private boolean isContainer, isWearable, isStackable;
     private boolean locked;
     private short weight, defaultLayer;
     private byte lightLevel;
-    private transient List<Item> children;
-    private Player draggedBy;
     private int amount, price, height;
     private String behavior;
     private long decayAt;
@@ -328,7 +328,7 @@ public class Item extends SLObject implements SendableItem {
 
     public void setDragged(Player who) {
         this.draggedBy = who;
-        for(ObjectObserver o : observers) o.onDragItem(this, who);
+        for(ObjectObserver o : observers) o.onItemDragged(this, who);
     }
 
     public Player getDraggingPlayer() {

@@ -47,10 +47,11 @@ public class Player extends Mobile {
     private transient TargetObjectHandler targetObject;
     private transient Map<Long, List<Item>> shopList; // current shop listing with amount etc for certain shop npc
     private transient Group group;
-    private boolean isWalking, frozen;
+    private transient Item dragItem;
+    private transient int dragAmount;
+    private transient boolean isWalking, frozen;
     private CommandLevel commandLevel;
     private long seed;
-    private int dragAmount;
     private String email, homepage, realName, password, pcSpecs;
 
     public Player(long serial) {
@@ -161,6 +162,14 @@ public class Player extends Mobile {
     @Override
     public boolean isVisible() {
         return super.isVisible() && isOnline();
+    }
+
+    public void setDraggedItem(Item item) {
+        this.dragItem = item;
+    }
+
+    public Item getDraggedItem() {
+        return dragItem;
     }
 
     public int getDragAmount() {

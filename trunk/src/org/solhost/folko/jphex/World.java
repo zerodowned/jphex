@@ -159,10 +159,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 registry.removeObject(obj.getSerial());
                 continue;
             }
-            if(obj instanceof Player) {
-                // thaw if save happened during casting or so
-                ((Player) obj).thaw();
-            } else if(obj instanceof Mobile) {
+            if(obj instanceof Mobile) {
                 Mobile mob = (Mobile) obj;
                 mob.setOpponent(null);
                 mob.setRefreshRunning(false);
@@ -269,6 +266,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     public synchronized void logoutPlayer(Player player) {
         Group.leaveGroup(player);
+        cancelDrag(player, player.getDraggedItem());
         onlinePlayers.remove(player);
         log.info(player.getName() + " logged out, " + onlinePlayers.size() + " online");
     }
@@ -535,22 +533,49 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
 
     private void doDrag(Player player, Item item, int amount) {
         item.stopDecay();
-        item.setDragged(player);
+        item.setDragged(player); // this makes it invisible for others
         player.setDragAmount(amount);
+        player.setDraggedItem(item);
 
         if(amount != 0 && amount < item.getAmount()) {
             // not dragging the whole pile -> need to create new pile
             Item newPile = item.createCopy(registry.registerItemSerial());
             newPile.setAmount(item.getAmount() - amount);
+            item.setAmount(amount);
             registry.registerObject(newPile);
             if(item.getParent() != null) {
                 Item container = (Item) item.getParent();
                 container.addChild(newPile, newPile.getLocation());
             }
         }
+    }
 
-        // remove the item from screen because it's being dragged
-        item.rememberParent();
+    public synchronized void onDrop(Player player, Item item, Item dropOn, Point3D loc) {
+        if(item.getDraggingPlayer() != player || player.getDraggedItem() != item) {
+            // cheating?
+            log.warning(player.getName() + " dropped " + item.getSerial() + " but dragged by: "
+                    + item.getDraggingPlayer().getSerial() + ", player dragging: " + player.getDraggedItem().getSerial());
+            return;
+        }
+
+        int amount = player.getDragAmount();
+        player.setDragAmount(0);
+        player.setDraggedItem(null);
+        item.dropped();
+
+        if(dropOn != null){
+            if(!player.tryAccess(dropOn)) {
+                cancelDrag(player, item);
+                return;
+            }
+            if(dropOn.isContainer() && !dropOn.acceptsChild(item)) {
+                player.sendSysMessage("You can't put that there.");
+                cancelDrag(player, item);
+                return;
+            }
+        }
+
+        // remove from old location
         SLObject parent = item.getParent();
         if(parent != null) {
             if(parent instanceof Item) {
@@ -561,17 +586,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 mob.unequipItem(item);
             }
         }
-    }
 
-    public synchronized void onDrop(Player player, Item item, Item dropOn, Point3D loc) {
-        if(item.getDraggingPlayer() != player) {
-            // cheating?
-            return;
-        }
-        int amount = player.getDragAmount();
-        player.setDragAmount(0);
-        item.setAmount(amount);
-        item.dropped();
         if(dropOn == null) {
             // to ground
             item.clearParent();
@@ -580,48 +595,22 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         } else {
             // to container or stack
             item.stopDecay();
-            if(player.tryAccess(dropOn)) {
-                if(dropOn.isContainer()) {
-                    if(dropOn.acceptsChild(item)) {
-                        dropOn.addChild(item, loc);
-                    } else {
-                        player.sendSysMessage("You can't put that there.");
-                        cancelDrag(player, item);
-                    }
-                    return;
-                } else {
-                    dropOn.setAmount(dropOn.getAmount() + amount);
-                    item.delete();
-                    return;
-                }
+            if(dropOn.isContainer()) {
+                dropOn.addChild(item, loc);
             } else {
-                cancelDrag(player, item);
-                return;
+                dropOn.setAmount(dropOn.getAmount() + amount);
+                item.delete();
             }
         }
     }
 
     public synchronized void cancelDrag(Player player, Item item) {
-        player.setDragAmount(0);
         if(item == null) {
             return;
         }
         item.dropped();
-        item.restoreParent();
         // trigger observers
-        if(item.isOnGround()) {
-            log.finest("cancelDrag -> toGround");
-            item.setLocation(item.getLocation());
-        } else {
-            SLObject parent = item.getParent();
-            if(parent instanceof Item) {
-                log.finest("cancelDrag -> toContainer");
-                ((Item) parent).addChild(item, item.getLocation());
-            } else if(parent instanceof Mobile) {
-                log.finest("cancelDrag -> toEquip");
-                ((Mobile) parent).equipItem(item);
-            }
-        }
+        item.setLocation(item.getLocation());
     }
 
     public synchronized boolean onEquip(Player player, Item item, Mobile mob, short layer) {
@@ -1175,7 +1164,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     @Override
-    public synchronized void onDragItem(Item itm, Player who) {
+    public synchronized void onItemDragged(Item itm, Player who) {
         for(Player player : getInterestedPlayers(who)) {
             if(player != who) {
                 sendDelete(player, itm);
