@@ -113,8 +113,11 @@ public class Group {
         if(group == null) {
             return;
         }
+
         if(group.leader == player) {
             for(Player member : group.members) {
+                GroupPacket packet = new GroupPacket(null, member);
+                member.sendPacket(packet);
                 member.sendSysMessage("Your group has been disbanded");
                 member.setGroup(null);
             }
@@ -125,6 +128,8 @@ public class Group {
             player.sendSysMessage("You have left the group");
 
             for(Player member : group.members) {
+                GroupPacket packet = new GroupPacket(null, member);
+                member.sendPacket(packet);
                 member.sendSysMessage(player.getName() + " left your group");
             }
         }

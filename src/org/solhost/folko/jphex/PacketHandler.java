@@ -387,7 +387,11 @@ public class PacketHandler implements IPacketHandler {
         Player player = playerClients.get(client);
         Player leader = registry.findPlayer(packet.getLeaderSerial());
         Player added = registry.findPlayer(packet.getAddedSerial());
-        Group.onGroupRequest(player, leader, added);
+        if(leader != null && added != null) {
+            Group.onGroupRequest(player, leader, added);
+        } else {
+            player.sendSysMessage("Invalid group request");
+        }
     }
 
     private void onShopAction(Client client, ShopPacket packet) {
