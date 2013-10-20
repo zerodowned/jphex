@@ -18,12 +18,10 @@
 #-------------------------------------------------------------------------------
 class Test < TextCommand
   def invoke(player, line)
-    $api.targetObject(player) do |mob|
-      if $api.canSee(player, mob)
-        $api.sendSysMessage(player, "You can see that.")
-      else
-        $api.sendSysMessage(player, "You can't see that.")
-      end
+    if $api.canSee($api.findObject(2), $api.findObject(3))
+      $api.sendSysMessage(player, "You can see that.")
+    else
+      $api.sendSysMessage(player, "You can't see that.")
     end
   end
 end
