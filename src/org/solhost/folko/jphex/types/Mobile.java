@@ -634,4 +634,16 @@ public abstract class Mobile extends SLObject implements SendableMobile {
 
         return factor;
     }
+
+    public boolean isHuman() {
+        switch(graphic) {
+        case Mobiles.MOBTYPE_GUARD:
+        case Mobiles.MOBTYPE_HUMAN_FEMALE:
+        case Mobiles.MOBTYPE_HUMAN_MALE:
+        case Mobiles.MOBTYPE_LORD_BRITISH:
+        case Mobiles.MOBTYPE_PALE_HUMAN:
+            return true;
+        }
+        return false;
+    }
 }
