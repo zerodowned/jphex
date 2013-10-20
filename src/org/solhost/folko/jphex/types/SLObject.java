@@ -36,7 +36,7 @@ import org.solhost.folko.uosl.util.ObjectLister;
 public abstract class SLObject implements Serializable, SendableObject {
     private static final long serialVersionUID = 1L;
     protected transient Set<ObjectObserver> observers;
-    protected transient SLObject parent, backupParent; // backup for drag cancelling
+    protected transient SLObject parent;
     protected Map<String, RubyObject> scriptProperties;
     protected long serial;
     protected Point3D location;
@@ -71,7 +71,6 @@ public abstract class SLObject implements Serializable, SendableObject {
         for(ObjectObserver o : observers) o.onObjectDelete(this);
         deleted = true;
         parent = null;
-        backupParent = null;
     }
 
     public void setParent(SLObject parent) {
@@ -80,14 +79,6 @@ public abstract class SLObject implements Serializable, SendableObject {
 
     public SLObject getParent() {
         return parent;
-    }
-
-    public void rememberParent() {
-        this.backupParent = parent;
-    }
-
-    public void restoreParent() {
-        this.parent = backupParent;
     }
 
     public void clearParent() {

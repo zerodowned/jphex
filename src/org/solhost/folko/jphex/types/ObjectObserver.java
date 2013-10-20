@@ -25,7 +25,7 @@ public interface ObjectObserver {
     public void onObjectUpdate(SLObject src);
     public void onObjectDelete(SLObject src);
     public void onLocationChanged(SLObject src, Point3D oldLoc);
-    public void onDragItem(Item src, Player who);
+    public void onItemDragged(Item src, Player who);
     public void onAttributeChanged(Mobile src, Attribute a);
     public void onItemEquipped(Item item, Mobile mob);
     public void onChildAdded(Item container, Item child);
