@@ -18,6 +18,8 @@ Working so far:
  * Day-Night cycle
  * Usable doors and a script that places them in the whole town
  * Spawning system
+ * Grouping (like the party system in modern UO)
+ * Peeking (like Snooping) and Stealing skills
 
 Missing:
  * Look at the issue tracker
