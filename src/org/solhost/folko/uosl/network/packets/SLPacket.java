@@ -168,6 +168,7 @@ public abstract class SLPacket {
         case ShopPacket.ID:             return ShopPacket.read(buffer, dataLength);
         case AttackPacket.ID:           return AttackPacket.read(buffer, dataLength);
         case BoardAddPostPacket.ID:     return BoardAddPostPacket.read(buffer, dataLength);
+        case GroupPacket.ID:            return GroupPacket.read(buffer, dataLength);
         default:                        return UnknownPacket.read(buffer, id, dataLength);
         }
     }

@@ -268,6 +268,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     }
 
     public synchronized void logoutPlayer(Player player) {
+        Group.leaveGroup(player);
         onlinePlayers.remove(player);
         log.info(player.getName() + " logged out, " + onlinePlayers.size() + " online");
     }
@@ -1204,8 +1205,13 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             mob.delete();
             Mobile mostDamager = mob.getMostDamager();
             if(mostDamager instanceof Player) {
+                Player slayer = (Player) mostDamager;
                 long exp = mob.getAttribute(Attribute.STRENGTH) + mob.getAttribute(Attribute.DEXTERITY) + mob.getAttribute(Attribute.INTELLIGENCE);
-                mostDamager.rewardAttribute(Attribute.EXPERIENCE, exp);
+                if(slayer.getGroup() != null) {
+                    slayer.getGroup().rewardExperience(exp);
+                } else {
+                    slayer.rewardAttribute(Attribute.EXPERIENCE, exp);
+                }
             }
         } else {
             mob.delete();

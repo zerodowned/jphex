@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.solhost.folko.jphex.Group;
 import org.solhost.folko.jphex.network.Client;
 import org.solhost.folko.uosl.network.packets.LocationPacket;
 import org.solhost.folko.uosl.network.packets.SLPacket;
@@ -45,6 +46,7 @@ public class Player extends Mobile {
     private transient TargetLocationHandler targetLocation;
     private transient TargetObjectHandler targetObject;
     private transient Map<Long, List<Item>> shopList; // current shop listing with amount etc for certain shop npc
+    private transient Group group;
     private boolean isWalking, frozen;
     private CommandLevel commandLevel;
     private long seed;
@@ -53,6 +55,14 @@ public class Player extends Mobile {
 
     public Player(long serial) {
         super(serial);
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public void freeze() {

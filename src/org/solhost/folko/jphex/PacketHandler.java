@@ -60,6 +60,7 @@ public class PacketHandler implements IPacketHandler {
         case ActionPacket.ID:           onAction(client, (ActionPacket) packet); break;
         case ShopPacket.ID:             onShopAction(client, (ShopPacket) packet); break;
         case BoardAddPostPacket.ID:     onBoardPost(client, (BoardAddPostPacket) packet); break;
+        case GroupPacket.ID:            onGroupRequest(client, (GroupPacket) packet); break;
         default:
             log.fine("Unknown packet from " + client.getRemoteAddress() + ": " + packet);
         }
@@ -186,7 +187,19 @@ public class PacketHandler implements IPacketHandler {
 
     private void onSpeechRequest(Client client, SpeechRequestPacket packet) {
         Player player = playerClients.get(client);
-        world.onSpeech(player, packet.getText(), packet.getColor());
+        switch(packet.getMode()) {
+        case SpeechRequestPacket.MODE_BARK:
+            world.onSpeech(player, packet.getText(), packet.getColor());
+            break;
+        case SpeechRequestPacket.MODE_GROUP:
+            Group.onGroupChat(player, packet.getText(), packet.getColor());
+            break;
+        case SpeechRequestPacket.MODE_WHISPER: // TODO
+        case SpeechRequestPacket.MODE_BROADCAST:
+        case SpeechRequestPacket.MODE_CRY:
+            player.sendSysMessage("Sorry, this speech mode is not yet supported.");
+            break;
+        }
     }
 
     private void onRequest(Client client, RequestPacket packet) {
@@ -368,6 +381,13 @@ public class PacketHandler implements IPacketHandler {
     private void onBoardPost(Client client, BoardAddPostPacket packet) {
         Player player = playerClients.get(client);
         world.onBBoardPost(player, packet.getSubject(), packet.getMessage());
+    }
+
+    private void onGroupRequest(Client client, GroupPacket packet) {
+        Player player = playerClients.get(client);
+        Player leader = registry.findPlayer(packet.getLeaderSerial());
+        Player added = registry.findPlayer(packet.getAddedSerial());
+        Group.onGroupRequest(player, leader, added);
     }
 
     private void onShopAction(Client client, ShopPacket packet) {

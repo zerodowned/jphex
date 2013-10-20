@@ -20,23 +20,32 @@ package org.solhost.folko.uosl.network.packets;
 
 import java.nio.ByteBuffer;
 
-public class SpeechRequestPacket extends SLPacket {
-    public static final short ID = 0x06;
-    public static final short MODE_BARK         = 0x00; // default, switched to with '
-    public static final short MODE_GROUP        = 0x01; // initiated with /
-    public static final short MODE_WHISPER      = 0x02; // initiated with :
-    public static final short MODE_BROADCAST    = 0x03; // initiated with t
-    public static final short MODE_CRY          = 0x04; // initiated with "
+import org.solhost.folko.uosl.network.SendableMobile;
 
-    private String text;
-    private short mode;
-    private long color;
+public class GroupPacket extends SLPacket {
+    public static final short ID = 0x6E;
+    private long leaderSerial, addedSerial;
 
-    public static SpeechRequestPacket read(ByteBuffer buffer, int len) {
-        SpeechRequestPacket res = new SpeechRequestPacket();
-        res.mode = readUByte(buffer); // unknown
-        res.color = readUDWord(buffer);
-        res.text = readString(buffer, len - 5);
+    private GroupPacket() {
+
+    }
+
+    // sending, set leader to null to destroy group
+    public GroupPacket(SendableMobile leader, SendableMobile member) {
+        initWrite(ID, 0x0C);
+        if(leader != null) {
+            addUDWord(leader.getSerial());
+        } else {
+            addUDWord(0);
+        }
+        addUDWord(member.getSerial());
+    }
+
+    // receiving
+    public static GroupPacket read(ByteBuffer b, int len) {
+        GroupPacket res = new GroupPacket();
+        res.leaderSerial = readUDWord(b);
+        res.addedSerial = readUDWord(b);
         return res;
     }
 
@@ -45,15 +54,11 @@ public class SpeechRequestPacket extends SLPacket {
         return ID;
     }
 
-    public short getMode() {
-        return mode;
+    public long getLeaderSerial() {
+        return leaderSerial;
     }
 
-    public String getText() {
-        return text;
-    }
-
-    public long getColor() {
-        return color;
+    public long getAddedSerial() {
+        return addedSerial;
     }
 }
