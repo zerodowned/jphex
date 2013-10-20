@@ -40,7 +40,7 @@ import org.solhost.folko.uosl.types.Spell;
 public class Player extends Mobile {
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger("jphex.types");
-    private static final int ACCESS_ITEM_RANGE = 2;
+    public static final int ACCESS_ITEM_RANGE = 2;
     private static final double DEATH_EXP_LOSS = 0.1;
     private transient Client client;
     private transient TargetLocationHandler targetLocation;
@@ -336,6 +336,15 @@ public class Player extends Mobile {
 
     @Override
     public void onLoad() {
+    }
+
+    public boolean tryPeek(Item container) {
+        return checkSkill(Attribute.PEEK, 0, 1000);
+    }
+
+    public boolean trySteal(Item item, int amount) {
+        int weight = Math.max(1, item.getWeight()) * amount;
+        return checkSkill(Attribute.STEALING, (weight - 1) * 100, 1000);
     }
 
     @Override
