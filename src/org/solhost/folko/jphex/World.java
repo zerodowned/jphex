@@ -573,7 +573,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         item.setAmount(amount);
         item.dropped();
         if(dropOn == null) {
-            // to groud
+            // to ground
             item.clearParent();
             item.setLocation(loc);
             item.decayInMillis(DECAY_MINUTES * 60 * 1000);
