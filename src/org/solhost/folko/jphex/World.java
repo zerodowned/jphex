@@ -368,15 +368,45 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             }
         } else if (obj instanceof Item) {
             Item itm = (Item) obj;
-            if(!player.tryAccess(itm)) {
-                return;
-            }
             if(itm.isContainer()) {
-                sendContainer(player, itm, true);
+                onOpenContainer(player, itm);
             } else {
-                itm.onUse(player);
+                // ordinary item
+                if(player.tryAccess(itm)) {
+                    itm.onUse(player);
+                }
             }
         }
+    }
+
+    public synchronized void onOpenContainer(Player player, Item container) {
+        // players doubleclicks container -> check if peek skill is needed
+        SLObject owner = container.getRoot();
+        if(owner instanceof Mobile && owner != player) {
+            // container owned by someone else -> peek
+            onPeek(player, container);
+        } else if(player.tryAccess(container)) {
+            // container not owned or owned by self
+            sendContainer(player, container, true);
+        }
+    }
+
+    private synchronized void onPeek(Player player, Item container) {
+        SLObject root = container.getRoot();
+        if(!root.inRange(player.getLocation(), Player.ACCESS_ITEM_RANGE)) {
+            player.sendSysMessage("That is too far away.");
+            return;
+        }
+        if(!player.tryPeek(container)) {
+            if(root instanceof Player) {
+                ((Player) root).sendSysMessage(player.getName() + " failed to peek into your backpack.");
+            }
+            player.sendSysMessage("You failed to peek into it.");
+            return;
+        }
+        // success
+        player.sendSysMessage("You silently peek into it.");
+        sendContainer(player, container, true);
     }
 
     public synchronized void onSkillRequest(Player player, Mobile what) {
@@ -464,17 +494,46 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         player.sendPacket(new RemoveObjectPacket(obj));
     }
 
-    public synchronized boolean onDrag(Player player, Item item, int amount) {
+    public synchronized void onDrag(Player player, Item item, int amount) {
         if(item.isLocked()) {
             player.sendSysMessage("That is locked.");
-            return false;
+            player.sendPacket(new CancelDragPacket(false));
+            return;
         }
-        if(!player.tryAccess(item)) {
-            return false;
+
+        SLObject root = item.getRoot();
+        if(root instanceof Mobile && root != player) {
+            // stealing
+            onSteal(player, item, amount);
+        } else {
+            // normal drag
+            if(!player.tryAccess(item) || item.getAmount() < amount) {
+                player.sendPacket(new CancelDragPacket(false));
+                return;
+            }
+            doDrag(player, item, amount);
         }
-        if(item.getAmount() < amount) {
-            return false;
+    }
+
+    private void onSteal(Player player, Item item, int amount) {
+        SLObject owner = item.getRoot();
+        if(!owner.inRange(player.getLocation(), Player.ACCESS_ITEM_RANGE)) {
+            player.sendSysMessage("That is too far away.");
+            player.sendPacket(new CancelDragPacket(false));
+            return;
         }
+        if(player.trySteal(item, amount)) {
+            player.sendSysMessage("You manage to lift it silently");
+            doDrag(player, item, amount);
+        } else {
+            if(owner instanceof Player) {
+                ((Player) owner).sendSysMessage("You catch " + player.getName() + " trying to steal from you!");
+            }
+            player.sendPacket(new CancelDragPacket(true));
+        }
+    }
+
+    private void doDrag(Player player, Item item, int amount) {
         item.stopDecay();
         item.setDragged(player);
         player.setDragAmount(amount);
@@ -502,11 +561,13 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 mob.unequipItem(item);
             }
         }
-
-        return true;
     }
 
     public synchronized void onDrop(Player player, Item item, Item dropOn, Point3D loc) {
+        if(item.getDraggingPlayer() != player) {
+            // cheating?
+            return;
+        }
         int amount = player.getDragAmount();
         player.setDragAmount(0);
         item.setAmount(amount);
@@ -652,15 +713,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 if(container.isOnGround()) {
                     return getOnlinePlayersInRange(obj.getParent().getLocation(), VISIBLE_RANGE);
                 } else {
+                    // the item is in a mobile's backpack or something
+                    // because of the way the peek skill works, every player around needs this information
+                    // TODO: Maybe store a list of currently peeking players on a container
                     SLObject root = container.getRoot();
-                    if(root instanceof Player) {
-                        List<Player> res = new LinkedList<Player>();
-                        res.add((Player) root);
-                        return res;
-                    } else {
-                        // inside a mobile's backpack -> no one can see it
-                        return empty;
-                    }
+                    return getInterestedPlayers(root);
                 }
             } else {
                 // no one can see it

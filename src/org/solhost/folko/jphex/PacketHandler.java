@@ -230,13 +230,10 @@ public class PacketHandler implements IPacketHandler {
         Item item = registry.findItem(packet.getSerial());
         if(item == null) {
             player.sendSysMessage("I cannot move that.");
-            client.send(new CancelDragPacket());
+            client.send(new CancelDragPacket(false));
             return;
         }
-        if(!world.onDrag(player, item, packet.getAmount())) {
-            client.send(new CancelDragPacket());
-            return;
-        }
+        world.onDrag(player, item, packet.getAmount());
     }
 
     private void onDrop(Client client, DropPacket packet) {

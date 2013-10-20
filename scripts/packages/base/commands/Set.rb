@@ -34,6 +34,8 @@ class Set < TextCommand
         when "z"        then $api.moveObject(obj, obj.getLocation().getX(), obj.getLocation().getY(), Integer(value))
         when "magic"    then obj.setAttribute(Attribute::MAGIC, Integer(value))
         when "melee"    then obj.setAttribute(Attribute::MELEE, Integer(value))
+        when "peek"     then obj.setAttribute(Attribute::PEEK, Integer(value))
+        when "stealing" then obj.setAttribute(Attribute::STEALING, Integer(value))
         when "int"      then obj.setAttribute(Attribute::INTELLIGENCE, Integer(value))
         when "mana"     then obj.setAttribute(Attribute::MANA, Integer(value))
         when "hits"     then obj.setAttribute(Attribute::HITS, Integer(value))
