@@ -939,7 +939,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         if(deltaZ > SLData.CHARACHTER_HEIGHT / 2) {
             return true;
         }
-        if(attacker.distanceTo(defender) > 1 || !defender.isVisible()) {
+        if(attacker.distanceTo(defender) > 1 || !defender.isVisible() || !attacker.canSee(defender, VISIBLE_RANGE, this)) {
             return true;
         }
         log.fine("fight ongoing between " + attacker.getName() + " and " + defender.getName());

@@ -384,8 +384,17 @@ public class SLData {
                 StaticTile stat = tiles.getStaticTile(obj.getStaticID());
                 int lowerZ = obj.getLocation().getZ();
                 int upperZ = lowerZ + stat.height;
-                if(lowerZ <= point.getZ() && upperZ >= point.getZ() && !stat.isSurface()) {
-                    return false;
+                if(lowerZ <= point.getZ() && upperZ >= point.getZ()) {
+                    // there's a static that potentially blocks the way.
+                    if(!stat.isSurface()) {
+                        return false;
+                    } else {
+                        // a surface only blocks if it is between on Z
+                        int surfZ = obj.getLocation().getZ();
+                        if((src.getZ() < surfZ && dest.getZ() >= surfZ) || (dest.getZ() < surfZ && src.getZ() >= surfZ)) {
+                            return false;
+                        }
+                    }
                 }
             }
         }
