@@ -24,7 +24,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -404,6 +403,7 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
         }
         // success
         player.sendSysMessage("You silently peek into it.");
+        container.addPeekingPlayer(player);
         sendContainer(player, container, true);
     }
 
@@ -702,34 +702,54 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
                 if(container.isOnGround()) {
                     return getOnlinePlayersInRange(obj.getParent().getLocation(), VISIBLE_RANGE);
                 } else {
-                    // the item is in a mobile's backpack or something
-                    // because of the way the peek skill works, every player around needs this information
-                    // TODO: Maybe store a list of currently peeking players on a container
+                    List<Player> res = new LinkedList<Player>();
                     SLObject root = container.getRoot();
-                    return getInterestedPlayers(root);
+                    if(root instanceof Player) {
+                        // inside a player's backpack -> only player is interested
+                        res.add((Player) root);
+                    }
+                    // need to add players that are peeking inside this container
+                    for(Player p : getOnlinePlayersInRange(root.getLocation(), 2)) {
+                        if(container.isPlayerPeeking(p)) {
+                            res.add(p);
+                        }
+                    }
+                    return res;
                 }
             } else {
                 // no one can see it
-                return new ArrayList<Player>();
+                return empty;
             }
         } else {
-            throw new RuntimeException("don't know who can see " + obj);
+            throw new RuntimeException("don't know who can see " + obj.getSerial());
         }
     }
 
     public synchronized void onSingleClick(Player player, SLObject object) {
+        if(object instanceof Mobile) {
+            showMobileName(player, (Mobile) object, true);
+        } else {
+            log.warning(player.getName() + " singleclicked non-mobile " + object.getSerial());
+        }
+    }
+
+    public synchronized void showMobileName(Player toWhom, Mobile who, boolean extended) {
         long color;
-        String name = object.getName();
-        if(object instanceof Player) {
+        String name = who.getName();
+        if(who instanceof Player) {
             color = SendTextPacket.COLOR_SEE_PLAYER;
-        } else if (object instanceof NPC) {
+        } else if (who instanceof NPC) {
             color = SendTextPacket.COLOR_SEE_NPC;
-            name = ((NPC) object).getDecoratedName();
+            name = ((NPC) who).getDecoratedName();
         } else {
             color = SendTextPacket.COLOR_SYSTEM;
         }
-        SendTextPacket packet = new SendTextPacket(object, SendTextPacket.MODE_SEE, color, name);
-        player.sendPacket(packet);
+        SendTextPacket packet = new SendTextPacket(who, SendTextPacket.MODE_SEE, color, name);
+        toWhom.sendPacket(packet);
+        if(extended && who instanceof Player) {
+            SendTextPacket packet2 = new SendTextPacket(who, SendTextPacket.MODE_SEE, color, "Level " + who.getAttribute(Attribute.LEVEL));
+            toWhom.sendPacket(packet2);
+        }
     }
 
     public synchronized void sayAbove(SLObject obj, String text) {
@@ -1082,9 +1102,11 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             if(obj != player) {
                 log.finer(String.format("sending move of %08X to %s -> update", obj.getSerial(), player.getName()));
                 sendObject(player, obj);
-                if(obj instanceof Mobile && player.distanceTo(oldLoc) > VISIBLE_RANGE) {
-                    // wasn't visible before -> also send equip
-                    sendFullEquipment(player, (Mobile) obj);
+                if(obj instanceof Mobile) {
+                    if(player.distanceTo(oldLoc) > VISIBLE_RANGE) {
+                        // wasn't visible before -> also send equip
+                        sendFullEquipment(player, (Mobile) obj);
+                    }
                 }
             }
         }

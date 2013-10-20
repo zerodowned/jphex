@@ -22,6 +22,7 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
@@ -46,6 +47,7 @@ public class Item extends SLObject implements SendableItem {
     private static final Logger log = Logger.getLogger("jphex.types");
     private transient Player draggedBy;
     private transient List<Item> children;
+    private transient List<Player> peekingPlayers; // if container so we can send changes to them
     private boolean isContainer, isWearable, isStackable;
     private boolean locked;
     private short weight, defaultLayer;
@@ -124,6 +126,20 @@ public class Item extends SLObject implements SendableItem {
                 log.log(Level.SEVERE, "Script error in onLoad: " + e.getMessage(), e);
             }
         }
+    }
+
+    public void addPeekingPlayer(Player player) {
+        if(peekingPlayers == null) {
+            peekingPlayers = new LinkedList<Player>();
+        }
+        peekingPlayers.add(player);
+    }
+
+    public boolean isPlayerPeeking(Player player) {
+        if(peekingPlayers == null) {
+            return false;
+        }
+        return peekingPlayers.contains(player);
     }
 
     public int getHeight() {
