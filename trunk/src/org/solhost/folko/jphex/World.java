@@ -618,6 +618,23 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             if(layer != item.getLayer()) {
                 log.warning(String.format("Player requested equip on layer %d but default is %d", layer, item.getLayer()));
             }
+
+            player.setDragAmount(0);
+            player.setDraggedItem(null);
+            item.dropped();
+
+            // remove from old location
+            SLObject parent = item.getParent();
+            if(parent != null) {
+                if(parent instanceof Item) {
+                    Item container = (Item) parent;
+                    container.removeChild(item);
+                } else if(parent instanceof Mobile) {
+                    Mobile oldMob = (Mobile) parent;
+                    oldMob.unequipItem(item);
+                }
+            }
+
             player.equipItem(item);
             return true;
         } else {
