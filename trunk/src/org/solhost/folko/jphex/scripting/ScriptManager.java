@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import org.jruby.Ruby;
 import org.jruby.RubyClass;
 import org.jruby.RubyInstanceConfig.CompileMode;
+import org.jruby.RubyObject;
 import org.jruby.embed.PathType;
 import org.jruby.embed.ScriptingContainer;
 import org.jruby.javasupport.JavaEmbedUtils;
@@ -61,6 +62,7 @@ public class ScriptManager {
         log.config("Using Ruby " + ruby.getCompatVersion());
         Ruby.setThreadLocalRuntime(ruby.getProvider().getRuntime());
         ruby.setCompileMode(CompileMode.FORCE);
+        ruby.runScriptlet("require 'yaml'");
         ruby.runScriptlet("java_import " + ScriptAPI.class.getName());
         ruby.runScriptlet("java_import " + ItemBehavior.class.getName());
         ruby.runScriptlet("java_import " + MobileBehavior.class.getName());
@@ -174,6 +176,28 @@ public class ScriptManager {
 
     public IRubyObject toRubyObject(Object object) {
         return JavaEmbedUtils.javaToRuby(ruby.getProvider().getRuntime(), object);
+    }
+
+    public String serialize(RubyObject object) {
+        ruby.put("$obj", object);
+        Object res = ruby.runScriptlet("YAML::dump($obj)");
+        if(res instanceof String) {
+            return (String) res;
+        } else {
+            log.warning("Couldn't serialize " + object);
+            return "";
+        }
+    }
+
+    public RubyObject deserialize(String serialized) {
+        ruby.put("$ser", serialized);
+        Object res = ruby.runScriptlet("YAML::load($ser)");
+        if(res != null) {
+            return (RubyObject) toRubyObject(res);
+        } else {
+            log.warning("Couldn't deserialize ' " + serialized + "'");
+            return null;
+        }
     }
 
     public boolean reload() {
