@@ -22,8 +22,10 @@ Just run "java -jar JPhex-0.0.1.jar" from a console (such as cmd.exe on Windows)
 = Connecting with the client =
 After you have configured the client with Ingerimm and started the server, you should be able to connect.
 
-= Using the server=
+= Using the client with the server=
 There are quite a few text commands that can be used to create items, spawns NPCs etc. When using the server for the first time, you should use #doorgen to automatically create doors and #spawnergen to create some spawners. Check out the scripts/packages/base/commands directory for more commands.
+
+Do not resize the client's window as that will cause gumps to be drawn outside the drawable range. If you run a version of Windows that creates thick borders, you should increase the vertical size a little so you can see the text input line.
 
 = Using ViewSL=
 To explore the available items or get interesting coordinates for using #goto, you could use ViewSL. You can start it from the console through "java -jar ViewSL-0.0.1.jar" or just doubleclick it as it is a GUI application.
