@@ -27,6 +27,16 @@ There are quite a few text commands that can be used to create items, spawns NPC
 
 Do not resize the client's window as that will cause gumps to be drawn outside the drawable range. If you run a version of Windows that creates thick borders, you should increase the vertical size a little so you can see the text input line.
 
+== Some commands ==
+
+  * #save - save the world state
+  * #spawn `<`template> - spawns an NPC. Templates: see scripts/packages/base/mobiles. You can add files there and use #reload to use them immediately
+  * #reload - reloads the scripts
+  * #create `<`graphic or template> `[`bag`]` - creates an item. Example: #create 0x386 creates a spellbook, #create food bag creates random food in your backpack.
+  * #goto `<`x> `<`y> `[`z`]` - goes to specified coordinates
+  * #go `<`place> - goes to a predefined place, currently only #go britain
+  * #set `<`property`>` `<`value`>` sets an attribute to a value, for example #set magic 1000 to set magery to 100%
+
 = Using ViewSL=
 To explore the available items or get interesting coordinates for using #goto, you could use ViewSL. You can start it from the console through "java -jar ViewSL-0.0.1.jar" or just doubleclick it as it is a GUI application.
 
