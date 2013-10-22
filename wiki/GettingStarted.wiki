@@ -31,3 +31,6 @@ Do not resize the client's window as that will cause gumps to be drawn outside t
 To explore the available items or get interesting coordinates for using #goto, you could use ViewSL. You can start it from the console through "java -jar ViewSL-0.0.1.jar" or just doubleclick it as it is a GUI application.
 
 To move around in the game view, you can use the arrow keys or WASD and Q, E, Z and C for diagonal movement. Using the R key toggles roof drawing.
+
+= Comments =
+This is a pre-alpha release of the pre-alpha UO server, so expect a lot of bugs. If you find any, please mail them to me.
