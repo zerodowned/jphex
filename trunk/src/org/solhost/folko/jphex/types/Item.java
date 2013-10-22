@@ -430,8 +430,18 @@ public class Item extends SLObject implements SendableItem {
     }
 
     public boolean acceptsChild(Item item) {
-        if(graphic == Items.GFX_SPELLBOOK && Spell.fromScrollGraphic(item.getGraphic()) == null) {
-            return false;
+        if(graphic == Items.GFX_SPELLBOOK) {
+            Spell spell = Spell.fromScrollGraphic(item.getGraphic());
+            if(spell == null) {
+                // trying to insert something that's not a spell into spellbook
+                return false;
+            }
+            for(Item scroll : children) {
+                if(scroll.getGraphic() == item.getGraphic()) {
+                    // scroll already present
+                    return false;
+                }
+            }
         }
 
         return true;

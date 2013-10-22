@@ -20,10 +20,15 @@ class SpawnerGen < TextCommand
   @@spawners = [
       # Blacksmith
       {:x => 393, :y => 532, :z => 0, :type => 0x044B, :count => 1, :duration => 10, :range => 0},
+      {:x => 448, :y => 647, :z => 0, :type => 0x044B, :count => 1, :duration => 10, :range => 0},
       # Provisioner
       {:x => 478, :y => 654, :z => 0, :type => 0x0455, :count => 1, :duration => 10, :range => 0},
+      {:x => 407, :y => 587, :z => 0, :type => 0x0455, :count => 1, :duration => 10, :range => 0},
       # Mage
       {:x => 462, :y => 528, :z => 0, :type => 0x0451, :count => 1, :duration => 10, :range => 0},
+      # Cook
+      {:x => 443, :y => 599, :z => 0, :type => 0x044D, :count => 1, :duration => 10, :range => 0},
+
       # Rabbit
       {:x => 169, :y => 855, :z => 0, :type => 0x043F, :count => 5, :duration => 3, :range => 10},
       {:x => 266, :y => 512, :z => 0, :type => 0x043F, :count => 5, :duration => 3, :range => 10},

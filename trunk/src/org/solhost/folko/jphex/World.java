@@ -334,9 +334,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
             if(dest == null) {
                 return false;
             }
-            if(running && !player.consumeAttribute(Attribute.FATIGUE, 1)) {
-                return false;
-            }
+            //if(running && !player.consumeAttribute(Attribute.FATIGUE, 1)) {
+            //    return false;
+            //}
             player.setWalking(true);
             player.setLocation(dest);
             player.setWalking(false);
@@ -910,7 +910,9 @@ public class World implements ObjectObserver, SerialObserver, ObjectLister, Time
     public synchronized void onCastSpell(Player player, Spell spell, Item scroll, Point3D at, Mobile on) {
         if(scroll != null && !player.tryAccess(scroll)) {
             return;
-        } else if(!player.hasSpell(spell)) {
+        }
+
+        if(scroll == null && !player.hasSpell(spell)) {
             player.sendSysMessage("You do not have that spell");
             return;
         }
