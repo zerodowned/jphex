@@ -27,3 +27,5 @@ There are quite a few text commands that can be used to create items, spawns NPC
 
 = Using ViewSL=
 To explore the available items or get interesting coordinates for using #goto, you could use ViewSL. You can start it from the console through "java -jar ViewSL-0.0.1.jar" or just doubleclick it as it is a GUI application.
+
+To move around in the game view, you can use the arrow keys or WASD and Q, E, Z and C for diagonal movement. Using the R key toggles roof drawing.
