@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.jruby.RubyObject;
+import org.solhost.folko.jphex.scripting.ScriptManager;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.network.SendableObject;
 import org.solhost.folko.uosl.types.Point2D;
@@ -37,7 +38,7 @@ public abstract class SLObject implements Serializable, SendableObject {
     private static final long serialVersionUID = 1L;
     protected transient Set<ObjectObserver> observers;
     protected transient SLObject parent;
-    protected Map<String, RubyObject> scriptProperties;
+    protected transient Map<String, RubyObject> scriptProperties;
     protected long serial;
     protected Point3D location;
     protected int graphic, hue;
@@ -162,9 +163,29 @@ public abstract class SLObject implements Serializable, SendableObject {
         return scriptProperties.get(name);
     }
 
+    private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
+        stream.defaultWriteObject();
+        stream.writeInt(scriptProperties.size());
+        for(String key : scriptProperties.keySet()) {
+            String serialized = ScriptManager.instance().serialize(scriptProperties.get(key));
+            stream.writeObject(key);
+            stream.writeObject(serialized);
+        }
+    }
+
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         stream.defaultReadObject();
+
         this.observers = new CopyOnWriteArraySet<ObjectObserver>();
+        this.scriptProperties = new HashMap<String, RubyObject>();
+
+        int count = stream.readInt();
+        for(int i = 0; i < count; i++) {
+            String key = (String) stream.readObject();
+            String data = (String) stream.readObject();
+            RubyObject obj = ScriptManager.instance().deserialize(data);
+            scriptProperties.put(key, obj);
+        }
     }
 
     // at startup
