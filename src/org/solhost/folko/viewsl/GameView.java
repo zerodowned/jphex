@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
+ * Copyright (c) 2013, 2014 Folke Will <folke.will@gmail.com>
  *
  * This file is part of JPhex.
  *
@@ -58,6 +58,9 @@ import org.solhost.folko.uosl.util.Pathfinder;
 
 public class GameView extends JPanel {
     private static final long serialVersionUID = 1070070853406868736L;
+    private static final int TILE_SIZE = 44;
+    private static final double TARGET_FPS = 25.0;
+
     private final Map<Integer, Image> mapTileCache;
     private final Map<Integer, Image> staticTileCache;
     private final Map<Point2D, Image> polygonCache;
@@ -74,9 +77,6 @@ public class GameView extends JPanel {
     private boolean cutOffZ, hackMover;
     private final int projectConstant;
 
-    private static final int TILE_SIZE = 44;
-    private static final double TARGET_FPS = 25.0;
-
     // needed for polygon rasterization
     private class RasterInfo {
         int x, y;
@@ -89,6 +89,7 @@ public class GameView extends JPanel {
             this.ty = ty;
         }
     };
+
     class RasterQuad {
         RasterInfo[] raster;
         boolean isRegular;
@@ -111,6 +112,7 @@ public class GameView extends JPanel {
             return res;
         }
     }
+
     private RasterInfo[] leftSide, rightSide;
 
     public GameView(final SLData data) {
@@ -125,8 +127,7 @@ public class GameView extends JPanel {
         this.mapTileCache = new HashMap<>();
         this.staticTileCache = new HashMap<>();
         this.polygonCache = new HashMap<>();
-        // this.sceneCenter = new Point3D(379, 607, 0);
-        this.sceneCenter = new Point3D(352, 719, 0);
+        this.sceneCenter = new Point3D(379, 607, 0);
         this.lastRedraw = System.currentTimeMillis();
         this.redrawTimer = new Timer((int) (1000.0 / TARGET_FPS), new ActionListener() {
             public void actionPerformed(ActionEvent e) {
