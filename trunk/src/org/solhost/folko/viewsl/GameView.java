@@ -24,8 +24,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -34,6 +32,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -61,6 +60,7 @@ public class GameView extends JPanel {
     private static final long serialVersionUID = 1070070853406868736L;
     private final Map<Integer, Image> mapTileCache;
     private final Map<Integer, Image> staticTileCache;
+    private final Map<Point2D, Image> polygonCache;
     private Point3D sceneCenter;
     private final SLData data;
     private final SLMap map;
@@ -72,9 +72,46 @@ public class GameView extends JPanel {
     private double lastFPS;
     private Pathfinder finder;
     private boolean cutOffZ, hackMover;
+    private final int projectConstant;
 
     private static final int TILE_SIZE = 44;
     private static final double TARGET_FPS = 25.0;
+
+    // needed for polygon rasterization
+    private class RasterInfo {
+        int x, y;
+        double tx, ty;
+
+        public RasterInfo(int x, int y, double tx, double ty) {
+            this.x = x;
+            this.y = y;
+            this.tx = tx;
+            this.ty = ty;
+        }
+    };
+    class RasterQuad {
+        RasterInfo[] raster;
+        boolean isRegular;
+        int minX, minY, maxX, maxY;
+
+        public RasterQuad() {
+            minX = Integer.MAX_VALUE;
+            minY = Integer.MAX_VALUE;
+            maxX = Integer.MIN_VALUE;
+            maxY = Integer.MIN_VALUE;
+            raster = new RasterInfo[4];
+        }
+
+        public Polygon toPolygon() {
+            Polygon res = new Polygon();
+            res.addPoint(raster[0].x, raster[0].y);
+            res.addPoint(raster[1].x, raster[1].y);
+            res.addPoint(raster[2].x, raster[2].y);
+            res.addPoint(raster[3].x, raster[3].y);
+            return res;
+        }
+    }
+    private RasterInfo[] leftSide, rightSide;
 
     public GameView(final SLData data) {
         this.data = data;
@@ -82,11 +119,14 @@ public class GameView extends JPanel {
         this.art = data.getArt();
         this.statics = data.getStatics();
         this.tiles = data.getTiles();
-        this.cutOffZ = true;
+        this.cutOffZ = false;
         this.hackMover = true;
-        this.mapTileCache = new HashMap<Integer, Image>();
-        this.staticTileCache = new HashMap<Integer, Image>();
-        this.sceneCenter = new Point3D(379, 607, 0);
+        this.projectConstant = 4;
+        this.mapTileCache = new HashMap<>();
+        this.staticTileCache = new HashMap<>();
+        this.polygonCache = new HashMap<>();
+        // this.sceneCenter = new Point3D(379, 607, 0);
+        this.sceneCenter = new Point3D(352, 719, 0);
         this.lastRedraw = System.currentTimeMillis();
         this.redrawTimer = new Timer((int) (1000.0 / TARGET_FPS), new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -201,8 +241,8 @@ public class GameView extends JPanel {
             for(int x = sceneCenter.getX() - drawDist; x <= sceneCenter.getX() + drawDist; x++) {
                 if(x >= 0 && x < 1024 && y >= 0 && y < 1024) {
                     Point3D point = new Point3D(x, y, getZ(x, y));
-                    //drawGrid(g, point, Color.blue);
                     drawMapTile(g, point);
+                    // drawGrid(g, point, Color.blue);
                     drawStatics(g, point);
                 }
             }
@@ -214,36 +254,28 @@ public class GameView extends JPanel {
     }
 
     protected void markCenter(Graphics g) {
-        Point center = transform(sceneCenter);
+        Point center = project(sceneCenter);
         g.fillOval(center.x - 4, center.y - 4, 8, 8);
     }
 
     protected void drawGrid(Graphics g, Point3D p, Color color) {
-        Polygon poly = new Polygon();
-        Double theta = getPointPolygon(poly, p);
-        if(theta == null) {
-            Point center = transform(p);
-            poly.addPoint(center.x, center.y + TILE_SIZE / 2);
-            poly.addPoint(center.x - TILE_SIZE / 2, center.y);
-            poly.addPoint(center.x, center.y - TILE_SIZE / 2);
-            poly.addPoint(center.x + TILE_SIZE / 2, center.y);
-        }
+        RasterQuad r = getPointPolygon(p);
         g.setColor(color);
-        g.drawPolygon(poly);
+        g.drawPolygon(r.toPolygon());
     }
 
     private void drawPath(Graphics g) {
         if(finder != null && finder.hasPath()) {
             List<Direction> path = finder.getPath();
             Point3D curLoc = finder.getStart();
-            Point lastPoint = transform(curLoc), curPoint;
+            Point lastPoint = project(curLoc), curPoint;
             for(Direction dir : path) {
                 Point3D nextLoc = data.getElevatedPoint(curLoc, dir, statics);
                 if(nextLoc == null) {
                     System.err.println("invalid path move: " + dir);
                     break;
                 }
-                curPoint = transform(nextLoc);
+                curPoint = project(nextLoc);
                 g.drawLine(lastPoint.x, lastPoint.y, curPoint.x, curPoint.y);
                 lastPoint = curPoint;
                 curLoc = nextLoc;
@@ -265,7 +297,7 @@ public class GameView extends JPanel {
 
         Point mousePoint = getMousePosition();
         if(mousePoint != null) {
-            Point2D igp = transform(mousePoint);
+            Point2D igp = projectBack(mousePoint);
             info = String.format("Mouse at %4d, %4d on screen -> %4d, %4d in game",
                     mousePoint.x, mousePoint.y, igp.getX(), igp.getY());
             g.drawString(info, 10, 35);
@@ -297,21 +329,25 @@ public class GameView extends JPanel {
     }
 
     private void drawMapTile(Graphics g, Point3D pos) {
-        Point center = transform(pos);
         int landID = map.getTextureID(pos);
-        Image image = getMapTileImage(landID);
+        LandTile landTile = tiles.getLandTile(landID);
 
-        Polygon poly = new Polygon();
-        Double theta = getPointPolygon(poly, pos);
-        if(theta == null) {
-            g.drawImage(image, center.x - TILE_SIZE / 2, center.y - TILE_SIZE / 2, null);
-        } else {
-            LandTile tile = tiles.getLandTile(landID);
-            Image texture = image;
-            if(tile.textureID != 0) {
-                texture = getStaticTileImage(tile.textureID);
+        // check whether there is a big tile to project onto irregular polygons
+        boolean canProject = landTile.textureID != 0;
+
+        // check whether we actually need to use the projection
+        RasterQuad quad = getPointPolygon(pos);
+        if(!quad.isRegular && canProject) {
+            Image image = getMapTilePolygon(pos, quad, landTile.textureID);
+            if(image != null) {
+                g.drawImage(image, quad.minX, quad.minY, null);
             }
-            drawTexture(g, poly, texture, theta);
+        } else {
+            Point center = project(pos);
+            Image image = getMapTileImage(landID);
+            if(image != null) {
+                g.drawImage(image, center.x - TILE_SIZE / 2, center.y - TILE_SIZE / 2, null);
+            }
         }
     }
 
@@ -345,7 +381,7 @@ public class GameView extends JPanel {
     }
 
     private void drawStatics(Graphics g, Point3D pos) {
-        Point center = transform(new Point3D(pos, 0));
+        Point center = project(new Point3D(pos, 0));
         for(SLStatic s : sortStatics(statics.getStatics(pos))) {
             if(s.getLocation().getZ() - sceneCenter.getZ() > 10 && cutOffZ) {
                 continue;
@@ -354,7 +390,7 @@ public class GameView extends JPanel {
             Image image = getStaticTileImage(s.getStaticID());
             if(image != null) {
                 int xOff = 0, yOff = 0;
-                int z = s.getLocation().getZ() * 4;
+                int z = s.getLocation().getZ() * projectConstant;
 
                 xOff = -(TILE_SIZE / 2);
                 yOff = TILE_SIZE / 2 - image.getHeight(null) - z;
@@ -364,6 +400,20 @@ public class GameView extends JPanel {
                 g.drawImage(image, center.x + xOff, center.y + yOff, null);
             }
         }
+    }
+
+    private Image getMapTilePolygon(Point2D where, RasterQuad quad, int textureId) {
+        Image image;
+        if(!polygonCache.containsKey(where)) {
+            Image textureImage = getStaticTileImage(textureId);
+            image = rasterizePolygonWithTexture(quad, (BufferedImage) textureImage);
+            if(image != null) {
+                polygonCache.put(where, image);
+            }
+        } else {
+            image = polygonCache.get(where);
+        }
+        return image;
     }
 
     private Image getMapTileImage(int id) {
@@ -405,62 +455,188 @@ public class GameView extends JPanel {
         return image;
     }
 
-    private void drawTexture(Graphics g, Polygon poly, Image image, double angle) {
-        for(int i = 0; i < poly.npoints; i++) {
-            if(poly.xpoints[i] < 0) poly.xpoints[i] = 0;
-            if(poly.ypoints[i] < 0) poly.ypoints[i] = 0;
-            if(poly.xpoints[i] >= getWidth() - 1) poly.xpoints[i] = getWidth() - 1;
-            if(poly.ypoints[i] >= getHeight() - 1) poly.ypoints[i] = getHeight() - 1;
+    private void reallocateRasterInfo(int height) {
+        if(leftSide == null || leftSide.length < height) {
+            leftSide = new RasterInfo[height];
+            for(int i = 0; i < height; i++) {
+                leftSide[i] = new RasterInfo(0, 0, 0, 0);
+            }
         }
-        Shape before = g.getClip();
-        g.setClip(poly);
-        Rectangle box = poly.getBounds();
-        if(box.width > 0 && box.height > 0) {
-//            double w = image.getWidth(null), h = image.getHeight(null);
-//            double nh = box.height;
-//            double nw = w / h * nh;
-//            AffineTransform scale = AffineTransform.getScaleInstance(w / nw, h / nh);
-//            AffineTransform rot = AffineTransform.getRotateInstance(Math.PI / 4, w / 2, h / 2);
-//            scale.concatenate(rot);
-//            AffineTransformOp op = new AffineTransformOp(scale, AffineTransformOp.TYPE_BILINEAR);
-//            image = op.filter((BufferedImage) image, null);
-            g.drawImage(image, box.x, box.y, null);
+        if(rightSide == null || rightSide.length < height) {
+            rightSide = new RasterInfo[height];
+            for(int i = 0; i < height; i++) {
+                rightSide[i] = new RasterInfo(0, 0, 0, 0);
+            }
         }
-        g.setClip(before);
+    }
+
+    private BufferedImage rasterizePolygonWithTexture(RasterQuad quad, BufferedImage textureImage) {
+        // texture coordinates are in [0, 1] so we need to know the actual dimensions
+        double imgMaxX = textureImage.getWidth() - 1;
+        double imgMaxY = textureImage.getHeight() - 1;
+
+        // find orientation of the polygon
+        int n = 4, topIndex = 0, bottomIndex = 0;
+        for(int i = 0; i < n; i++) {
+            if(quad.raster[i].y > quad.raster[bottomIndex].y) {
+                bottomIndex = i;
+            }
+            if(quad.raster[i].y < quad.raster[topIndex].y) {
+                topIndex = i;
+            }
+        }
+
+        // calculate result height and y offset
+        int height = quad.raster[bottomIndex].y - quad.raster[topIndex].y + 1;
+        int minY = quad.raster[topIndex].y;
+        if(height == 0) {
+            return null;
+        }
+
+        // approximate polygon texture coordinates
+        reallocateRasterInfo(height);
+        for(int i = topIndex; i != bottomIndex; ) {
+            int j = (i == 0) ? (n - 1) : (i - 1);
+            linearApprox(quad.raster[i], quad.raster[j], minY, leftSide);
+            i = j;
+        }
+
+        for(int i = topIndex; i != bottomIndex; ) {
+            int j = (i + 1) % n;
+            linearApprox(quad.raster[i], quad.raster[j], minY, rightSide);
+            i = j;
+        }
+
+        // check if left and right are swapped
+        RasterInfo[] left = leftSide, right = rightSide;
+        int mid = (quad.raster[bottomIndex].y + quad.raster[topIndex].y) / 2;
+        if(leftSide[mid - minY].x > rightSide[mid - minY].x) {
+            left = rightSide;
+            right = leftSide;
+        }
+
+        // calculate output width and x offset
+        int maxX = Integer.MIN_VALUE;
+        int minX = Integer.MAX_VALUE;
+        for(int y = quad.raster[topIndex].y; y <= quad.raster[bottomIndex].y; y++) {
+            int startX = left[y - minY].x;
+            int endX = right[y - minY].x;
+            if(endX < startX) {
+                continue;
+            }
+            if(startX < minX) {
+                minX = startX;
+            }
+            if(endX > maxX) {
+                maxX = endX;
+            }
+        }
+        int width = maxX - minX + 1;
+
+        BufferedImage rasterImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        for(int y = quad.raster[topIndex].y; y <= quad.raster[bottomIndex].y; y++) {
+            RasterInfo start = left[y - minY];
+            RasterInfo end = right[y - minY];
+            int len = end.x - start.x + 1;
+            if(len < 0) {
+                // this happens if the polygon becomes concave, ignore for now because
+                // the cases where this happens are are and these polygons are not really
+                // visible anyways
+                continue;
+            }
+            double txStep = (end.tx - start.tx) / len;
+            double tyStep = (end.ty - start.ty) / len;
+            double tx = start.tx;
+            double ty = start.ty;
+            for(int x = start.x; x <= end.x; x++) {
+                int dstX = x - minX;
+                int dstY = y - minY;
+                int srcX = (int) (tx * imgMaxX);
+                int srcY = (int) (ty * imgMaxY);
+                rasterImage.setRGB(dstX, dstY, textureImage.getRGB(srcX, srcY));
+                tx += txStep;
+                ty += tyStep;
+            }
+        }
+        return rasterImage;
+    }
+
+    private void linearApprox(RasterInfo start, RasterInfo end, int rasterOffset, RasterInfo[] side) {
+        int height = end.y - start.y + 1;
+        if(height == 0) {
+            // just create a straight line starting at "start"
+            side[start.y - rasterOffset].x = start.x;
+            side[start.y - rasterOffset].y = start.y;
+            side[start.y - rasterOffset].tx = start.tx;
+            side[start.y - rasterOffset].ty = start.ty;
+            return;
+        }
+        double xStep = (end.x - start.x) / (double) height;
+        double txStep = (end.tx - start.tx) / height;
+        double tyStep = (end.ty - start.ty)/ height;
+        double curX = start.x;
+        double curTx = start.tx;
+        double curTy = start.ty;
+        for(int y = start.y; y <= end.y; y++) {
+            side[y - rasterOffset].x = (int) (curX + 0.5);
+            side[y - rasterOffset].y = y;
+            side[y - rasterOffset].tx = curTx;
+            side[y - rasterOffset].ty = curTy;
+            curX += xStep;
+            curTx += txStep;
+            curTy += tyStep;
+        }
     }
 
     private int getZ(int x, int y) {
         return map.getTileElevation(x, y);
     }
 
-    private Double getPointPolygon(Polygon dest, Point3D point) {
+    private RasterQuad getPointPolygon(Point3D point) {
+        RasterQuad res = new RasterQuad();
+        res.isRegular = false;
         int east = getZ(point.getX() + 1, point.getY());
         int south = getZ(point.getX(), point.getY() + 1);
         int southEast = getZ(point.getX() + 1, point.getY() + 1);
         int our = point.getZ();
 
-        Point top = transform(point);
+        Point top = project(point);
         top.y -= TILE_SIZE / 2;
 
-        int y2 = TILE_SIZE / 2 + (our - east) * 4;
-        int y3 = TILE_SIZE     + (our - southEast) * 4;
-        int y4 = TILE_SIZE / 2 + (our - south) * 4;
+        int dy2 = (our - east) * projectConstant;
+        int dy3 = (our - southEast) * projectConstant;
+        int dy4 = (our - south) * projectConstant;
 
-        if(y2 == TILE_SIZE / 2 && y3 == TILE_SIZE  && y4 == TILE_SIZE / 2) {
-            // TODO: Check what real client does
-            return null;
+        if(dy2 == 0 && dy3 == 0 && dy4 == 0) {
+            res.isRegular = true;
         }
 
-        dest.reset();
-        dest.addPoint(top.x, top.y); // top
-        dest.addPoint(top.x + TILE_SIZE / 2, top.y + y2); // right
-        dest.addPoint(top.x, top.y + y3); // bottom
-        dest.addPoint(top.x - TILE_SIZE / 2, top.y + y4); // left
-        return 0.0;
+        res.raster[0] = new RasterInfo(top.x, top.y, 0, 0); // top
+        res.raster[1] = new RasterInfo(top.x + TILE_SIZE / 2, top.y + TILE_SIZE / 2 + dy2, 1, 0); // right
+        res.raster[2] = new RasterInfo(top.x, top.y + TILE_SIZE + dy3, 1, 1); // bottom
+        res.raster[3] = new RasterInfo(top.x - TILE_SIZE / 2, top.y + TILE_SIZE / 2 + dy4, 0, 1); // left
+
+        for(int i = 0; i < 4; i++) {
+            if(res.raster[i].x < res.minX) {
+                res.minX = res.raster[i].x;
+            }
+            if(res.raster[i].x > res.maxX) {
+                res.maxX = res.raster[i].x;
+            }
+            if(res.raster[i].y < res.minY) {
+                res.minY = res.raster[i].y;
+            }
+            if(res.raster[i].y > res.maxY) {
+                res.maxY = res.raster[i].y;
+            }
+        }
+
+        return res;
     }
 
     // game -> screen, returns center of tile
-    private Point transform(Point3D src) {
+    private Point project(Point3D src) {
         int width = getWidth();
         int height = getHeight();
 
@@ -471,12 +647,12 @@ public class GameView extends JPanel {
 
         // direction vector on screen
         int dxS = (dxG - dyG) * TILE_SIZE / 2;
-        int dyS = (dxG + dyG) * TILE_SIZE / 2 - dzG * 4;
+        int dyS = (dxG + dyG) * TILE_SIZE / 2 - dzG * projectConstant;
 
         return new Point(width / 2 + dxS, height / 2 + dyS);
     }
 
-    private Point3D transform(Point src) {
+    private Point3D projectBack(Point src) {
         int width = getWidth();
         int height = getHeight();
 
