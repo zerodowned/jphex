@@ -57,25 +57,26 @@ import org.solhost.folko.uosl.types.Point3D;
 import org.solhost.folko.uosl.util.Pathfinder;
 
 public class GameView extends JPanel {
-    private static final long serialVersionUID = 1070070853406868736L;
-    private static final int TILE_SIZE = 44;
-    private static final double TARGET_FPS = 25.0;
+    private static final long   serialVersionUID    = 1L;
+    private static final int    TILE_SIZE           = 44;
+    private static final double TARGET_FPS          = 25.0;
+    private static final int    PROJECTION_CONSTANT = 4;
 
     private final Map<Integer, Image> mapTileCache;
     private final Map<Integer, Image> staticTileCache;
     private final Map<Point2D, Image> polygonCache;
-    private Point3D sceneCenter;
     private final SLData data;
     private final SLMap map;
     private final SLArt art;
     private final SLTiles tiles;
     private final SLStatics statics;
     private final Timer redrawTimer;
+    private Point3D sceneCenter;
     private long lastRedraw, drawDuration, lastFPSUpdate;
     private double lastFPS;
     private Pathfinder finder;
-    private boolean cutOffZ, hackMover;
-    private final int projectConstant;
+    private boolean cutOffZ = false, hackMover = true;
+    private boolean drawGrid = false, drawLand = true, drawStatics = true;
 
     // needed for polygon rasterization
     private class RasterInfo {
@@ -121,9 +122,6 @@ public class GameView extends JPanel {
         this.art = data.getArt();
         this.statics = data.getStatics();
         this.tiles = data.getTiles();
-        this.cutOffZ = false;
-        this.hackMover = true;
-        this.projectConstant = 4;
         this.mapTileCache = new HashMap<>();
         this.staticTileCache = new HashMap<>();
         this.polygonCache = new HashMap<>();
@@ -197,6 +195,15 @@ public class GameView extends JPanel {
                 case KeyEvent.VK_H:
                     hackMover = !hackMover;
                     break;
+                case KeyEvent.VK_1:
+                    drawGrid = !drawGrid;
+                    break;
+                case KeyEvent.VK_2:
+                    drawLand = !drawLand;
+                    break;
+                case KeyEvent.VK_3:
+                    drawStatics = !drawStatics;
+                    break;
                 }
                 if(dir != null) {
                     moveCenter(dir);
@@ -242,9 +249,15 @@ public class GameView extends JPanel {
             for(int x = sceneCenter.getX() - drawDist; x <= sceneCenter.getX() + drawDist; x++) {
                 if(x >= 0 && x < 1024 && y >= 0 && y < 1024) {
                     Point3D point = new Point3D(x, y, getZ(x, y));
-                    drawMapTile(g, point);
-                    // drawGrid(g, point, Color.blue);
-                    drawStatics(g, point);
+                    if(drawLand) {
+                        drawMapTile(g, point);
+                    }
+                    if(drawGrid) {
+                        drawGrid(g, point, Color.blue);
+                    }
+                    if(drawStatics) {
+                        drawStatics(g, point);
+                    }
                 }
             }
         }
@@ -391,7 +404,7 @@ public class GameView extends JPanel {
             Image image = getStaticTileImage(s.getStaticID());
             if(image != null) {
                 int xOff = 0, yOff = 0;
-                int z = s.getLocation().getZ() * projectConstant;
+                int z = s.getLocation().getZ() * PROJECTION_CONSTANT;
 
                 xOff = -(TILE_SIZE / 2);
                 yOff = TILE_SIZE / 2 - image.getHeight(null) - z;
@@ -605,9 +618,9 @@ public class GameView extends JPanel {
         Point top = project(point);
         top.y -= TILE_SIZE / 2;
 
-        int dy2 = (our - east) * projectConstant;
-        int dy3 = (our - southEast) * projectConstant;
-        int dy4 = (our - south) * projectConstant;
+        int dy2 = (our - east) * PROJECTION_CONSTANT;
+        int dy3 = (our - southEast) * PROJECTION_CONSTANT;
+        int dy4 = (our - south) * PROJECTION_CONSTANT;
 
         if(dy2 == 0 && dy3 == 0 && dy4 == 0) {
             res.isRegular = true;
@@ -648,7 +661,7 @@ public class GameView extends JPanel {
 
         // direction vector on screen
         int dxS = (dxG - dyG) * TILE_SIZE / 2;
-        int dyS = (dxG + dyG) * TILE_SIZE / 2 - dzG * projectConstant;
+        int dyS = (dxG + dyG) * TILE_SIZE / 2 - dzG * PROJECTION_CONSTANT;
 
         return new Point(width / 2 + dxS, height / 2 + dyS);
     }
