@@ -20,9 +20,15 @@ package org.solhost.folko.uosl.data;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class SLGumps {
-    private final SLDataFile gumps;
+    public static final int GUMP_ENTRY_COUNT = 65535;
+    private final SortedMap<Integer, GumpEntry> gumpEntries;
 
     public class GumpEntry {
         public int id;
@@ -30,40 +36,44 @@ public class SLGumps {
     }
 
     public SLGumps(String gumpsPath) throws IOException {
-        gumps = new SLDataFile(gumpsPath, true);
+        gumpEntries = new TreeMap<>();
+        readGumps(gumpsPath);
     }
 
-    public synchronized GumpEntry getGump(int id) {
-        GumpEntry res = new GumpEntry();
+    /**
+     * Sorted in ascending order
+     * @return all gump IDs in ascending order
+     */
+    public List<Integer> getAllGumpIDs() {
+        Integer[] ids = gumpEntries.keySet().toArray(new Integer[0]);
+        return Collections.unmodifiableList(Arrays.asList(ids));
+    }
 
-        // I think the client has the Gump offsets hardcoded, but
-        // as a Gump entry always starts with 0x01, we can just read
-        // the gumps one after another and then search for 0x01 to
-        // find the next entry
+    public GumpEntry getGump(int id) {
+        return gumpEntries.get(id);
+    }
 
-        // skip previous gumps as we don't have a GUMPIDX file
-        gumps.seek(0);
-        for(int i = 0; i < id; i++) {
-            // skip until start of entry entry
-            while(gumps.readUByte() != 0x01) {}
+    private void readGumps(String gumpsPath) throws IOException {
+        // we can only read all gumps at once because there is no index file
+        SLDataFile gumps = new SLDataFile(gumpsPath, false);
+        for(int i = 0; i < GUMP_ENTRY_COUNT; i++) {
+            boolean hasData = (gumps.readUByte() == 1);
+            if(!hasData) {
+                continue;
+            }
             int width = gumps.readUWord();
             int height = gumps.readUWord();
-            gumps.skip(width * height * 2);
-        }
-
-        // skip until start of entry
-        while(gumps.readUByte() != 0x01) {}
-        int width = gumps.readUWord();
-        int height = gumps.readUWord();
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for(int y = 0; y < height; y++) {
-            for(int x = 0; x < width; x++) {
-                int color = gumps.readUWord();
-                image.setRGB(x, y, SLColor.convert555(color, 0xFF));
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            for(int y = 0; y < height; y++) {
+                for(int x = 0; x < width; x++) {
+                    int color = gumps.readUWord();
+                    image.setRGB(x, y, SLColor.convert555(color, 0xFF));
+                }
             }
+            GumpEntry entry = new GumpEntry();
+            entry.id = i;
+            entry.image = image;
+            gumpEntries.put(i, entry);
         }
-        res.id = id;
-        res.image = image;
-        return res;
     }
 }
