@@ -127,7 +127,7 @@ public class ArtView extends JPanel {
             name = tile.name;
             entry = art.getLandArt(id);
             if(entry != null) {
-                String info = String.format("0x%04X: %s", entry.id, name);
+                String info = String.format("0x%04X: %s, Unknown: %08X", entry.id, name, (int) entry.unknown);
                 landPanel.setBorder(BorderFactory.createTitledBorder(info));
             }
         } else {
