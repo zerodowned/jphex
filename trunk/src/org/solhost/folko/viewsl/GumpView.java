@@ -22,6 +22,7 @@ import java.awt.BorderLayout;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
@@ -37,12 +38,11 @@ import org.solhost.folko.uosl.data.SLGumps.GumpEntry;
 
 public class GumpView extends JPanel {
     private static final long serialVersionUID = 2447630322701777960L;
+    private final List<Integer> gumpIDs;
     private SLGumps gumps;
     private ImagePanel imagePanel;
     private JList<String> gumpList;
     private JLabel gumpLabel, coordsLabel;
-
-    private static final int NUM_GUMPS = 77;
 
     public GumpView(SLGumps gumps) {
         this.gumps = gumps;
@@ -52,7 +52,8 @@ public class GumpView extends JPanel {
 
         DefaultListModel<String> model = new DefaultListModel<String>();
         gumpList = new JList<String>(model);
-        for(int i = 0; i < NUM_GUMPS; i++)  {
+        gumpIDs = gumps.getAllGumpIDs();
+        for(int i : gumpIDs) {
             model.addElement(String.format("%02X", i));
         }
 
@@ -85,7 +86,7 @@ public class GumpView extends JPanel {
     }
 
     private void selectGump(int listIndex) {
-        GumpEntry entry = gumps.getGump(listIndex);
+        GumpEntry entry = gumps.getGump(gumpIDs.get(listIndex));
         gumpLabel.setText(String.format("0x%04X", entry.id));
         imagePanel.setImage(entry.image);
     }
