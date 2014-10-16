@@ -37,7 +37,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.solhost.folko.uosl.data.SLArt;
-import org.solhost.folko.uosl.data.SLArt.AnimationEntry;
+import org.solhost.folko.uosl.data.SLArt.MobileAnimation;
+import org.solhost.folko.uosl.types.Direction;
 
 public class AnimationView extends JPanel {
     private static final long serialVersionUID = -225672106193952019L;
@@ -48,7 +49,7 @@ public class AnimationView extends JPanel {
     private SLArt art;
     private Timer timer;
     private int currentFrame;
-    private AnimationEntry currentAnimation;
+    private MobileAnimation currentAnimation;
 
     private static final int ANIMATION_DELAY = 80;
 
@@ -109,8 +110,8 @@ public class AnimationView extends JPanel {
             timer.stop();
             timer = null;
         }
-        int id = artList.getModel().getElementAt(idx).id;
-        currentAnimation = art.getAnimationEntry(id);
+        ArtListEntry entry = artList.getModel().getElementAt(idx);
+        currentAnimation = art.getAnimationEntry(entry.id, entry.dir, entry.fighting);
         currentFrame = 0;
         artLabel.setText(String.format("0x%04X: %d frames", currentAnimation.id, currentAnimation.frames.size()));
         updateFrame();
@@ -127,27 +128,36 @@ public class AnimationView extends JPanel {
 
 class ArtListEntry {
     public int id;
+    public Direction dir;
+    public boolean fighting;
 
     @Override
     public String toString() {
-        return String.format("%04X", id);
+        return String.format("%04X %s %s", id, dir.toString(), fighting ? "Fighting" : "Walking");
     }
 }
 
 class ArtListModel extends AbstractListModel<ArtListEntry> {
     private static final long serialVersionUID = 1L;
-    private static final int MAX_FRAMES = 32768;
+    private static final int MAX_MOBILES = 0x3F;
     private final List<ArtListEntry> entries;
 
     public ArtListModel(SLArt art) {
         entries = new LinkedList<ArtListEntry>();
-        for(int i = 0; i < MAX_FRAMES; i++)  {
-            AnimationEntry artEntry = art.getAnimationEntry(i);
-            if(artEntry != null) {
-                i += artEntry.frames.size() - 1; // -1 because loop will do ++
-                ArtListEntry listEntry = new ArtListEntry();
-                listEntry.id = i;
-                entries.add(listEntry);
+        for(int i = 0; i < MAX_MOBILES; i++)  {
+            for(short dir = 0; dir < 8; dir++) {
+                for(int fighting = 0; fighting < 2; fighting++) {
+                    Direction d = Direction.parse(dir);
+                    boolean isFighting = fighting == 1;
+                    MobileAnimation artEntry = art.getAnimationEntry(i, d, isFighting);
+                    if(artEntry != null) {
+                        ArtListEntry listEntry = new ArtListEntry();
+                        listEntry.id = i;
+                        listEntry.dir = d;
+                        listEntry.fighting = isFighting;
+                        entries.add(listEntry);
+                    }
+                }
             }
         }
     }

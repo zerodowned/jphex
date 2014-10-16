@@ -63,7 +63,7 @@ public class SLData {
         palette = new SLPalette(dataPath +  "/PALETTE.MUL");
         statics = new SLStatics(dataPath +  "/STATICS0.MUL", dataPath + "/STAIDX0.MUL");
         sound = new SLSound(dataPath +      "/SOUND.MUL", dataPath + "/SOUNDIDX.MUL");
-        art = new SLArt(dataPath +          "/ART.MUL", dataPath + "/ARTIDX.MUL");
+        art = new SLArt(dataPath +          "/ART.MUL", dataPath + "/ARTIDX.MUL", dataPath + "/ANIMDATA.MUL");
         tiles = new SLTiles(dataPath +      "/TILEDATA.MUL");
         gumps = new SLGumps(dataPath +      "/GUMPS.MUL");
     }
