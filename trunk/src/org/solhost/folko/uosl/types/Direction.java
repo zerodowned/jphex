@@ -49,6 +49,20 @@ public enum Direction {
         }
     }
 
+    public int getFrameIndex() {
+        switch(this) {
+        case NORTH:         return 3;
+        case NORTH_EAST:    return 2;
+        case EAST:          return 1;
+        case SOUTH_EAST:    return 0;
+        case SOUTH:         return 1;
+        case SOUTH_WEST:    return 2;
+        case WEST:          return 3;
+        case NORTH_WEST:    return 4;
+        default:            return -1;
+        }
+    }
+
     public Direction getOpposingDirection() {
         switch(this) {
         case NORTH:         return SOUTH;
