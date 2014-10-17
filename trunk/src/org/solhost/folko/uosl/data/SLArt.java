@@ -127,7 +127,7 @@ public class SLArt {
 
         int alpha = 0xFF;
         if(translucent){
-            alpha = 0xD0;
+            alpha = 0xC0;
         }
 
         artData.readUDWord(); // unknown, probably size of encoded data

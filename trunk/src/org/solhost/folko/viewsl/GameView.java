@@ -95,6 +95,7 @@ public class GameView extends JPanel {
         RasterInfo[] raster;
         boolean isRegular;
         int minX, minY, maxX, maxY;
+        double lightLevel;
 
         public RasterQuad() {
             minX = Integer.MAX_VALUE;
@@ -555,7 +556,7 @@ public class GameView extends JPanel {
             int len = end.x - start.x + 1;
             if(len < 0) {
                 // this happens if the polygon becomes concave, ignore for now because
-                // the cases where this happens are are and these polygons are not really
+                // the cases where this happens are rare and these polygons are not really
                 // visible anyways
                 continue;
             }
@@ -568,12 +569,26 @@ public class GameView extends JPanel {
                 int dstY = y - minY;
                 int srcX = (int) (tx * imgMaxX);
                 int srcY = (int) (ty * imgMaxY);
-                rasterImage.setRGB(dstX, dstY, textureImage.getRGB(srcX, srcY));
+                int dstColor = applyLightLevel(textureImage.getRGB(srcX, srcY), quad.lightLevel);
+                rasterImage.setRGB(dstX, dstY, dstColor);
                 tx += txStep;
                 ty += tyStep;
             }
         }
         return rasterImage;
+    }
+
+    private int applyLightLevel(int color, double level) {
+        int a = (color & 0xFF000000) >> 24;
+        int r = (color & 0x00FF0000) >> 16;
+        int g = (color & 0x0000FF00) >>  8;
+        int b = (color & 0x000000FF) >>  0;
+
+        r = Math.min((int) (r * level + 0.5), 255);
+        g = Math.min((int) (g * level + 0.5), 255);
+        b = Math.min((int) (b * level + 0.5), 255);
+
+        return (a << 24) | (r << 16) | (g << 8) | (b << 0);
     }
 
     private void linearApprox(RasterInfo start, RasterInfo end, int rasterOffset, RasterInfo[] side) {
@@ -610,26 +625,32 @@ public class GameView extends JPanel {
     private RasterQuad getPointPolygon(Point3D point) {
         RasterQuad res = new RasterQuad();
         res.isRegular = false;
+
+        // to calculate slopes and light, we need to check our height vs our neighbors
+        int selfZ = point.getZ();
         int east = getZ(point.getX() + 1, point.getY());
         int south = getZ(point.getX(), point.getY() + 1);
         int southEast = getZ(point.getX() + 1, point.getY() + 1);
-        int our = point.getZ();
 
         Point top = project(point);
         top.y -= TILE_SIZE / 2;
 
-        int dy2 = (our - east) * PROJECTION_CONSTANT;
-        int dy3 = (our - southEast) * PROJECTION_CONSTANT;
-        int dy4 = (our - south) * PROJECTION_CONSTANT;
+        res.lightLevel = calculateLightLevel(selfZ, east, south, southEast);
 
-        if(dy2 == 0 && dy3 == 0 && dy4 == 0) {
+        // calculate slopes
+        int dzEast =      (selfZ - east)        * PROJECTION_CONSTANT;
+        int dzSouthEast = (selfZ - southEast)   * PROJECTION_CONSTANT;
+        int dzSouth =     (selfZ - south)       * PROJECTION_CONSTANT;
+
+        if(dzEast == 0 && dzSouthEast == 0 && dzSouth == 0) {
             res.isRegular = true;
         }
 
-        res.raster[0] = new RasterInfo(top.x, top.y, 0, 0); // top
-        res.raster[1] = new RasterInfo(top.x + TILE_SIZE / 2, top.y + TILE_SIZE / 2 + dy2, 1, 0); // right
-        res.raster[2] = new RasterInfo(top.x, top.y + TILE_SIZE + dy3, 1, 1); // bottom
-        res.raster[3] = new RasterInfo(top.x - TILE_SIZE / 2, top.y + TILE_SIZE / 2 + dy4, 0, 1); // left
+        // the order in a regular tile is top, right, bottom, left
+        res.raster[0] = new RasterInfo(top.x,                   top.y,                           0, 0);
+        res.raster[1] = new RasterInfo(top.x + TILE_SIZE / 2,   top.y + TILE_SIZE / 2 + dzEast,  1, 0);
+        res.raster[2] = new RasterInfo(top.x,                   top.y + TILE_SIZE + dzSouthEast, 1, 1);
+        res.raster[3] = new RasterInfo(top.x - TILE_SIZE / 2,   top.y + TILE_SIZE / 2 + dzSouth, 0, 1);
 
         for(int i = 0; i < 4; i++) {
             if(res.raster[i].x < res.minX) {
@@ -647,6 +668,29 @@ public class GameView extends JPanel {
         }
 
         return res;
+    }
+
+    private double calculateLightLevel(int selfZ, int east, int south, int southEast) {
+        // TODO: think of something better
+        if(selfZ < south && selfZ < east && selfZ < southEast) {
+            return 0.98;
+        } else if(selfZ < south && selfZ < east && selfZ >= southEast) {
+            return 1.05;
+        } else if(selfZ < south && selfZ >= east && selfZ < southEast) {
+            return 0.98;
+        } else if(selfZ < south && selfZ >= east && selfZ >= southEast) {
+            return 0.98;
+        } else if(selfZ >= south && selfZ < east && selfZ < southEast) {
+            return 1.08;
+        } else if(selfZ >= south && selfZ < east && selfZ >= southEast) {
+            return 1.08;
+        } else if(selfZ >= south && selfZ >= east && selfZ < southEast) {
+            return 1;
+        } else if(selfZ > south && selfZ > east && selfZ > southEast) {
+            return 1.08;
+        } else {
+            return 1;
+        }
     }
 
     // game -> screen, returns center of tile
