@@ -138,6 +138,19 @@ public class ObjectRegistry {
         }
     }
 
+    public synchronized Player findPlayer(String name) {
+        for(SLObject obj : objects.values()) {
+            String objName = obj.getName();
+            if(!(obj instanceof Player) || objName == null)  {
+                continue;
+            }
+            if(objName.toLowerCase().equals(name.toLowerCase())) {
+                return (Player) obj;
+            }
+        }
+        return null;
+    }
+
     public synchronized Player findPlayer(long serial) {
         SLObject obj = objects.get(serial);
         if(obj instanceof Player) {

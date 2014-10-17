@@ -20,14 +20,21 @@ package org.solhost.folko.uosl.network.packets;
 
 import java.nio.ByteBuffer;
 
+import org.solhost.folko.uosl.types.Items;
+
 public class LoginPacket extends SLPacket {
     public static final short ID = 0x01;
+    // addition for SLClient: when this serial is used for seed and serial, try logging in via name
+    public static final long LOGIN_BY_NAME = Items.SERIAL_FIRST;
     private long serial, seed, version;
     private String name, homepage, email, realName, pcSpecs, password;
     private short gender;
     private short strength, dexterity, intelligence, skinHue, hairHue, hairStyle;
 
     public LoginPacket() {
+    }
+
+    public void prepareSend() {
         initWrite(ID, 0x253);
         addUDWord(serial);
         addUDWord(seed);
@@ -77,8 +84,11 @@ public class LoginPacket extends SLPacket {
         this.seed = seed;
     }
 
-    public void setName(String name, String realName) {
+    public void setName(String name) {
         this.name = name;
+    }
+
+    public void setRealName(String realName) {
         this.realName = realName;
     }
 

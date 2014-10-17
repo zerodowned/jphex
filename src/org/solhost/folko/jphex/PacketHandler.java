@@ -82,37 +82,59 @@ public class PacketHandler implements IPacketHandler {
 
     private void onLoginRequest(Client client, LoginPacket packet) {
         long serial = packet.getSerial();
+        long seed = packet.getSeed();
+        Player player = null;
         if(serial == 0) {
+            log.fine("Client wants to create charater " + packet.getName());
             onCreatePlayer(client, packet);
+            return;
+        } else if(serial == LoginPacket.LOGIN_BY_NAME && seed == LoginPacket.LOGIN_BY_NAME) {
+            // SLClient login for existing player
+            log.fine("Login from SLClient: " + packet.getName());
+            player = registry.findPlayer(packet.getName());
         } else if(registry.findPlayer(serial) != null) {
-            // existing player
-            Player player = registry.findPlayer(serial);
-            if(player.getSeed() != packet.getSeed()) {
+            // original client login for existing player
+            log.fine("Login from original client: " + packet.getName());
+            player = registry.findPlayer(serial);
+            if(player.getSeed() != seed) {
                 // client has old version of the player or something
                 client.send(new LoginErrorPacket(LoginErrorPacket.REASON_CHAR_NOT_FOUND));
                 return;
             }
-            if(!player.getPassword().equals(packet.getPassword())) {
-                client.send(new LoginErrorPacket(LoginErrorPacket.REASON_PASSWORD));
-                return;
-            }
-            if(player.isOnline()) {
-                client.send(new LoginErrorPacket(LoginErrorPacket.REASON_OTHER));
-                return;
-            }
-
-            // everything ok
-            playerClients.put(client, player);
-            player.setClient(client);
-            world.sendInitSequence(player);
-            world.loginPlayer(player);
         } else {
+            log.fine("Login with non-existent character " + packet.getName());
+        }
+
+        if(player == null) {
             // unknown player
             client.send(new LoginErrorPacket(LoginErrorPacket.REASON_CHAR_NOT_FOUND));
+            return;
         }
+
+        if(!player.getPassword().equals(packet.getPassword())) {
+            client.send(new LoginErrorPacket(LoginErrorPacket.REASON_PASSWORD));
+            return;
+        }
+        if(player.isOnline()) {
+            client.send(new LoginErrorPacket(LoginErrorPacket.REASON_OTHER));
+            return;
+        }
+
+        // everything ok
+        playerClients.put(client, player);
+        player.setClient(client);
+        world.sendInitSequence(player);
+        world.loginPlayer(player);
     }
 
     private void onCreatePlayer(Client client, LoginPacket packet) {
+        String playerName = packet.getName().trim();
+        if(registry.findPlayer(playerName) != null) {
+            // already exists
+            client.send(new LoginErrorPacket(LoginErrorPacket.REASON_OTHER));
+            return;
+        }
+
         int statSum = packet.getStrength() + packet.getDexterity() + packet.getIntelligence();
         if(statSum == 0) {
             // this happens if a previous creation failed
@@ -126,7 +148,7 @@ public class PacketHandler implements IPacketHandler {
         // TODO: verify values (stat sum ~100, max each stat = 75 etc)
 
         player.setSeed(Util.random(0, Integer.MAX_VALUE));
-        player.setName(packet.getName());
+        player.setName(playerName);
         player.setHomepage(packet.getHomepage());
         player.setEmail(packet.getEmail());
         player.setRealName(packet.getRealName());

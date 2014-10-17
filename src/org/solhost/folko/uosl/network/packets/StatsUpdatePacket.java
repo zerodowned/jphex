@@ -18,11 +18,15 @@
  ******************************************************************************/
 package org.solhost.folko.uosl.network.packets;
 
+import java.nio.ByteBuffer;
+
+import org.solhost.folko.uosl.network.MobileStub;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.types.Attribute;
 
 public class StatsUpdatePacket extends SLPacket {
     public static final short ID = 0x4C;
+    private SendableMobile mobile;
 
     public StatsUpdatePacket(SendableMobile mob, boolean relativeHitsOnly) {
         initWrite(ID, 0x14);
@@ -50,6 +54,29 @@ public class StatsUpdatePacket extends SLPacket {
             addUWord((int) mob.getAttribute(Attribute.MAX_FATIGUE));
             addUWord((int) mob.getAttribute(Attribute.FATIGUE)); //needs to be > 5 or client won't be able to walk
         }
+    }
+
+    private StatsUpdatePacket() {
+    }
+
+    public static StatsUpdatePacket read(ByteBuffer buffer, int lenght) {
+        StatsUpdatePacket res = new StatsUpdatePacket();
+        MobileStub m = new MobileStub();
+
+        m.setSerial(readUDWord(buffer));
+        m.setAttribute(Attribute.MAX_HITS,      readUWord(buffer));
+        m.setAttribute(Attribute.HITS,          readUWord(buffer));
+        m.setAttribute(Attribute.MAX_MANA,      readUWord(buffer));
+        m.setAttribute(Attribute.MANA,          readUWord(buffer));
+        m.setAttribute(Attribute.MAX_FATIGUE,   readUWord(buffer));
+        m.setAttribute(Attribute.FATIGUE,       readUWord(buffer));
+
+        res.mobile = m;
+        return res;
+    }
+
+    public SendableMobile getMobile() {
+        return mobile;
     }
 
     @Override
