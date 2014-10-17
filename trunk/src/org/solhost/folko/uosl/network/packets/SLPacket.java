@@ -62,7 +62,7 @@ public abstract class SLPacket {
 
     public void addString(String s, int len) {
         for(int i = 0; i < len; i++) {
-            if(i < s.length()) {
+            if(s != null && i < s.length()) {
                 char c = s.charAt(i);
                 addUByte((short) (c & 0xFF));
             } else {
@@ -156,6 +156,7 @@ public abstract class SLPacket {
 
         switch(id) {
         case LoginPacket.ID:            return LoginPacket.read(buffer, dataLength);
+        case LoginErrorPacket.ID:       return LoginErrorPacket.read(buffer, dataLength);
         case DragPacket.ID:             return DragPacket.read(buffer, dataLength);
         case DropPacket.ID:             return DropPacket.read(buffer, dataLength);
         case SingleClickPacket.ID:      return SingleClickPacket.read(buffer, dataLength);
@@ -182,7 +183,7 @@ public abstract class SLPacket {
                 builder.append(String.format("%02X", sendBuffer.get(i)));
             }
         } else {
-            System.out.println("<received packet>");
+            builder.append(getClass().getSimpleName());
         }
         return builder.toString();
     }
