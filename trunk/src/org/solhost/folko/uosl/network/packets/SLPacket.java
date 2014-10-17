@@ -157,6 +157,12 @@ public abstract class SLPacket {
         switch(id) {
         case LoginPacket.ID:            return LoginPacket.read(buffer, dataLength);
         case LoginErrorPacket.ID:       return LoginErrorPacket.read(buffer, dataLength);
+        case InitPlayerPacket.ID:       return InitPlayerPacket.read(buffer, dataLength);
+        case StatsUpdatePacket.ID:      return StatsUpdatePacket.read(buffer, dataLength);
+        case LocationPacket.ID:         return LocationPacket.read(buffer, dataLength);
+        case EquipPacket.ID:            return EquipPacket.read(buffer, dataLength);
+        case GlobalLightLevelPacket.ID: return GlobalLightLevelPacket.read(buffer, dataLength);
+        case SendTextPacket.ID:         return SendTextPacket.read(buffer, dataLength);
         case DragPacket.ID:             return DragPacket.read(buffer, dataLength);
         case DropPacket.ID:             return DropPacket.read(buffer, dataLength);
         case SingleClickPacket.ID:      return SingleClickPacket.read(buffer, dataLength);

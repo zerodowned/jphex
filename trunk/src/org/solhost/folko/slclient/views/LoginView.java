@@ -1,6 +1,6 @@
 package org.solhost.folko.slclient.views;
 
-import org.solhost.folko.slclient.controllers.LoginController;
+import org.solhost.folko.slclient.controllers.MainController;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -17,7 +17,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
 public class LoginView {
-    private final LoginController controller;
+    private final MainController controller;
     private final Scene scene;
     private final Text notification;
     private final TextField hostField, nameField, passwordField;
@@ -25,7 +25,7 @@ public class LoginView {
     private final StringProperty host, name, password;
     private final BooleanProperty busy;
 
-    public LoginView(LoginController controller) {
+    public LoginView(MainController controller) {
         this.controller = controller;
         this.busy = new SimpleBooleanProperty(false);
         GridPane grid = new GridPane();
@@ -76,7 +76,7 @@ public class LoginView {
         host.addListener(e -> notification.setText(""));
         name.addListener(e -> notification.setText(""));
         password.addListener(e -> notification.setText(""));
-        loginButton.setOnAction(e -> controller.onLogin(host.get(), name.get(), password.get()));
+        loginButton.setOnAction(e -> controller.onLoginRequest(host.get(), name.get(), password.get()));
     }
 
     public void showInfo(String text) {

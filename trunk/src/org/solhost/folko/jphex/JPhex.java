@@ -21,6 +21,7 @@ package org.solhost.folko.jphex;
 import java.io.*;
 import java.util.logging.*;
 
+import org.solhost.folko.common.LogFormatter;
 import org.solhost.folko.jphex.network.Server;
 import org.solhost.folko.jphex.scripting.ScriptAPI;
 import org.solhost.folko.jphex.scripting.ScriptAPIImpl;

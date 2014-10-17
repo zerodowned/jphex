@@ -9,9 +9,13 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.solhost.folko.uosl.network.packets.SLPacket;
 
 public class Connection {
+    private static final Logger log = Logger.getLogger("slclient.connection");
     private static final int DEFAULT_PORT = 2590;
     private static final int BUFFER_SIZE = 65536;
     private final Selector selector;
@@ -20,7 +24,7 @@ public class Connection {
     private final ByteBuffer recvBuffer, sendBuffer;
     private final Object selectMutex;
     private boolean enableWrite, disableWrite;
-    private ConnectionHandler handler;
+    private final ConnectionHandler handler;
     private String host;
     private int port;
 
@@ -28,7 +32,7 @@ public class Connection {
         void onConnected();
         void onIncomingPacket(SLPacket packet);
         void onRemoteDisconnect();
-        void onError(String reason);
+        void onNetworkError(String reason);
     }
 
 
@@ -63,33 +67,44 @@ public class Connection {
         connect();
     }
 
-    public synchronized void setConnectionHandler(ConnectionHandler handler) {
-        this.handler = handler;
-    }
-
     private synchronized void connect() throws IOException {
-        InetSocketAddress addr = new InetSocketAddress(host, port);
+        try {
+            log.info("Connecting to " + host + ", port " + port);
+            InetSocketAddress addr = new InetSocketAddress(host, port);
 
-        if(socketChan.connect(addr)) {
-            handler.onConnected();
+            if(socketChan.connect(addr)) {
+                // immediate success
+                log.fine("Immediate success when connecting");
+                handler.onConnected();
+            }
+        } catch(Exception e) {
+            log.warning("Couldn't connect: " + e.getMessage());
+            disconnect();
+            throw e;
         }
     }
 
     public synchronized void disconnect() {
         try {
+            log.fine("Disconnecting connection");
+            selector.wakeup();
+            connectionThread.interrupt();
             socketChan.close();
         } catch (IOException e) {
-            // network error on shutdown is OK
+            // network error on shutdown is OK, so don't propagate
+            log.fine("Exception on channel close: " + e.getMessage());
         }
     }
 
     private void loop() {
-        while(true) {
+        log.fine("Running network loop");
+        while(!Thread.interrupted()) {
             try {
                 selector.select();
                 for(SelectionKey key : selector.selectedKeys()) {
                     if(!key.isValid()) {
-                        handler.onError("Network Error: select");
+                        log.warning("Invalid key in select");
+                        handler.onNetworkError("Network Error: select");
                         key.cancel();
                         continue;
                     }
@@ -108,6 +123,7 @@ public class Connection {
                 synchronized(selectMutex) {
                     SelectionKey key = socketChan.keyFor(selector);
                     if(key == null || !key.isValid()) {
+                        log.warning("Key became invalid when setting interestOps");
                         handler.onRemoteDisconnect();
                         break;
                     }
@@ -123,15 +139,22 @@ public class Connection {
                 }
             } catch (IOException e) {
                 synchronized(this) {
-                    handler.onError(e.getMessage());
+                    handler.onNetworkError(e.getMessage());
                 }
                 break;
             }
         }
+        log.fine("Left network loop");
     }
 
-    private synchronized void onConnect() throws IOException {
-        socketChan.finishConnect();
+    private synchronized void onConnect() {
+        try {
+            socketChan.finishConnect();
+        } catch(Exception e) {
+            log.warning("Connect failed: " + e.getMessage());
+            handler.onNetworkError(e.getMessage());
+            return;
+        }
         handler.onConnected();
     }
 
@@ -147,6 +170,7 @@ public class Connection {
                 // append packet to sendBuffer
                 packet.writeTo(sendBuffer);
             } catch (IOException e) {
+                log.log(Level.SEVERE, "Exception when writing packet: " + e.getMessage(), e);
                 handler.onRemoteDisconnect();
                 needEnable = false;
             }
@@ -160,6 +184,7 @@ public class Connection {
     }
 
     private synchronized void onWritable() throws IOException {
+        log.finest("Sending out write buffer");
         boolean needDisable = false;
         synchronized(sendBuffer) {
             sendBuffer.flip();
@@ -185,6 +210,7 @@ public class Connection {
             int bytesRead = socketChan.read(recvBuffer);
             if(bytesRead == -1) {
                 // normal shutdown of the client
+                log.fine("Client shutdown while reading");
                 handler.onRemoteDisconnect();
                 return;
             }
@@ -204,7 +230,7 @@ public class Connection {
                 }
             } while(lastPacket != null);
         } catch (IOException e) {
-            handler.onError("Read error: " + e.getMessage());
+            handler.onNetworkError("Read error: " + e.getMessage());
             return;
         }
 
@@ -213,7 +239,7 @@ public class Connection {
             try {
                 handler.onIncomingPacket(packet);
             } catch(Exception e) {
-                handler.onError("Error when handling incoming packet: " + e);
+                handler.onNetworkError("Error when handling incoming packet: " + e);
             }
         }
     }
