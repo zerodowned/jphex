@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (c) 2013 Folke Will <folke.will@gmail.com>
- * 
+ *
  * This file is part of JPhex.
- * 
+ *
  * JPhex is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * JPhex is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -26,6 +26,26 @@ public class LoginPacket extends SLPacket {
     private String name, homepage, email, realName, pcSpecs, password;
     private short gender;
     private short strength, dexterity, intelligence, skinHue, hairHue, hairStyle;
+
+    public LoginPacket() {
+        initWrite(ID, 0x253);
+        addUDWord(serial);
+        addUDWord(seed);
+        addString(name, 30);
+        addString(homepage, 128);
+        addUDWord(version);
+        addString(email, 128);
+        addString(realName, 128);
+        addString(pcSpecs, 128);
+        addString(password, 30);
+        addUByte(gender);
+        addUByte(strength);
+        addUByte(dexterity);
+        addUByte(intelligence);
+        addUByte(skinHue);
+        addUByte(hairHue);
+        addUByte(hairStyle);
+    }
 
     public static LoginPacket read(ByteBuffer buffer, int length) {
         LoginPacket res = new LoginPacket();
@@ -47,6 +67,55 @@ public class LoginPacket extends SLPacket {
         res.hairStyle       = readUByte(buffer);
 
         return res;
+    }
+
+    public void setSerial(long serial) {
+        this.serial = serial;
+    }
+
+    public void setSeed(long seed) {
+        this.seed = seed;
+    }
+
+    public void setName(String name, String realName) {
+        this.name = name;
+        this.realName = realName;
+    }
+
+    public void setHomepage(String homepage) {
+        this.homepage = homepage;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPcSpecs(String pcSpecs) {
+        this.pcSpecs = pcSpecs;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setGender(short gender) {
+        this.gender = gender;
+    }
+
+    public void setStats(short str, short dex, short intel) {
+        this.strength = str;
+        this.dexterity = dex;
+        this.intelligence = intel;
+    }
+
+    public void setLook(short skinHue, short hairHue, short hairStyle) {
+        this.skinHue = skinHue;
+        this.hairHue = hairHue;
+        this.hairStyle = hairStyle;
     }
 
     @Override
