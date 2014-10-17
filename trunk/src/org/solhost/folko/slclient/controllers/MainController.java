@@ -50,7 +50,8 @@ public class MainController {
 
     // user entered login data
     public void onLoginRequest(String host, String name, String password) {
-        game.setLoginData(name, password);
+        game.getPlayer().setName(name);
+        game.getPlayer().setPassword(password);
         loginView.setBusy(true);
         networkController.tryConnect(host);
     }

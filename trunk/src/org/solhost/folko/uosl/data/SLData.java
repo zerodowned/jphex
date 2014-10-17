@@ -46,12 +46,14 @@ public class SLData {
         this.dataPath = dataPath;
     }
 
-    public static void init(String dataPath) throws IOException {
+    public synchronized static SLData init(String dataPath) throws IOException {
         if(instance != null) {
             throw new RuntimeException("client data already initialized");
         }
-        instance = new SLData(dataPath);
-        instance.load();
+        SLData newInstance = new SLData(dataPath);
+        newInstance.load();
+        instance = newInstance;
+        return newInstance;
     }
 
     public static SLData get() {

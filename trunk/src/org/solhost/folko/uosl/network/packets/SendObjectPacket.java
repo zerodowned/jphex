@@ -18,12 +18,20 @@
  ******************************************************************************/
 package org.solhost.folko.uosl.network.packets;
 
+import java.nio.ByteBuffer;
+
+import org.solhost.folko.uosl.network.ObjectStub;
 import org.solhost.folko.uosl.network.SendableItem;
 import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.network.SendableObject;
+import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Point3D;
 
 public class SendObjectPacket extends SLPacket {
     public static final short ID = 0x35;
+    private SendableObject object;
+    private int amount;
+    private Direction facing;
 
     public SendObjectPacket(SendableObject obj) {
         initWrite(ID, 0x15);
@@ -46,6 +54,40 @@ public class SendObjectPacket extends SLPacket {
         }
         addSByte((byte) obj.getLocation().getZ());
         addUWord(obj.getHue());
+    }
+
+    private SendObjectPacket() {
+    }
+
+    public static SendObjectPacket read(ByteBuffer buffer, int length) {
+        SendObjectPacket res = new SendObjectPacket();
+        ObjectStub object = new ObjectStub();
+
+        object.setSerial(readUDWord(buffer));
+        object.setGraphic(readUWord(buffer));
+        readUByte(buffer);
+        res.amount = readUWord(buffer);
+        int x = readUWord(buffer);
+        int y = readUWord(buffer);
+        res.facing = Direction.parse(readUByte(buffer));
+        byte z = readSByte(buffer);
+        object.setLocation(new Point3D(x, y, z));
+        object.setHue(readUWord(buffer));
+
+        res.object = object;
+        return res;
+    }
+
+    public SendableObject getObject() {
+        return object;
+    }
+
+    public Direction getFacing() {
+        return facing;
+    }
+
+    public int getAmount() {
+        return amount;
     }
 
     @Override

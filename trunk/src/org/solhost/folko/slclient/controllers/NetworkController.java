@@ -7,7 +7,10 @@ import java.util.logging.Logger;
 import org.solhost.folko.slclient.models.Connection;
 import org.solhost.folko.slclient.models.Connection.ConnectionHandler;
 import org.solhost.folko.slclient.models.GameState;
+import org.solhost.folko.slclient.models.Player;
+import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.network.packets.InitPlayerPacket;
+import org.solhost.folko.uosl.network.packets.LocationPacket;
 import org.solhost.folko.uosl.network.packets.LoginErrorPacket;
 import org.solhost.folko.uosl.network.packets.SLPacket;
 
@@ -80,7 +83,19 @@ public class NetworkController implements ConnectionHandler {
 
     private void onInitPlayer(InitPlayerPacket packet) {
         game.onLoginSuccess();
-        game.setPlayerSerial(packet.getSerial());
+        game.getPlayer().setSerial(packet.getSerial());
+    }
+
+    private void onLocationChange(LocationPacket packet) {
+        SendableMobile src = packet.getMobile();
+        if(src.getSerial() != game.getPlayer().getSerial()) {
+            log.warning("LocationPacket received for non-player object");
+            return;
+        }
+        Player player = game.getPlayer();
+        player.setGraphic(src.getGraphic());
+        player.setFacing(src.getFacing());
+        player.setLocation(src.getLocation());
     }
 
     @Override
@@ -89,6 +104,7 @@ public class NetworkController implements ConnectionHandler {
         switch(packet.getID()) {
         case LoginErrorPacket.ID:   onLoginFail((LoginErrorPacket) packet); break;
         case InitPlayerPacket.ID:   onInitPlayer((InitPlayerPacket) packet); break;
+        case LocationPacket.ID:     onLocationChange((LocationPacket) packet); break;
         }
     }
 }
