@@ -2,6 +2,7 @@ package org.solhost.folko.slclient.models;
 
 import java.util.logging.Logger;
 
+import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.network.packets.LoginPacket;
 
 import javafx.beans.property.Property;
@@ -12,13 +13,16 @@ public class GameState {
     public enum State {DISCONNECTED, CONNECTED, LOGGED_IN};
 
     private static final Logger log = Logger.getLogger("slclient.game");
-    private Connection connection;
-    private long playerSerial;
-    private String name, password;
+    private final SLData data;
+    private final Player player;
     private final Property<State> state;
+    private Connection connection;
 
     public GameState() {
         state = new SimpleObjectProperty<GameState.State>(State.DISCONNECTED);
+        player = new Player();
+        data = SLData.get();
+        log.fine("Game initialized");
     }
 
     public ReadOnlyProperty<State> stateProperty() {
@@ -29,18 +33,8 @@ public class GameState {
         return state.getValue();
     }
 
-    public void setLoginData(String name, String password) {
-        this.name = name;
-        this.password = password;
-    }
-
-    public void setPlayerSerial(long serial) {
-        log.fine(String.format("Our serial: %08X", serial));
-        this.playerSerial = serial;
-    }
-
-    public long getPlayerSerial() {
-        return playerSerial;
+    public Player getPlayer() {
+        return player;
     }
 
     public void onConnect(Connection connection) {
@@ -55,8 +49,8 @@ public class GameState {
 
     public void tryLogin() {
         LoginPacket login = new LoginPacket();
-        login.setName(name);
-        login.setPassword(password);
+        login.setName(player.getName());
+        login.setPassword(player.getPassword());
         login.setSeed(LoginPacket.LOGIN_BY_NAME);
         login.setSerial(LoginPacket.LOGIN_BY_NAME);
         login.prepareSend();
