@@ -51,6 +51,7 @@ public class LoginView {
 
         loginButton = new Button("Login");
         loginButton.disableProperty().bind(busy);
+        loginButton.setDefaultButton(true);
         HBox buttonBox = new HBox(loginButton);
         buttonBox.setAlignment(Pos.BASELINE_RIGHT);
         grid.add(buttonBox, 1, 4);

@@ -2,7 +2,6 @@ package org.solhost.folko.slclient.models;
 
 import java.util.logging.Logger;
 
-import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.network.packets.LoginPacket;
 
 import javafx.beans.property.Property;
@@ -13,7 +12,6 @@ public class GameState {
     public enum State {DISCONNECTED, CONNECTED, LOGGED_IN};
 
     private static final Logger log = Logger.getLogger("slclient.game");
-    private final SLData data;
     private final Player player;
     private final Property<State> state;
     private Connection connection;
@@ -21,7 +19,6 @@ public class GameState {
     public GameState() {
         state = new SimpleObjectProperty<GameState.State>(State.DISCONNECTED);
         player = new Player();
-        data = SLData.get();
         log.fine("Game initialized");
     }
 

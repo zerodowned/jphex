@@ -1,11 +1,15 @@
 package org.solhost.folko.slclient.controllers;
 
+import java.util.Collections;
 import java.util.logging.Logger;
 
 import org.solhost.folko.slclient.models.GameState;
 import org.solhost.folko.slclient.models.GameState.State;
 import org.solhost.folko.slclient.views.GameView;
 import org.solhost.folko.slclient.views.LoginView;
+import org.solhost.folko.uosl.data.SLData;
+import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Point3D;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -104,5 +108,12 @@ public class MainController {
 
     public GameState getGameState() {
         return game;
+    }
+
+    public void onRequestMove(Direction dir) {
+        // just testing
+        Point3D oldLoc = game.getPlayer().getLocation();
+        Point3D newLoc = SLData.get().getElevatedPoint(oldLoc, dir, p -> Collections.emptyList());
+        game.getPlayer().setLocation(newLoc);
     }
 }
