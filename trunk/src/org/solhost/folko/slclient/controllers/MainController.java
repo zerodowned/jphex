@@ -114,6 +114,14 @@ public class MainController {
         // just testing
         Point3D oldLoc = game.getPlayer().getLocation();
         Point3D newLoc = SLData.get().getElevatedPoint(oldLoc, dir, p -> Collections.emptyList());
+        if(newLoc == null) {
+            // move not allowed
+            return;
+        }
         game.getPlayer().setLocation(newLoc);
+    }
+
+    public void onUpdateRangeChange(int sceneRadius) {
+        game.setUpdateRange(sceneRadius);
     }
 }

@@ -23,6 +23,8 @@ import java.io.IOException;
 import org.solhost.folko.uosl.types.Point2D;
 
 public class SLMap {
+    public final static int MAP_WIDTH = 1024;
+    public final static int MAP_HEIGHT = 1024;
     private final SLDataFile mapFile;
 
     private class Tile {

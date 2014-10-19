@@ -3,6 +3,10 @@ package org.solhost.folko.slclient.models;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyProperty;
+import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -12,7 +16,7 @@ import javafx.beans.property.StringProperty;
 import org.solhost.folko.uosl.network.SendableObject;
 import org.solhost.folko.uosl.types.Point3D;
 
-public class SLObject implements SendableObject {
+public abstract class SLObject implements SendableObject {
     protected LongProperty serial;
     protected Property<Point3D> location;
     protected IntegerProperty graphic, hue;
@@ -30,7 +34,7 @@ public class SLObject implements SendableObject {
         return serial.get();
     }
 
-    public LongProperty serialProperty() {
+    public ReadOnlyLongProperty serialProperty() {
         return serial;
     }
 
@@ -42,7 +46,7 @@ public class SLObject implements SendableObject {
         return location.getValue();
     }
 
-    public Property<Point3D> locationProperty() {
+    public ReadOnlyProperty<Point3D> locationProperty() {
         return location;
     }
 
@@ -54,7 +58,7 @@ public class SLObject implements SendableObject {
         return graphic.get();
     }
 
-    public IntegerProperty graphicProperty() {
+    public ReadOnlyIntegerProperty graphicProperty() {
         return graphic;
     }
 
@@ -66,7 +70,7 @@ public class SLObject implements SendableObject {
         return hue.get();
     }
 
-    public IntegerProperty hueProperty() {
+    public ReadOnlyIntegerProperty hueProperty() {
         return hue;
     }
 
@@ -78,7 +82,7 @@ public class SLObject implements SendableObject {
         return name.get();
     }
 
-    public StringProperty nameProperty() {
+    public ReadOnlyStringProperty nameProperty() {
         return name;
     }
 

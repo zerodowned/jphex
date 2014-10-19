@@ -2,27 +2,52 @@ package org.solhost.folko.slclient.models;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyIntegerProperty;
+import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import org.solhost.folko.uosl.data.SLData;
+import org.solhost.folko.uosl.data.SLStatic;
+import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 import org.solhost.folko.uosl.network.SendableItem;
 
 public class SLItem extends SLObject implements SendableItem {
     private final IntegerProperty amount;
     private final Property<Short> layer, facingOverride;
+    private StaticTile tileInfo;
 
-    public SLItem() {
+    public SLItem(long serial, int graphic) {
         super();
+        setSerial(serial);
+        setGraphic(graphic);
         amount = new SimpleIntegerProperty();
         layer = new SimpleObjectProperty<>();
         facingOverride = new SimpleObjectProperty<>();
+    }
+
+    public static SLItem fromStatic(SLStatic stat) {
+        SLItem res = new SLItem(stat.getSerial(), stat.getStaticID());
+        res.setLocation(stat.getLocation());
+        res.setHue(stat.getHue());
+        res.setLayer(res.tileInfo.layer);
+        res.setName(res.tileInfo.name);
+        res.setFacingOverride((short) 0);
+        res.setAmount(1);
+        return res;
+    }
+
+    @Override
+    public void setGraphic(int graphic) {
+        super.setGraphic(graphic);
+        tileInfo = SLData.get().getTiles().getStaticTile(graphic);
     }
 
     public void setAmount(int amount) {
         this.amount.set(amount);
     }
 
-    public IntegerProperty amountProperty() {
+    public ReadOnlyIntegerProperty amountProperty() {
         return amount;
     }
 
@@ -35,7 +60,7 @@ public class SLItem extends SLObject implements SendableItem {
         this.layer.setValue(layer);
     }
 
-    public Property<Short> layerProperty() {
+    public ReadOnlyProperty<Short> layerProperty() {
         return layer;
     }
 
@@ -48,7 +73,7 @@ public class SLItem extends SLObject implements SendableItem {
         this.facingOverride.setValue(override);
     }
 
-    public Property<Short> facingOverrideProperty() {
+    public ReadOnlyProperty<Short> facingOverrideProperty() {
         return facingOverride;
     }
 
@@ -57,4 +82,7 @@ public class SLItem extends SLObject implements SendableItem {
         return facingOverride.getValue();
     }
 
+    public StaticTile getTileInfo() {
+        return tileInfo;
+    }
 }
