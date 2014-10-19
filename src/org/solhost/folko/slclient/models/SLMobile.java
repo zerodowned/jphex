@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyLongProperty;
+import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
@@ -30,7 +32,7 @@ public class SLMobile extends SLObject implements SendableMobile {
         return attributes.get(attr).get();
     }
 
-    public LongProperty getAttributeProperty(Attribute attr) {
+    public ReadOnlyLongProperty getAttributeProperty(Attribute attr) {
         return attributes.get(attr);
     }
 
@@ -42,7 +44,7 @@ public class SLMobile extends SLObject implements SendableMobile {
         this.facing.setValue(dir);
     }
 
-    public Property<Direction> facingProperty() {
+    public ReadOnlyProperty<Direction> facingProperty() {
         return facing;
     }
 
