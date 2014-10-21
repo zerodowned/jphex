@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 
 import org.solhost.folko.common.LogFormatter;
 import org.solhost.folko.slclient.controllers.MainController;
+import org.solhost.folko.slclient.models.ImageCache;
 import org.solhost.folko.uosl.data.SLData;
 
 import javafx.application.Application;
@@ -39,6 +40,7 @@ public class SLClient extends Application {
         do {
             try {
                 SLData.init(dir);
+                ImageCache.init();
                 dataLoaded = true;
             } catch (IOException e) {
                 DirectoryChooser cd = new DirectoryChooser();

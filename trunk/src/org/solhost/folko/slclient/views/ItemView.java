@@ -1,28 +1,46 @@
 package org.solhost.folko.slclient.views;
 
+import org.solhost.folko.slclient.models.ImageCache;
 import org.solhost.folko.slclient.models.SLItem;
-import org.solhost.folko.uosl.data.SLArt.ArtEntry;
-import org.solhost.folko.uosl.data.SLArt;
-import org.solhost.folko.uosl.data.SLData;
-import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.MeshView;
+import javafx.scene.shape.TriangleMesh;
 
-public class ItemView extends ImageView {
+public class ItemView extends MeshView {
 
     public ItemView(SLItem itm) {
-        SLArt art = SLData.get().getArt();
         int graphic = itm.getGraphic();
-        ArtEntry entry = art.getStaticArt(graphic, (itm.getTileInfo().flags & StaticTile.FLAG_TRANSLUCENT) != 0);
-        Image itemImage = SwingFXUtils.toFXImage(entry.image, null);
-        setImage(itemImage);
+        Image itemImage = ImageCache.getStaticImage(graphic);
+        if(itemImage == null) {
+            return;
+        }
 
-        setScaleX(1 / 44.0);
-        setScaleY(1 / 44.0);
-        setTranslateX(itm.getLocation().getX());
-        setTranslateY(itm.getLocation().getY());
-        setTranslateZ(itm.getLocation().getZ());
+        float w = (float) (itemImage.getWidth() / 44.0);
+        float h = (float) (itemImage.getHeight() / 44.0);
+        TriangleMesh mesh = new TriangleMesh();
+        mesh.getPoints().addAll(
+                    0f, 0f, -0.1f,
+                    0f, h, -0.1f,
+                    w, h, -0.1f,
+                    w, 0f, -0.1f
+                );
+        mesh.getTexCoords().addAll(
+                    0f, 0f,
+                    0f, 1f,
+                    1f, 1f,
+                    1f, 0f
+                );
+        mesh.getFaces().addAll(
+                    0, 0, 1, 1, 3, 3,
+                    1, 1, 2, 2, 3, 3
+                );
+
+        setMesh(mesh);
+
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseMap(itemImage);
+        setMaterial(material);
     }
 }

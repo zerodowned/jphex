@@ -49,6 +49,30 @@ public enum Direction {
         }
     }
 
+    // angle must be in [0, 360]. 0 is north west and positive angles turn clockwise
+    public static Direction fromAngle(double angle) {
+        double r = 360 / 16.0;
+        if(angle < 45 - r) {
+            return Direction.NORTH_WEST;
+        } else if(angle < 90 - r) {
+            return Direction.NORTH;
+        } else if(angle < 135 - r) {
+            return Direction.NORTH_EAST;
+        } else if(angle < 180 - r) {
+            return Direction.EAST;
+        } else if(angle < 225 - r) {
+            return Direction.SOUTH_EAST;
+        } else if(angle < 270 - r) {
+            return Direction.SOUTH;
+        } else if(angle < 315 - r) {
+            return Direction.SOUTH_WEST;
+        } else if(angle < 360 - r) {
+            return Direction.WEST;
+        } else {
+            return Direction.NORTH_WEST;
+        }
+    }
+
     public int getFrameIndex() {
         switch(this) {
         case NORTH:         return 3;
