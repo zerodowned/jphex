@@ -1,13 +1,11 @@
 package org.solhost.folko.slclient.controllers;
 
-import java.util.Collections;
 import java.util.logging.Logger;
 
 import org.solhost.folko.slclient.models.GameState;
 import org.solhost.folko.slclient.models.GameState.State;
 import org.solhost.folko.slclient.views.GameView;
 import org.solhost.folko.slclient.views.LoginView;
-import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Point3D;
 
@@ -113,11 +111,7 @@ public class MainController {
     public void onRequestMove(Direction dir) {
         // just testing
         Point3D oldLoc = game.getPlayer().getLocation();
-        Point3D newLoc = SLData.get().getElevatedPoint(oldLoc, dir, p -> Collections.emptyList());
-        if(newLoc == null) {
-            // move not allowed
-            return;
-        }
+        Point3D newLoc = new Point3D(oldLoc.getTranslated(dir), oldLoc.getZ());
         game.getPlayer().setLocation(newLoc);
     }
 
