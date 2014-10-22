@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>JPhex</groupId>
     <artifactId>JPhex</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>JPhex</name>
     <description>UOSL Server Emulator</description>
     <build>
@@ -24,7 +24,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.solhost.folko.slclient.SLClient</mainClass>
+                            <mainClass>org.solhost.folko.jphex.JPhex</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
