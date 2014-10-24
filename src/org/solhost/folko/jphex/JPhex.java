@@ -44,7 +44,7 @@ public class JPhex {
         log.setUseParentHandlers(false);
         log.addHandler(handler);
         log.setLevel(logLevel);
-        log.info("JPhex 0.0.1 starting...");
+        log.info("JPhex 0.0.2 starting...");
         log.info("Copyright 2003-2004, 2013 by Folke Will");
     }
 
