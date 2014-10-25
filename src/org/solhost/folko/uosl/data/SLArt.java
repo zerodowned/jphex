@@ -27,6 +27,9 @@ import java.util.List;
 import org.solhost.folko.uosl.types.Direction;
 
 public class SLArt {
+    public static final int NUM_LAND_ARTS = 0x4000;
+    public static final int NUM_STATIC_ARTS = 0x4000;
+    public static final int TILE_DIAMETER = 44;
     private final SLDataFile artData, artIdx, animData;
 
     public SLArt(String artPath, String idxPath, String animDataPath) throws IOException {
