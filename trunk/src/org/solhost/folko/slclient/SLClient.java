@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 
 import org.solhost.folko.common.LogFormatter;
 import org.solhost.folko.slclient.controllers.MainController;
-import org.solhost.folko.slclient.models.ImageCache;
 import org.solhost.folko.uosl.data.SLData;
 
 import javafx.application.Application;
@@ -23,24 +22,23 @@ public class SLClient extends Application {
     public void start(Stage stage) {
         setupLogger(Level.FINEST);
 
+        log.info("Loading game data...");
         loadGameData();
 
         log.fine("Starting main controller");
         MainController mainController = new MainController(stage);
-        mainController.startGame();
+        mainController.showLoginScreen();
 
         stage.setTitle("Ultima Online: Shattered Legacy");
         stage.show();
     }
 
     private void loadGameData() {
-        log.info("Loading game data...");
         boolean dataLoaded = false;
         String dir = "data";
         do {
             try {
                 SLData.init(dir);
-                ImageCache.init();
                 dataLoaded = true;
             } catch (IOException e) {
                 DirectoryChooser cd = new DirectoryChooser();

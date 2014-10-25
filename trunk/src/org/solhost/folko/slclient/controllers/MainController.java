@@ -1,5 +1,8 @@
 package org.solhost.folko.slclient.controllers;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.solhost.folko.slclient.models.GameState;
@@ -28,9 +31,16 @@ public class MainController {
         game.stateProperty().addListener((g, from, to) -> onGameStateChange(from, to));
     }
 
-    public void startGame() {
+    public void showLoginScreen() {
         loginView = new LoginView(this);
         stage.setScene(loginView.getScene());
+        stage.show();
+
+        new Thread(() -> {
+            //game.getPlayer().setLocation(new Point3D(0, 0, 0));
+            game.getPlayer().setLocation(new Point3D(379, 607, 0));
+            game.onLoginSuccess();
+        }).start();
     }
 
     private void onGameStateChange(State oldState, State newState) {
@@ -81,13 +91,31 @@ public class MainController {
     }
 
     private void onLogin(State oldState) {
-        Platform.runLater(() -> {
+        // stop JavaFX, start LWJGL
+        FutureTask<Void> task = new FutureTask<>(() -> {
+            Platform.setImplicitExit(false);
+            stage.hide();
+        }, null);
+
+        if(Platform.isFxApplicationThread()) {
+            task.run();
+        } else {
+            Platform.runLater(task);
+        }
+
+        try {
+            task.get(); // wait for task to complete
             gameView = new GameView(this);
-            stage.setMinWidth(800);
-            stage.setMinHeight(600);
-            stage.centerOnScreen();
-            stage.setScene(gameView.getScene());
-        });
+            new Thread(() -> gameView.run()).start();
+        } catch (InterruptedException | ExecutionException e) {
+            log.log(Level.FINE, "Login stopped: " + e.getMessage(), e);
+        }
+    }
+
+    public void onGameClosed() {
+        log.fine("Stopping game...");
+        networkController.stopNetwork();
+        System.exit(0);
     }
 
     public void onNetworkError(String reason) {
@@ -98,6 +126,15 @@ public class MainController {
                 loginView.setBusy(false);
             });
         }
+    }
+
+    public void onGameError(String reason) {
+        gameView.dispose();
+        Platform.runLater(() -> {
+            showLoginScreen();
+            loginView.showError(reason);
+            Platform.setImplicitExit(true);
+        });
     }
 
     public Stage getStage() {

@@ -43,8 +43,10 @@ public class NetworkController implements ConnectionHandler {
 
     public void stopNetwork() {
         log.info("Stopping network");
-        connection.disconnect();
-        game.onDisconnect();
+        if(connection != null) {
+            connection.disconnect();
+            game.onDisconnect();
+        }
     }
 
     @Override
