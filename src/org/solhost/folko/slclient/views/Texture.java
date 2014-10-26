@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL12;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -11,6 +12,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 public class Texture {
     private final int id, width, height;
+    private final boolean useMipMapping = false;
 
     public Texture(BufferedImage image) {
         this.width = image.getWidth();
@@ -33,10 +35,15 @@ public class Texture {
 
         id = glGenTextures();
         glBindTexture(GL_TEXTURE_2D, id);
-        glTexParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        if(useMipMapping) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        } else {
+            glTexParameteri(GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0);
+            glTexParameteri(GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, 0);
+        }
     }
 
     public void setTextureUnit(int unit) {
@@ -45,6 +52,14 @@ public class Texture {
 
     public void bind() {
         glBindTexture(GL_TEXTURE_2D, id);
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     public int getTextureId() {

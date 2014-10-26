@@ -16,5 +16,7 @@ void main() {
     } else {
         texCoords = texNormal;
     }
-    gl_Position = mat * vec4(vec3(position.xy, position.z + zOffsets[gl_VertexID]), 1);
+    vec4 fixedPosition = vec4(position, 1);
+    fixedPosition.z += zOffsets[gl_VertexID];
+    gl_Position = mat * fixedPosition;
 }

@@ -20,6 +20,7 @@ import org.solhost.folko.slclient.models.TexturePool;
 import org.solhost.folko.uosl.data.SLArt;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLMap;
+import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.data.SLTiles.LandTile;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Point3D;
@@ -33,14 +34,15 @@ public class GameView {
     private static final Logger log = Logger.getLogger("slclient.gameview");
     private static final int DEFAULT_WIDTH  = 800;
     private static final int DEFAULT_HEIGHT = 600;
-    private static final int FPS = 20;
+    private static final int FPS = 10;
 
     private final MainController mainController;
     private final GameState game;
-    private Transform projection;
-    private final Transform view, model;
+    private Transform projection, view;
+    private final Transform model;
     private ShaderProgram shader;
     private Integer vaoID, vboID, eboID, texID, texTextureID;
+    private boolean gridOnly;
 
     public GameView(MainController mainController) {
         this.mainController = mainController;
@@ -53,8 +55,8 @@ public class GameView {
         }
 
         projection = new Transform();
-        view = new Transform();
         model = new Transform();
+        gridOnly = false;
     }
 
     public void run() {
@@ -107,6 +109,14 @@ public class GameView {
         while(Keyboard.next()) {
             if(Keyboard.getEventKeyState()) {
                 // pressed
+                if(Keyboard.getEventCharacter() == 'g') {
+                    gridOnly = !gridOnly;
+                    if(gridOnly) {
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                    } else {
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                    }
+                }
             } else {
                 // released
             }
@@ -127,6 +137,10 @@ public class GameView {
                 mainController.onRequestMove(Direction.SOUTH_WEST);
             } else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
                 mainController.onRequestMove(Direction.NORTH_EAST);
+            } else if(Keyboard.isKeyDown(Keyboard.KEY_SLASH)) {
+                projection.scale(0.95f, 0.95f, 1);
+            } else if(Keyboard.isKeyDown(Keyboard.KEY_RBRACKET)) {
+                projection.scale(1.05f, 1.05f, 1);
             }
         }
     }
@@ -149,10 +163,9 @@ public class GameView {
         log.fine("Done loading textures");
 
         onResize();
-        glEnable(GL_DEPTH_TEST);
-        // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glEnable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         FloatBuffer vertices = BufferUtils.createFloatBuffer(12);
         vertices.put(new float[] {
@@ -214,16 +227,11 @@ public class GameView {
     }
 
     protected void projectOrtho(int width, int height) {
-        projection = Transform.orthographic(0, 0, width, height, 128f, -128f);
-        projection.translate(width / 2.0f, height / 2.0f, 0);
-        projection.rotate(0, 0, 45);
-        float scale = SLArt.TILE_DIAMETER / (float) Math.sqrt(2);
-        projection.scale(scale, scale, 1f);
+        projection = Transform.orthographic(-width / 2.0f, -height / 2.0f, width / 2.0f, height / 2.0f, 15f, -15f);
     }
 
     protected void projectPerspective(int width, int height) {
-        projection = Transform.perspective(45, (float) width / height, 0.1f, 100f);
-        projection.rotate(0, 0, -45);
+        projection = Transform.perspective(90, (float) width / height, 0.1f, 100f);
         projection.scale(1, -1, 1);
     }
 
@@ -258,23 +266,24 @@ public class GameView {
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
 
-        view.reset();
-        view.translate(-centerX, -centerY, -centerZ - 20);
-        view.scale(1.0f / SLArt.TILE_DIAMETER, 1.0f / SLArt.TILE_DIAMETER, 4.0f / SLArt.TILE_DIAMETER);
+        view = Transform.UO(SLArt.TILE_DIAMETER / 2.0f, 4.0f);
+        view.translate(-centerX, -centerY, -centerZ);
 
         for(int x = centerX - radius; x < centerX + radius; x++) {
             for(int y = centerY - radius; y < centerY + radius; y++) {
+                Point3D point;
                 boolean shouldProject = false, canProject = false;
                 int selfZ = 0, eastZ = 0, southZ = 0, southEastZ = 0;
                 Texture texture;
 
                 if(x < 0 || x >= SLMap.MAP_WIDTH || y < 0 || y >= SLMap.MAP_HEIGHT) {
+                    point = null;
                     texture = TexturePool.getLandTexture(1); // VOID texture like in real client
                 } else {
-                    Point3D self = new Point3D(x, y, SLData.get().getMap().getTileElevation(x, y));
-                    int landID = SLData.get().getMap().getTextureID(self);
+                    point = new Point3D(x, y, SLData.get().getMap().getTileElevation(x, y));
+                    int landID = SLData.get().getMap().getTextureID(point);
                     LandTile landTile = SLData.get().getTiles().getLandTile(landID);
-                    selfZ = self.getZ();
+                    selfZ = point.getZ();
                     eastZ = getZ(x + 1, y);
                     southZ = getZ(x, y + 1);
                     southEastZ = getZ(x + 1, y + 1);
@@ -287,16 +296,40 @@ public class GameView {
                         texture = TexturePool.getLandTexture(landID);
                         shader.setUniform("isLandTexture", false);
                     }
+                    if(texture == null) {
+                        texture = TexturePool.getLandTexture(0);
+                    }
                 }
                 texture.setTextureUnit(0);
                 texture.bind();
                 shader.setUniform("tex", 0);
-                shader.setUniform("zOffsets", southZ, selfZ, eastZ, southEastZ);
+                shader.setUniform("zOffsets", selfZ, southZ, southEastZ, eastZ);
                 model.reset();
-                model.scale(SLArt.TILE_DIAMETER, SLArt.TILE_DIAMETER, 1);
-                model.translate(x, y, 0);
+                model.translate(x + 0.5f, y + 0.5f, 0);
                 shader.setUniform("mat", model.combine(view).combine(projection));
                 glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
+
+                if(point == null || true) {
+                    continue;
+                }
+
+                shader.setUniform("isLandTexture", false);
+                for(SLStatic sta : SLData.get().getStatics().getStatics(point)) {
+                    texture = TexturePool.getStaticTexture(sta.getStaticID());
+                    if(texture == null) {
+                        continue;
+                    }
+                    int staZ = sta.getLocation().getZ();
+                    texture.setTextureUnit(0);
+                    texture.bind();
+                    shader.setUniform("tex", 0);
+                    shader.setUniform("zOffsets", staZ, staZ, staZ, staZ);
+                    model.reset();
+                    model.translate(x + 0.5f, y + 0.5f, 0);
+                    // model.scale(texture.getWidth() / GRID_LEN, texture.getHeight() / GRID_LEN, 1);
+                    shader.setUniform("mat", model.combine(view).combine(projection));
+                    glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
+                }
             }
         }
         glDisableVertexAttribArray(2);
