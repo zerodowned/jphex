@@ -27,7 +27,15 @@ public class ShaderProgram {
         fragmentShaderId = readShader(path, GL_FRAGMENT_SHADER);
     }
 
-    public void setUniform(String name, float... values) {
+    public void setUniformInt(String name, int value) {
+        int location = glGetUniformLocation(programId, name);
+        if(location == -1) {
+            throw new RuntimeException("Invalid uniform: " + name);
+        }
+        glUniform1i(location, value);
+    }
+
+    public void setUniformFloat(String name, float... values) {
         int location = glGetUniformLocation(programId, name);
         if(location == -1) {
             throw new RuntimeException("Invalid uniform: " + name);
@@ -51,7 +59,7 @@ public class ShaderProgram {
         }
     }
 
-    public void setUniform(String name, boolean val) {
+    public void setUniformBool(String name, boolean val) {
         int location = glGetUniformLocation(programId, name);
         if(location == -1) {
             throw new RuntimeException("Invalid uniform: " + name);
@@ -59,7 +67,7 @@ public class ShaderProgram {
         glUniform1i(location, val ? GL_TRUE : GL_FALSE);
     }
 
-    public void setUniform(String name, Transform t) {
+    public void setUniformMatrix(String name, Transform t) {
         int location = glGetUniformLocation(programId, name);
         glUniformMatrix4(location, false, t.getFloatBuffer());
     }
