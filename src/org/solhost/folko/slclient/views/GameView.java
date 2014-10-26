@@ -3,6 +3,9 @@ package org.solhost.folko.slclient.views;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,6 +25,7 @@ import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLMap;
 import org.solhost.folko.uosl.data.SLStatic;
 import org.solhost.folko.uosl.data.SLTiles.LandTile;
+import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Point3D;
 
@@ -34,14 +38,14 @@ public class GameView {
     private static final Logger log = Logger.getLogger("slclient.gameview");
     private static final int DEFAULT_WIDTH  = 800;
     private static final int DEFAULT_HEIGHT = 600;
-    private static final int FPS = 10;
+    private static final int FPS = 30;
 
     private final MainController mainController;
     private final GameState game;
     private Transform projection, view;
     private final Transform model;
     private ShaderProgram shader;
-    private Integer vaoID, vboID, eboID, texID, texTextureID;
+    private Integer vaoID, vboID, eboID;
     private boolean gridOnly;
 
     public GameView(MainController mainController) {
@@ -69,10 +73,17 @@ public class GameView {
             Display.setVSyncEnabled(true);
             Display.setResizable(true);
             Display.create(pixFormat, contextAttribs);
-            mainLoop();
         } catch (LWJGLException e) {
             log.log(Level.SEVERE, "Couldn't create display: " + e.getMessage(), e);
             mainController.onGameError("Couldn't create display: " + e.getMessage());
+            return;
+        }
+
+        try {
+            mainLoop();
+        } catch(Exception e) {
+            log.log(Level.SEVERE, "Game crashed: " + e.getMessage(), e);
+            mainController.onGameError("Game crashed: " + e.getMessage());
         }
     }
 
@@ -169,32 +180,12 @@ public class GameView {
 
         FloatBuffer vertices = BufferUtils.createFloatBuffer(12);
         vertices.put(new float[] {
-                -0.5f, -0.5f, +0.0f, // left bottom     -> South
-                -0.5f, +0.5f, +0.0f, // left top        -> NorthWest
-                +0.5f, +0.5f, +0.0f, // right top       -> East
-                +0.5f, -0.5f, +0.0f, // right bottom    -> SouthEast
+                -0.5f, -0.5f, +0.0f, // left bottom
+                -0.5f, +0.5f, +0.0f, // left top
+                +0.5f, +0.5f, +0.0f, // right top
+                +0.5f, -0.5f, +0.0f, // right bottom
         });
         vertices.rewind();
-
-        FloatBuffer texCoords = BufferUtils.createFloatBuffer(8);
-        texCoords.put(new float[] {
-                +0.5f, +0.0f, // bottom
-                +0.0f, +0.5f, // left
-                +0.5f, +1.0f, // top
-                +1.0f, +0.5f, // right
-
-        });
-        texCoords.rewind();
-
-        FloatBuffer texCoordsTexture = BufferUtils.createFloatBuffer(8);
-        texCoordsTexture.put(new float[] {
-                +0.0f, +0.0f, // bottom
-                +0.0f, +1.0f, // left
-                +1.0f, +1.0f, // top
-                +1.0f, +0.0f, // right
-
-        });
-        texCoordsTexture.rewind();
 
         ShortBuffer elements = BufferUtils.createShortBuffer(4);
         elements.put(new short[] {
@@ -209,16 +200,6 @@ public class GameView {
             glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
             glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
-            texID = glGenBuffers();
-            glBindBuffer(GL_ARRAY_BUFFER, texID);
-            glBufferData(GL_ARRAY_BUFFER, texCoords, GL_STATIC_DRAW);
-            glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
-
-            texTextureID = glGenBuffers();
-            glBindBuffer(GL_ARRAY_BUFFER, texTextureID);
-            glBufferData(GL_ARRAY_BUFFER, texCoordsTexture, GL_STATIC_DRAW);
-            glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, 0);
-
             eboID = glGenBuffers();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, elements, GL_STATIC_DRAW);
@@ -226,21 +207,11 @@ public class GameView {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    protected void projectOrtho(int width, int height) {
-        projection = Transform.orthographic(-width / 2.0f, -height / 2.0f, width / 2.0f, height / 2.0f, 15f, -15f);
-    }
-
-    protected void projectPerspective(int width, int height) {
-        projection = Transform.perspective(90, (float) width / height, 0.1f, 100f);
-        projection.scale(1, -1, 1);
-    }
-
     private void onResize() {
         int width = Display.getWidth();
         int height = Display.getHeight();
         glViewport(0, 0, width, height);
-        //projectPerspective(width, height);
-        projectOrtho(width, height);
+        projection = Transform.orthographic(-width / 2.0f, -height / 2.0f, width / 2.0f, height / 2.0f, 128f, -128f);
 
         double radiusX = (width / (double) SLArt.TILE_DIAMETER);
         double radiusY = (height / (double) SLArt.TILE_DIAMETER);
@@ -258,16 +229,16 @@ public class GameView {
         int centerZ = game.getPlayer().getLocation().getZ();
         int radius = game.getUpdateRange();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         shader.bind();
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
 
-        view = Transform.UO(SLArt.TILE_DIAMETER / 2.0f, 4.0f);
+        view = Transform.UO(SLArt.TILE_DIAMETER, 2.5f);
         view.translate(-centerX, -centerY, -centerZ);
+
+        shader.setUniformFloat("tex", 0);
 
         for(int x = centerX - radius; x < centerX + radius; x++) {
             for(int y = centerY - radius; y < centerY + radius; y++) {
@@ -291,10 +262,10 @@ public class GameView {
                     canProject = (landTile != null && landTile.textureID != 0);
                     if(shouldProject && canProject) {
                         texture = TexturePool.getStaticTexture(landTile.textureID);
-                        shader.setUniform("isLandTexture", true);
+                        shader.setUniformInt("textureType", 1);
                     } else {
                         texture = TexturePool.getLandTexture(landID);
-                        shader.setUniform("isLandTexture", false);
+                        shader.setUniformInt("textureType", 0);
                     }
                     if(texture == null) {
                         texture = TexturePool.getLandTexture(0);
@@ -302,38 +273,35 @@ public class GameView {
                 }
                 texture.setTextureUnit(0);
                 texture.bind();
-                shader.setUniform("tex", 0);
-                shader.setUniform("zOffsets", selfZ, southZ, southEastZ, eastZ);
+                shader.setUniformFloat("zOffsets", selfZ, southZ, southEastZ, eastZ);
                 model.reset();
                 model.translate(x + 0.5f, y + 0.5f, 0);
-                shader.setUniform("mat", model.combine(view).combine(projection));
+                shader.setUniformMatrix("mat", model.combine(view).combine(projection));
                 glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
 
-                if(point == null || true) {
+                if(point == null) {
                     continue;
                 }
 
-                shader.setUniform("isLandTexture", false);
-                for(SLStatic sta : SLData.get().getStatics().getStatics(point)) {
+                shader.setUniformInt("textureType", 2);
+                shader.setUniformFloat("zOffsets", 0, 0, 0, 0);
+                for(SLStatic sta : sortStatics(SLData.get().getStatics().getStatics(point))) {
                     texture = TexturePool.getStaticTexture(sta.getStaticID());
                     if(texture == null) {
                         continue;
                     }
-                    int staZ = sta.getLocation().getZ();
                     texture.setTextureUnit(0);
                     texture.bind();
-                    shader.setUniform("tex", 0);
-                    shader.setUniform("zOffsets", staZ, staZ, staZ, staZ);
                     model.reset();
-                    model.translate(x + 0.5f, y + 0.5f, 0);
-                    // model.scale(texture.getWidth() / GRID_LEN, texture.getHeight() / GRID_LEN, 1);
-                    shader.setUniform("mat", model.combine(view).combine(projection));
+                    model.translate(x + 0.5f, y + 0.5f, sta.getLocation().getZ());
+                    model.rotate(0, 0, -45);
+                    float gridLen = SLArt.TILE_DIAMETER / (float) Math.sqrt(2);
+                    model.scale(texture.getWidth() / gridLen, texture.getHeight() / gridLen, 1f);
+                    shader.setUniformMatrix("mat", model.combine(view).combine(projection));
                     glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
                 }
             }
         }
-        glDisableVertexAttribArray(2);
-        glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
         shader.unbind();
@@ -358,16 +326,6 @@ public class GameView {
             vboID = null;
         }
 
-        if(texID != null) {
-            glDeleteBuffers(texID);
-            texID = null;
-        }
-
-        if(texTextureID != null) {
-            glDeleteBuffers(texTextureID);
-            texTextureID = null;
-        }
-
         if(eboID != null) {
             glDeleteBuffers(eboID);
             eboID = null;
@@ -375,5 +333,34 @@ public class GameView {
 
         Display.destroy();
         mainController.onGameClosed();
+    }
+
+    private List<SLStatic> sortStatics(List<SLStatic> in) {
+        // sort by view order
+        Collections.sort(in, new Comparator<SLStatic>() {
+            public int compare(SLStatic o1, SLStatic o2) {
+                StaticTile tile1 = SLData.get().getTiles().getStaticTile(o1.getStaticID());
+                StaticTile tile2 = SLData.get().getTiles().getStaticTile(o2.getStaticID());
+                int z1 = o1.getLocation().getZ();
+                int z2 = o2.getLocation().getZ();
+
+                if((tile1.flags & StaticTile.FLAG_BACKGROUND) != 0) {
+                    if((tile2.flags & StaticTile.FLAG_BACKGROUND) == 0) {
+                        // draw background first so it will be overdrawn by statics
+                        if(z1 > z2) {
+                            // but only if there is nothing below it
+                            return 1;
+                        } else {
+                            return -1;
+                        }
+                    } else {
+                        return z1 - z2;
+                    }
+                }
+                // default
+                return z1 - z2;
+            }
+        });
+        return in;
     }
 }
