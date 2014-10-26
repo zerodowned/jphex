@@ -37,7 +37,7 @@ public class MainController {
         stage.show();
 
         new Thread(() -> {
-            //game.getPlayer().setLocation(new Point3D(0, 0, 0));
+            // game.getPlayer().setLocation(new Point3D(0, 0, 0));
             game.getPlayer().setLocation(new Point3D(379, 607, 0));
             game.onLoginSuccess();
         }).start();

@@ -10,7 +10,7 @@ import org.lwjgl.util.vector.Vector3f;
 // and http://goharsha.com/lwjgl-tutorial-series/matrix-projections/
 
 public class Transform {
-    private final Matrix4f mat;
+    public final Matrix4f mat;
     private final FloatBuffer buffer;
 
     public Transform() {
@@ -61,6 +61,7 @@ public class Transform {
         t.mat.m00 = xScale;
         t.mat.m11 = yScale;
         t.mat.m22 = -((zFar + zNear) / frustumLen);
+
         t.mat.m23 = -1;
         t.mat.m32 = -((2 * zFar * zNear) / frustumLen);
         t.mat.m33 = 0;
@@ -69,13 +70,20 @@ public class Transform {
 
     public static Transform orthographic(float left, float top, float right, float bottom, float zNear, float zFar) {
         Transform t = new Transform();
+        // Scale so that (left, top, near) is mapped to (-1, -1, 1) and (right, bottom, far) to (1, 1, -1)
         t.mat.m00 = 2 / (right - left);
         t.mat.m11 = 2 / (top - bottom);
         t.mat.m22 = -2 / (zFar - zNear);
-        t.mat.m30 = -(right + left) / (right - left);
-        t.mat.m31 = -(top + bottom) / (top - bottom);
-        t.mat.m32 = -(zFar + zNear) / (zFar - zNear);
-        t.mat.m33 = 1;
         return t;
+    }
+
+    public static Transform UO(float t, float pc) {
+        Transform res = new Transform();
+        res.mat.m00 =  t;
+        res.mat.m01 =  t;
+        res.mat.m10 = -t;
+        res.mat.m11 =  t;
+        res.mat.m21 = -pc;
+        return res;
     }
 }
