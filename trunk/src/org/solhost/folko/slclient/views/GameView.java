@@ -49,6 +49,7 @@ public class GameView {
     private ShaderProgram shader;
     private Integer vaoID, vboID, eboID;
     private boolean gridOnly;
+    private float zoom = 1.0f;
 
     public GameView(MainController mainController) {
         this.mainController = mainController;
@@ -150,10 +151,10 @@ public class GameView {
                 mainController.onRequestMove(Direction.SOUTH_WEST);
             } else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
                 mainController.onRequestMove(Direction.NORTH_EAST);
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_SLASH)) {
-                projection.scale(0.95f, 0.95f, 1);
             } else if(Keyboard.isKeyDown(Keyboard.KEY_RBRACKET)) {
-                projection.scale(1.05f, 1.05f, 1);
+                onZoom(1.05f);
+            } else if(Keyboard.isKeyDown(Keyboard.KEY_SLASH)) {
+                onZoom(0.95f);
             }
         }
     }
@@ -214,9 +215,18 @@ public class GameView {
         int height = Display.getHeight();
         glViewport(0, 0, width, height);
         projection = Transform.orthographic(-width / 2.0f, -height / 2.0f, width / 2.0f, height / 2.0f, 128f, -128f);
+        projection.scale(zoom, zoom, 1);
+        onZoom(1.0f);
+    }
 
-        float radiusX = width / GRID_DIAMETER;
-        float radiusY = height / GRID_DIAMETER;
+    private void onZoom(float f) {
+        int width = Display.getWidth();
+        int height = Display.getHeight();
+
+        projection.scale(f, f, 1);
+        zoom *= f;
+        float radiusX = (width / zoom / GRID_DIAMETER);
+        float radiusY = (height / zoom / GRID_DIAMETER);
         int radius = (int) (Math.max(radiusX, radiusY) + 0.5);
         game.setUpdateRange(radius);
     }
