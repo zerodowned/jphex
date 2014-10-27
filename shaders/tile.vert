@@ -2,7 +2,7 @@
 
 uniform mat4 mat;
 uniform vec4 zOffsets;
-uniform int textureType; // 0 = land, 1 = static
+uniform int textureType; // 0 = land, 1 = static, 2 = mobile
 
 layout(location = 0) in vec2 position;
 

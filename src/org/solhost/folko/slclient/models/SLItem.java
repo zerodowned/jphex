@@ -18,9 +18,7 @@ public class SLItem extends SLObject implements SendableItem {
     private StaticTile tileInfo;
 
     public SLItem(long serial, int graphic) {
-        super();
-        setSerial(serial);
-        setGraphic(graphic);
+        super(serial, graphic);
         amount = new SimpleIntegerProperty();
         layer = new SimpleObjectProperty<>();
         facingOverride = new SimpleObjectProperty<>();

@@ -29,6 +29,7 @@ import org.solhost.folko.uosl.types.Direction;
 public class SLArt {
     public static final int NUM_LAND_ARTS = 0x4000;
     public static final int NUM_STATIC_ARTS = 0x4000;
+    public static final int NUM_ANIMATION_ARTS = 0x4000;
     public static final int TILE_DIAMETER = 44;
     private final SLDataFile artData, artIdx, animData;
 
@@ -55,7 +56,8 @@ public class SLArt {
 
     public class MobileAnimation {
         public int id;
-        public List<ArtEntry> frames;
+        public boolean needMirror;
+        public List<Integer> frames; // static tiles
     }
 
     // this is for *static* animations like fire on ground when the animation flag is set
@@ -208,11 +210,10 @@ public class SLArt {
 
     public MobileAnimation getAnimationEntry(int mobileID, Direction facing, boolean isFighting) {
         MobileAnimation res = new MobileAnimation();
-        boolean needMirror = false;
         res.frames = new ArrayList<>();
 
         if(facing == Direction.NORTH || facing == Direction.NORTH_EAST || facing == Direction.EAST) {
-            needMirror = true;
+            res.needMirror = true;
         }
 
         if(mobileID < 0x31) {
@@ -223,8 +224,7 @@ public class SLArt {
                     if(entry == null) {
                         continue;
                     }
-                    entry.mirror(needMirror);
-                    res.frames.add(entry);
+                    res.frames.add(res.id - 0x4000 + i);
                 }
             } else {
                 res.id = 0x8083 + (20 * mobileID + facing.getFrameIndex()) * 10;
@@ -233,8 +233,7 @@ public class SLArt {
                     if(entry == null) {
                         continue;
                     }
-                    entry.mirror(needMirror);
-                    res.frames.add(entry);
+                    res.frames.add(res.id - 0x4000 + i);
                 }
             }
         } else {
@@ -248,8 +247,7 @@ public class SLArt {
                 if(entry == null) {
                     continue;
                 }
-                entry.mirror(needMirror);
-                res.frames.add(entry);
+                res.frames.add(res.id - 0x4000 + i);
             }
         }
 

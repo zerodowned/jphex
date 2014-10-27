@@ -22,12 +22,15 @@ public abstract class SLObject implements SendableObject {
     protected IntegerProperty graphic, hue;
     protected StringProperty name;
 
-    public SLObject() {
-        serial = new SimpleLongProperty();
-        location = new SimpleObjectProperty<Point3D>();
-        graphic = new SimpleIntegerProperty();
-        hue = new SimpleIntegerProperty();
-        name = new SimpleStringProperty();
+    public SLObject(long serial, int graphic) {
+        this.serial = new SimpleLongProperty();
+        this.location = new SimpleObjectProperty<Point3D>();
+        this.graphic = new SimpleIntegerProperty();
+        this.hue = new SimpleIntegerProperty();
+        this.name = new SimpleStringProperty();
+
+        setSerial(serial);
+        setGraphic(graphic);
     }
 
     public long getSerial() {

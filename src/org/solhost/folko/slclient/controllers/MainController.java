@@ -10,8 +10,6 @@ import org.solhost.folko.slclient.models.GameState.State;
 import org.solhost.folko.slclient.views.GameView;
 import org.solhost.folko.slclient.views.LoginView;
 import org.solhost.folko.uosl.types.Direction;
-import org.solhost.folko.uosl.types.Point3D;
-
 import javafx.application.Platform;
 import javafx.stage.Stage;
 
@@ -35,12 +33,6 @@ public class MainController {
         loginView = new LoginView(this);
         stage.setScene(loginView.getScene());
         stage.show();
-
-        new Thread(() -> {
-            // game.getPlayer().setLocation(new Point3D(0, 0, 0));
-            game.getPlayer().setLocation(new Point3D(379, 607, 0));
-            game.onLoginSuccess();
-        }).start();
     }
 
     private void onGameStateChange(State oldState, State newState) {
@@ -146,10 +138,9 @@ public class MainController {
     }
 
     public void onRequestMove(Direction dir) {
-        // just testing
-        Point3D oldLoc = game.getPlayer().getLocation();
-        Point3D newLoc = new Point3D(oldLoc.getTranslated(dir), oldLoc.getZ());
-        game.getPlayer().setLocation(newLoc);
+//        Point3D oldLoc = game.getPlayer().getLocation();
+//        Point3D newLoc = new Point3D(oldLoc.getTranslated(dir), oldLoc.getZ());
+//        game.getPlayer().setLocation(newLoc);
     }
 
     public void onUpdateRangeChange(int sceneRadius) {
@@ -157,6 +148,6 @@ public class MainController {
     }
 
     public void onReportFPS(long fps) {
-        System.out.println(fps);
+        log.finest("FPS: " + fps);
     }
 }

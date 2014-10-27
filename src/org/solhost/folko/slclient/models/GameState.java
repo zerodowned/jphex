@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import org.solhost.folko.uosl.data.SLData;
-import org.solhost.folko.uosl.data.SLMap;
-import org.solhost.folko.uosl.data.SLStatic;
+import org.solhost.folko.uosl.network.SendableObject;
 import org.solhost.folko.uosl.network.packets.LoginPacket;
+import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Items;
 import org.solhost.folko.uosl.types.Point2D;
 import org.solhost.folko.uosl.types.Point3D;
 
@@ -25,12 +25,12 @@ public class GameState {
     private final Player player;
     private final Property<State> state;
     private final ObservableMap<Long, SLObject> objectsInRange;
-    private int updateRange;
+    private int updateRange = 15;
     private Connection connection;
 
     public GameState() {
         state = new SimpleObjectProperty<GameState.State>(State.DISCONNECTED);
-        player = new Player();
+        player = new Player(-1, -1);
         objectsInRange = FXCollections.observableMap(new HashMap<Long, SLObject>());
 
         player.locationProperty().addListener((Player, oldLoc, newLoc) -> onPlayerLocationChange(oldLoc, newLoc));
@@ -87,39 +87,49 @@ public class GameState {
         onPlayerLocationChange(player.getLocation(), player.getLocation());
     }
 
-    public void visitUpdateRange(Consumer<Point2D> c) {
-        Point2D center = player.getLocation();
-        for(int x = center.getX() - updateRange; x < center.getX() + updateRange; x++) {
-            if(x < 0 || x >= SLMap.MAP_WIDTH) {
-                continue;
-            }
-            for(int y = center.getY() - updateRange; y < center.getY() + updateRange; y++) {
-                if(y < 0 || y >= SLMap.MAP_HEIGHT) {
-                    continue;
-                }
-                c.accept(new Point2D(x, y));
+    public void forEachObjectAt(Point2D point, Consumer<SLObject> c) {
+        for(SLObject obj : objectsInRange.values()) {
+            if(point.equals(obj.getLocation())) {
+                c.accept(obj);
             }
         }
     }
 
     private synchronized void onPlayerLocationChange(Point3D oldLoc, Point3D newLoc) {
+        checkInvisible();
+    }
+
+    private void checkInvisible() {
         // check for objects no longer visible
+        Point3D location = player.getLocation();
         for(Iterator<SLObject> it = objectsInRange.values().iterator(); it.hasNext(); ) {
             SLObject obj = it.next();
-            if(obj.getLocation().distanceTo(newLoc) > updateRange) {
+            if(obj.getLocation().distanceTo(location) > updateRange) {
                 it.remove();
             }
         }
+    }
 
-        // check for new statics
-        visitUpdateRange(point -> {
-            for(SLStatic stat : SLData.get().getStatics().getStatics(point)) {
-                if(objectsInRange.containsKey(stat.getSerial())) {
-                    continue;
-                }
-                SLItem itm = SLItem.fromStatic(stat);
-                objectsInRange.put(itm.getSerial(), itm);
+    public synchronized void updateOrInitObject(SendableObject object, Direction facing, int amount) {
+        // valid in object: serial, graphic, location, hue
+        SLObject updatedObj = objectsInRange.get(object.getSerial());
+        if(updatedObj == null) {
+            // init new object
+            if(object.getSerial() >= Items.SERIAL_FIRST) {
+                updatedObj = new SLItem(object.getSerial(), object.getGraphic());
+            } else {
+                updatedObj = new SLMobile(object.getSerial(), object.getGraphic());
             }
-        });
+            objectsInRange.put(updatedObj.getSerial(), updatedObj);
+        }
+        updatedObj.setGraphic(object.getGraphic());
+        updatedObj.setLocation(object.getLocation());
+        updatedObj.setHue(object.getHue());
+        if(updatedObj instanceof SLItem) {
+            ((SLItem) updatedObj).setAmount(amount);
+        } else if(updatedObj instanceof SLMobile) {
+            ((SLMobile) updatedObj).setFacing(facing);
+        }
+        checkInvisible();
     }
 }
