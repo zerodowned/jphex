@@ -58,7 +58,7 @@ import org.solhost.folko.uosl.util.Pathfinder;
 
 public class GameView extends JPanel {
     private static final long   serialVersionUID    = 1L;
-    private static final int    TILE_SIZE           = 44;
+    private static final int    TILE_SIZE           = 42;
     private static final double TARGET_FPS          = 25.0;
     private static final int    PROJECTION_CONSTANT = 4;
 
@@ -396,7 +396,6 @@ public class GameView extends JPanel {
     }
 
     private void drawStatics(Graphics g, Point3D pos) {
-        Point center = project(new Point3D(pos, 0));
         for(SLStatic s : sortStatics(statics.getStatics(pos))) {
             if(s.getLocation().getZ() - sceneCenter.getZ() > 10 && cutOffZ) {
                 continue;
@@ -404,15 +403,10 @@ public class GameView extends JPanel {
 
             Image image = getStaticTileImage(s.getStaticID());
             if(image != null) {
-                int xOff = 0, yOff = 0;
-                int z = s.getLocation().getZ() * PROJECTION_CONSTANT;
-
-                xOff = -(TILE_SIZE / 2);
-                yOff = TILE_SIZE / 2 - image.getHeight(null) - z;
-                if(image.getWidth(null) > TILE_SIZE) {
-                    xOff -= (image.getWidth(null) - TILE_SIZE) / 2;
-                }
-                g.drawImage(image, center.x + xOff, center.y + yOff, null);
+                Point d = project(s.getLocation());
+                d.x -= TILE_SIZE / 2 + (image.getWidth(null) - TILE_SIZE) / 2;
+                d.y += TILE_SIZE / 2 - image.getHeight(null);
+                g.drawImage(image, d.x, d.y, null);
             }
         }
     }
@@ -454,12 +448,6 @@ public class GameView extends JPanel {
             ArtEntry entry = art.getStaticArt(id, (tile.flags & StaticTile.FLAG_TRANSLUCENT) != 0);
             if(entry != null) {
                 image = entry.image;
-                // TODO: I don't think this is how it's supposed to work
-                if((tile.flags & StaticTile.FLAG_TRANSLUCENT) != 0 || ((tile.flags & StaticTile.FLAG_ROOF) != 0)) {
-                    int width = image.getWidth(null);
-                    int height = image.getHeight(null);
-                    image = image.getScaledInstance(width + 5, height + 5, Image.SCALE_DEFAULT);
-                }
                 staticTileCache.put(id, image);
             } else {
                 image = null;
