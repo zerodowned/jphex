@@ -13,6 +13,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ContextAttribs;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
@@ -133,6 +134,14 @@ public class GameView {
                 }
             } else {
                 // released
+            }
+        }
+        while(Mouse.next()) {
+            int dz = Mouse.getEventDWheel();
+            if(dz > 0) {
+                onZoom(1.05f);
+            } else if(dz < 0) {
+                onZoom(0.95f);
             }
         }
     }
