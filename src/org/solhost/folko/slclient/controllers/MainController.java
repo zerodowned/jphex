@@ -155,4 +155,8 @@ public class MainController {
     public void onUpdateRangeChange(int sceneRadius) {
         game.setUpdateRange(sceneRadius);
     }
+
+    public void onReportFPS(long fps) {
+        System.out.println(fps);
+    }
 }

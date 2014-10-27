@@ -27,18 +27,24 @@ public class ShaderProgram {
         fragmentShaderId = readShader(path, GL_FRAGMENT_SHADER);
     }
 
-    public void setUniformInt(String name, int value) {
+    public int getUniformLocation(String name) {
         int location = glGetUniformLocation(programId, name);
         if(location == -1) {
-            throw new RuntimeException("Invalid uniform: " + name);
+            throw new RuntimeException("Invalid uniform: " + location);
+        }
+        return location;
+    }
+
+    public void setUniformInt(int location, int value) {
+        if(location == -1) {
+            throw new RuntimeException("Invalid uniform: " + location);
         }
         glUniform1i(location, value);
     }
 
-    public void setUniformFloat(String name, float... values) {
-        int location = glGetUniformLocation(programId, name);
+    public void setUniformFloat(int location, float... values) {
         if(location == -1) {
-            throw new RuntimeException("Invalid uniform: " + name);
+            throw new RuntimeException("Invalid uniform: " + location);
         }
 
         switch(values.length) {
@@ -59,16 +65,17 @@ public class ShaderProgram {
         }
     }
 
-    public void setUniformBool(String name, boolean val) {
-        int location = glGetUniformLocation(programId, name);
+    public void setUniformBool(int location, boolean val) {
         if(location == -1) {
-            throw new RuntimeException("Invalid uniform: " + name);
+            throw new RuntimeException("Invalid uniform: " + location);
         }
         glUniform1i(location, val ? GL_TRUE : GL_FALSE);
     }
 
-    public void setUniformMatrix(String name, Transform t) {
-        int location = glGetUniformLocation(programId, name);
+    public void setUniformMatrix(int location, Transform t) {
+        if(location == -1) {
+            throw new RuntimeException("Invalid uniform: " + location);
+        }
         glUniformMatrix4(location, false, t.getFloatBuffer());
     }
 
