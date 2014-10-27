@@ -404,7 +404,7 @@ public class GameView extends JPanel {
             Image image = getStaticTileImage(s.getStaticID());
             if(image != null) {
                 Point d = project(s.getLocation());
-                d.x -= TILE_SIZE / 2 + (image.getWidth(null) - TILE_SIZE) / 2;
+                d.x -= image.getWidth(null) / 2;
                 d.y += TILE_SIZE / 2 - image.getHeight(null);
                 g.drawImage(image, d.x, d.y, null);
             }
