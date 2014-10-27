@@ -4,6 +4,7 @@ import org.solhost.folko.slclient.views.Texture;
 import org.solhost.folko.uosl.data.SLArt;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLArt.ArtEntry;
+import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 
 public class TexturePool {
     private static Texture[] landTextures;
@@ -26,7 +27,12 @@ public class TexturePool {
         }
 
         for(int i = 0; i < SLArt.NUM_STATIC_ARTS; i++) {
-            ArtEntry entry = art.getStaticArt(i, false);
+            StaticTile tile = SLData.get().getTiles().getStaticTile(i);
+            if(tile == null) {
+                continue;
+            }
+            boolean translucent = (tile.flags & StaticTile.FLAG_TRANSLUCENT) != 0;
+            ArtEntry entry = art.getStaticArt(i, translucent);
             if(entry != null && entry.image != null) {
                 staticTextures[i] = new Texture(entry.image);
             }
