@@ -20,7 +20,6 @@ import org.lwjgl.opengl.PixelFormat;
 import org.solhost.folko.slclient.controllers.MainController;
 import org.solhost.folko.slclient.models.GameState;
 import org.solhost.folko.slclient.models.TexturePool;
-import org.solhost.folko.uosl.data.SLArt;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLMap;
 import org.solhost.folko.uosl.data.SLStatic;
@@ -38,6 +37,9 @@ public class GameView {
     private static final Logger log = Logger.getLogger("slclient.gameview");
     private static final int DEFAULT_WIDTH  = 800;
     private static final int DEFAULT_HEIGHT = 600;
+    private static final float GRID_DIAMETER = 42.0f;
+    private static final float GRID_EDGE     = GRID_DIAMETER / (float) Math.sqrt(2);
+    private static final float PROJECTION_CONSTANT = 4.0f;
     private static final int FPS = 30;
 
     private final MainController mainController;
@@ -180,10 +182,10 @@ public class GameView {
 
         FloatBuffer vertices = BufferUtils.createFloatBuffer(12);
         vertices.put(new float[] {
-                -0.5f, -0.5f, +0.0f, // left bottom
-                -0.5f, +0.5f, +0.0f, // left top
-                +0.5f, +0.5f, +0.0f, // right top
-                +0.5f, -0.5f, +0.0f, // right bottom
+                0, 0, 0, // left bottom
+                0, 1, 0, // left top
+                1, 1, 0, // right top
+                1, 0, 0, // right bottom
         });
         vertices.rewind();
 
@@ -213,8 +215,8 @@ public class GameView {
         glViewport(0, 0, width, height);
         projection = Transform.orthographic(-width / 2.0f, -height / 2.0f, width / 2.0f, height / 2.0f, 128f, -128f);
 
-        double radiusX = (width / (double) SLArt.TILE_DIAMETER);
-        double radiusY = (height / (double) SLArt.TILE_DIAMETER);
+        float radiusX = width / GRID_DIAMETER;
+        float radiusY = height / GRID_DIAMETER;
         int radius = (int) (Math.max(radiusX, radiusY) + 0.5);
         game.setUpdateRange(radius);
     }
@@ -235,7 +237,7 @@ public class GameView {
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
 
-        view = Transform.UO(SLArt.TILE_DIAMETER, 2.5f);
+        view = Transform.UO(GRID_DIAMETER, PROJECTION_CONSTANT);
         view.translate(-centerX, -centerY, -centerZ);
 
         shader.setUniformFloat("tex", 0);
@@ -274,8 +276,9 @@ public class GameView {
                 texture.setTextureUnit(0);
                 texture.bind();
                 shader.setUniformFloat("zOffsets", selfZ, southZ, southEastZ, eastZ);
+
                 model.reset();
-                model.translate(x + 0.5f, y + 0.5f, 0);
+                model.translate(x, y, 0);
                 shader.setUniformMatrix("mat", model.combine(view).combine(projection));
                 glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
 
@@ -292,12 +295,15 @@ public class GameView {
                     }
                     texture.setTextureUnit(0);
                     texture.bind();
+
+                    Transform textureProjection = new Transform(projection);
+                    textureProjection.translate(-texture.getWidth() / 2.0f, GRID_DIAMETER - texture.getHeight(), 0);
+
                     model.reset();
-                    model.translate(x + 0.5f, y + 0.5f, sta.getLocation().getZ());
+                    model.translate(x, y, sta.getLocation().getZ());
                     model.rotate(0, 0, -45);
-                    float gridLen = SLArt.TILE_DIAMETER / (float) Math.sqrt(2);
-                    model.scale(texture.getWidth() / gridLen, texture.getHeight() / gridLen, 1f);
-                    shader.setUniformMatrix("mat", model.combine(view).combine(projection));
+                    model.scale(texture.getWidth() / GRID_EDGE, texture.getHeight() / GRID_EDGE, 1f);
+                    shader.setUniformMatrix("mat", model.combine(view).combine(textureProjection));
                     glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
                 }
             }

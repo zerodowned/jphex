@@ -17,6 +17,10 @@ public class Transform {
         mat = new Matrix4f();
     }
 
+    public Transform(Transform other) {
+        this.mat = Matrix4f.load(other.mat, null);
+    }
+
     public void reset() {
         mat.setIdentity();
     }
@@ -43,9 +47,8 @@ public class Transform {
     }
 
     public Transform combine(Transform other) {
-        Transform res = new Transform();
-        Matrix4f.mul(other.mat, this.mat, res.mat);
-        return res;
+        Matrix4f.mul(other.mat, this.mat, this.mat);
+        return this;
     }
 
     public FloatBuffer getFloatBuffer() {
@@ -63,13 +66,14 @@ public class Transform {
         Transform t = new Transform();
         // Scale so that (left, top, near) is mapped to (-1, 1, 1) and (right, bottom, far) to (1, -1, -1)
         t.mat.m00 = 2 / (right - left);
-        t.mat.m11 = 2 / (top - bottom);
+        t.mat.m11 = -2 / (bottom - top);
         t.mat.m22 = -2 / (zFar - zNear);
         return t;
     }
 
     public static Transform UO(float gridDiameter, float pc) {
         Transform res = new Transform();
+        // rotate 45°, scale to grid, project z by moving y
         res.mat.m00 =  gridDiameter / 2.0f;
         res.mat.m01 =  gridDiameter / 2.0f;
         res.mat.m10 = -gridDiameter / 2.0f;
