@@ -37,6 +37,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.solhost.folko.uosl.data.SLArt;
+import org.solhost.folko.uosl.data.SLArt.ArtEntry;
 import org.solhost.folko.uosl.data.SLArt.MobileAnimation;
 import org.solhost.folko.uosl.types.Direction;
 
@@ -118,7 +119,10 @@ public class AnimationView extends JPanel {
     }
 
     private void updateFrame() {
-        imagePanel.setImage(currentAnimation.frames.get(currentFrame).image);
+        int staticID = currentAnimation.frames.get(currentFrame);
+        ArtEntry entry = art.getStaticArt(staticID, false);
+        entry.mirror(currentAnimation.needMirror);
+        imagePanel.setImage(entry.image);
         currentFrame++;
         if(currentFrame == currentAnimation.frames.size()) {
             currentFrame = 0;

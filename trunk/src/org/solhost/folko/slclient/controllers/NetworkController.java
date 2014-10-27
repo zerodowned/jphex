@@ -13,6 +13,7 @@ import org.solhost.folko.uosl.network.packets.InitPlayerPacket;
 import org.solhost.folko.uosl.network.packets.LocationPacket;
 import org.solhost.folko.uosl.network.packets.LoginErrorPacket;
 import org.solhost.folko.uosl.network.packets.SLPacket;
+import org.solhost.folko.uosl.network.packets.SendObjectPacket;
 
 public class NetworkController implements ConnectionHandler {
     private static final Logger log = Logger.getLogger("slclient.network");
@@ -100,6 +101,10 @@ public class NetworkController implements ConnectionHandler {
         player.setLocation(src.getLocation());
     }
 
+    private void onSendObject(SendObjectPacket packet) {
+        game.updateOrInitObject(packet.getObject(), packet.getFacing(), packet.getAmount());
+    }
+
     @Override
     public void onIncomingPacket(SLPacket packet) {
         log.finest("Incoming packet: " + packet);
@@ -107,6 +112,7 @@ public class NetworkController implements ConnectionHandler {
         case LoginErrorPacket.ID:   onLoginFail((LoginErrorPacket) packet); break;
         case InitPlayerPacket.ID:   onInitPlayer((InitPlayerPacket) packet); break;
         case LocationPacket.ID:     onLocationChange((LocationPacket) packet); break;
+        case SendObjectPacket.ID:   onSendObject((SendObjectPacket) packet); break;
         }
     }
 }

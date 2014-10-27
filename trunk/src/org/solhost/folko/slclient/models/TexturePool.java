@@ -9,6 +9,7 @@ import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 public class TexturePool {
     private static Texture[] landTextures;
     private static Texture[] staticTextures;
+    private static Texture[] animationFrames;
 
     private TexturePool() {
     }
@@ -16,6 +17,7 @@ public class TexturePool {
     public static void load() {
         landTextures = new Texture[SLArt.NUM_LAND_ARTS];
         staticTextures = new Texture[SLArt.NUM_STATIC_ARTS];
+        animationFrames = new Texture[SLArt.NUM_ANIMATION_ARTS];
 
         SLArt art = SLData.get().getArt();
 
@@ -37,6 +39,13 @@ public class TexturePool {
                 staticTextures[i] = new Texture(entry.image);
             }
         }
+
+        for(int i = 0x4000; i < 0x4000 + SLArt.NUM_ANIMATION_ARTS; i++) {
+            ArtEntry entry = art.getStaticArt(i, false);
+            if(entry != null && entry.image != null) {
+                animationFrames[i - 0x4000] = new Texture(entry.image);
+            }
+        }
     }
 
     public static Texture getLandTexture(int id) {
@@ -45,5 +54,9 @@ public class TexturePool {
 
     public static Texture getStaticTexture(int id) {
         return staticTextures[id];
+    }
+
+    public static Texture getAnimationFrame(int id) {
+        return animationFrames[id - 0x4000];
     }
 }

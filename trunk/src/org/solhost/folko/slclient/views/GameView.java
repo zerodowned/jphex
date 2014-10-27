@@ -19,13 +19,20 @@ import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.PixelFormat;
 import org.solhost.folko.slclient.controllers.MainController;
 import org.solhost.folko.slclient.models.GameState;
+import org.solhost.folko.slclient.models.SLItem;
+import org.solhost.folko.slclient.models.SLMobile;
 import org.solhost.folko.slclient.models.TexturePool;
+import org.solhost.folko.uosl.data.SLArt;
 import org.solhost.folko.uosl.data.SLData;
 import org.solhost.folko.uosl.data.SLMap;
 import org.solhost.folko.uosl.data.SLStatic;
+import org.solhost.folko.uosl.data.SLStatics;
+import org.solhost.folko.uosl.data.SLTiles;
+import org.solhost.folko.uosl.data.SLArt.MobileAnimation;
 import org.solhost.folko.uosl.data.SLTiles.LandTile;
 import org.solhost.folko.uosl.data.SLTiles.StaticTile;
 import org.solhost.folko.uosl.types.Direction;
+import org.solhost.folko.uosl.types.Point2D;
 import org.solhost.folko.uosl.types.Point3D;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -42,6 +49,11 @@ public class GameView {
     private static final float PROJECTION_CONSTANT = 4.0f;
     private static final int FPS = 20;
 
+    private final SLMap map;
+    private final SLTiles tiles;
+    private final SLStatics statics;
+    private final SLArt art;
+
     private final MainController mainController;
     private final GameState game;
 
@@ -53,11 +65,20 @@ public class GameView {
     private boolean gridOnly;
     private float zoom = 1.0f;
 
+    private int animFrameCounter;
+    private final int animDelay = 100;
+    private long nextAnimFrameIncrease = animDelay;
+
     private long fpsCounter, lastFPS;
 
     public GameView(MainController mainController) {
         this.mainController = mainController;
         this.game = mainController.getGameState();
+        this.map = SLData.get().getMap();
+        this.art = SLData.get().getArt();
+        this.tiles = SLData.get().getTiles();
+        this.statics = SLData.get().getStatics();
+
         try {
             Display.setDisplayMode(new DisplayMode(DEFAULT_WIDTH, DEFAULT_HEIGHT));
         } catch (LWJGLException e) {
@@ -163,6 +184,12 @@ public class GameView {
     private void update(long elapsedMillis) {
         updateFPS();
 
+        nextAnimFrameIncrease -= elapsedMillis;
+        if(nextAnimFrameIncrease < 0) {
+            animFrameCounter++;
+            nextAnimFrameIncrease = animDelay;
+        }
+
         lastMove += elapsedMillis;
         while(lastMove > moveDelay) {
             lastMove -= moveDelay;
@@ -203,8 +230,8 @@ public class GameView {
         TexturePool.load();
         log.fine("Done loading textures");
 
-//        glDepthFunc(GL_LEQUAL);
-//        glEnable(GL_DEPTH_TEST);
+        // glDepthFunc(GL_LEQUAL);
+        // glEnable(GL_DEPTH_TEST);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
@@ -264,7 +291,7 @@ public class GameView {
     }
 
     private int getZ(int x, int y) {
-        return SLData.get().getMap().getTileElevation(x, y);
+        return map.getTileElevation(x, y);
     }
 
     private void render() {
@@ -273,7 +300,7 @@ public class GameView {
         int centerZ = game.getPlayer().getLocation().getZ();
         int radius = game.getUpdateRange();
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT /* | GL_DEPTH_BUFFER_BIT */);
 
         shader.bind();
         glBindVertexArray(vaoID);
@@ -286,10 +313,33 @@ public class GameView {
 
         for(int x = centerX - radius; x < centerX + radius; x++) {
             for(int y = centerY - radius; y < centerY + radius; y++) {
+                // draw land even at invalid locations: will draw void like real client
                 drawLand(x, y);
-                drawStatics(x, y);
+
+                // but don't attempt to draw anything else at invalid locations
+                if(x < 0 || x >= SLMap.MAP_WIDTH || y < 0 || y >= SLMap.MAP_HEIGHT) {
+                    continue;
+                }
+
+                // now draw items and mobiles so that they cover the land
+                Point2D point = new Point2D(x,  y);
+                game.forEachObjectAt(point, (obj) -> {
+                    if(obj instanceof SLMobile) {
+                        drawMobile((SLMobile) obj);
+                    } else if(obj instanceof SLItem) {
+                        drawItem((SLItem) obj);
+                    }
+                 });
+
+                // draw statics last so they cover mobiles
+                for(SLStatic sta : sortStatics(statics.getStatics(point))) {
+                    SLItem staItm = SLItem.fromStatic(sta);
+                    drawItem(staItm);
+                }
             }
         }
+
+        drawMobile(game.getPlayer());
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
         shader.unbind();
@@ -305,9 +355,9 @@ public class GameView {
             point = null;
             texture = TexturePool.getLandTexture(1); // VOID texture like in real client
         } else {
-            point = new Point3D(x, y, SLData.get().getMap().getTileElevation(x, y));
-            int landID = SLData.get().getMap().getTextureID(point);
-            LandTile landTile = SLData.get().getTiles().getLandTile(landID);
+            point = new Point3D(x, y, map.getTileElevation(x, y));
+            int landID = map.getTextureID(point);
+            LandTile landTile = tiles.getLandTile(landID);
             selfZ = point.getZ();
             eastZ = getZ(x + 1, y);
             southZ = getZ(x, y + 1);
@@ -335,31 +385,65 @@ public class GameView {
         glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
     }
 
-    private void drawStatics(int x, int y) {
-        if(x < 0 || x >= SLMap.MAP_WIDTH || y < 0 || y >= SLMap.MAP_HEIGHT) {
-            return;
-        }
-        Point3D point = new Point3D(x,  y);
+    private void drawItem(SLItem item) {
+        int x = item.getLocation().getX();
+        int y = item.getLocation().getY();
+        int z = item.getLocation().getZ();
+
         shader.setUniformInt(texTypeLocation, 1);
         shader.setUniformFloat(zOffsetLocation, 0, 0, 0, 0);
-        for(SLStatic sta : sortStatics(SLData.get().getStatics().getStatics(point))) {
-            Texture texture = TexturePool.getStaticTexture(sta.getStaticID());
-            if(texture == null) {
-                continue;
-            }
-            texture.setTextureUnit(0);
-            texture.bind();
-
-            Transform textureProjection = new Transform(projection);
-            textureProjection.translate(-texture.getWidth() / 2.0f, GRID_DIAMETER - texture.getHeight(), 0);
-
-            model.reset();
-            model.translate(x, y, sta.getLocation().getZ());
-            model.rotate(0, 0, -45);
-            model.scale(texture.getWidth() / GRID_EDGE, texture.getHeight() / GRID_EDGE, 1f);
-            shader.setUniformMatrix(matLocation, model.combine(view).combine(textureProjection));
-            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
+        Texture texture = TexturePool.getStaticTexture(item.getGraphic());
+        if(texture == null) {
+            log.warning("No texture for item with graphic: " + item.getGraphic());
+            return;
         }
+        texture.setTextureUnit(0);
+        texture.bind();
+
+        Transform textureProjection = new Transform(projection);
+        textureProjection.translate(-texture.getWidth() / 2.0f, GRID_DIAMETER - texture.getHeight(), 0);
+
+        model.reset();
+        model.translate(x, y, z);
+        model.rotate(0, 0, -45);
+        model.scale(texture.getWidth() / GRID_EDGE, texture.getHeight() / GRID_EDGE, 1f);
+        shader.setUniformMatrix(matLocation, model.combine(view).combine(textureProjection));
+        glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
+    }
+
+    private void drawMobile(SLMobile mobile) {
+        boolean fighting = false;
+        int x = mobile.getLocation().getX();
+        int y = mobile.getLocation().getY();
+        int z = mobile.getLocation().getZ();
+        int graphic = mobile.getGraphic();
+        Direction facing = mobile.getFacing();
+
+        MobileAnimation animation = art.getAnimationEntry(graphic, facing, fighting);
+        if(animation == null) {
+            log.warning("No animation for graphic " + graphic + " and facing " + facing + ", fight: " + fighting);
+            return;
+        }
+        int numFrames = animation.frames.size();
+        Texture texture = TexturePool.getAnimationFrame(animation.frames.get(animFrameCounter % numFrames));
+        texture.setTextureUnit(0);
+        texture.bind();
+        shader.setUniformInt(texTypeLocation, 1);
+        shader.setUniformFloat(zOffsetLocation, 0, 0, 0, 0);
+        shader.setUniformInt(texTypeLocation, 2);
+        Transform textureProjection = new Transform(projection);
+        textureProjection.translate(-texture.getWidth() / 2.0f, GRID_DIAMETER - texture.getHeight(), 0);
+        model.reset();
+        model.translate(x, y, z);
+        model.rotate(0, 0, -45);
+        if(animation.needMirror) {
+            model.translate(texture.getWidth() / GRID_EDGE / 2.0f, 0, 0);
+            model.rotate(0, 180, 0);
+            model.translate(-texture.getWidth() / GRID_EDGE / 2.0f, 0, 0);
+        }
+        model.scale(texture.getWidth() / GRID_EDGE, texture.getHeight() / GRID_EDGE, 1f);
+        shader.setUniformMatrix(matLocation, model.combine(view).combine(textureProjection));
+        glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
     }
 
     public void dispose() {
@@ -393,8 +477,8 @@ public class GameView {
     private List<SLStatic> sortStatics(List<SLStatic> in) {
         // sort by view order (painter's algorithm)
         Collections.sort(in, (o1, o2) -> {
-                StaticTile tile1 = SLData.get().getTiles().getStaticTile(o1.getStaticID());
-                StaticTile tile2 = SLData.get().getTiles().getStaticTile(o2.getStaticID());
+                StaticTile tile1 = tiles.getStaticTile(o1.getStaticID());
+                StaticTile tile2 = tiles.getStaticTile(o2.getStaticID());
                 int z1 = o1.getLocation().getZ();
                 int z2 = o2.getLocation().getZ();
 

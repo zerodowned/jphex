@@ -18,8 +18,8 @@ public class SLMobile extends SLObject implements SendableMobile {
     private final Property<Direction> facing;
     private final Map<Attribute, LongProperty> attributes;
 
-    public SLMobile() {
-        super();
+    public SLMobile(long serial, int graphic) {
+        super(serial, graphic);
         facing = new SimpleObjectProperty<>();
         attributes = new HashMap<>();
         for(Attribute attr : Attribute.values()) {
@@ -52,5 +52,4 @@ public class SLMobile extends SLObject implements SendableMobile {
     public Direction getFacing() {
         return facing.getValue();
     }
-
 }
