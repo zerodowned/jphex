@@ -187,6 +187,9 @@ public class GameView {
             animFrameCounter++;
             nextAnimFrameIncrease = animDelay;
         }
+
+        // handle asynchrnous input
+
         if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
             mainController.onRequestMove(Direction.SOUTH_EAST);
         } else if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
@@ -195,10 +198,24 @@ public class GameView {
             mainController.onRequestMove(Direction.SOUTH_WEST);
         } else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
             mainController.onRequestMove(Direction.NORTH_EAST);
-        } else if(Keyboard.isKeyDown(Keyboard.KEY_RBRACKET)) {
+        }
+
+        if(Keyboard.isKeyDown(Keyboard.KEY_RBRACKET)) {
             onZoom(1.05f);
         } else if(Keyboard.isKeyDown(Keyboard.KEY_SLASH)) {
             onZoom(0.95f);
+        }
+
+        if(Mouse.isButtonDown(1)) {
+            double midX = Display.getWidth() / 2.0;
+            double midY = Display.getHeight() / 2.0;
+
+            double angle = Math.toDegrees(Math.atan2(Mouse.getX() - midX, Mouse.getY() - midY));
+            if(angle < 0) {
+                angle = 360 + angle;
+            }
+
+            mainController.onRequestMove(Direction.fromAngle(angle));
         }
     }
 
