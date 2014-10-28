@@ -20,7 +20,7 @@ public class SLClient extends Application {
 
     @Override
     public void start(Stage stage) {
-        setupLogger(Level.FINEST);
+        setupLogger(Level.FINER);
 
         log.info("Loading game data...");
         loadGameData();

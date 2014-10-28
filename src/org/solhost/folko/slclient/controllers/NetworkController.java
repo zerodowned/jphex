@@ -15,6 +15,7 @@ import org.solhost.folko.uosl.network.packets.EquipPacket;
 import org.solhost.folko.uosl.network.packets.InitPlayerPacket;
 import org.solhost.folko.uosl.network.packets.LocationPacket;
 import org.solhost.folko.uosl.network.packets.LoginErrorPacket;
+import org.solhost.folko.uosl.network.packets.RemoveObjectPacket;
 import org.solhost.folko.uosl.network.packets.SLPacket;
 import org.solhost.folko.uosl.network.packets.SendObjectPacket;
 
@@ -108,6 +109,10 @@ public class NetworkController implements ConnectionHandler {
         game.updateOrInitObject(packet.getObject(), packet.getFacing(), packet.getAmount());
     }
 
+    private void onRemoveObject(RemoveObjectPacket packet) {
+        game.removeObject(packet.getSerial());
+    }
+
     private void onEquip(EquipPacket packet) {
         game.equipItem(packet.getMobile(), packet.getItem());
     }
@@ -128,6 +133,7 @@ public class NetworkController implements ConnectionHandler {
         case InitPlayerPacket.ID:   onInitPlayer((InitPlayerPacket) packet); break;
         case LocationPacket.ID:     onLocationChange((LocationPacket) packet); break;
         case SendObjectPacket.ID:   onSendObject((SendObjectPacket) packet); break;
+        case RemoveObjectPacket.ID: onRemoveObject((RemoveObjectPacket) packet); break;
         case EquipPacket.ID:        onEquip((EquipPacket) packet); break;
         case AllowMovePacket.ID:    onAllowMove((AllowMovePacket) packet); break;
         case DenyMovePacket.ID:     onDenyMove((DenyMovePacket) packet); break;

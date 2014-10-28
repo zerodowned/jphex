@@ -164,6 +164,7 @@ public abstract class SLPacket {
         case GlobalLightLevelPacket.ID: return GlobalLightLevelPacket.read(buffer, dataLength);
         case SendTextPacket.ID:         return SendTextPacket.read(buffer, dataLength);
         case SendObjectPacket.ID:       return SendObjectPacket.read(buffer, dataLength);
+        case RemoveObjectPacket.ID:     return RemoveObjectPacket.read(buffer, dataLength);
         case AllowMovePacket.ID:        return AllowMovePacket.read(buffer, dataLength);
         case DenyMovePacket.ID:         return DenyMovePacket.read(buffer, dataLength);
         case DragPacket.ID:             return DragPacket.read(buffer, dataLength);
