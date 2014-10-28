@@ -154,7 +154,7 @@ public class SoundManager {
         return new Sequence[0];
     }
 
-    public void dispose() {
+    public void stop() {
         if(sequencer != null) {
             sequencer.stop();
             sequencer.close();

@@ -20,6 +20,8 @@ public class MainController {
     private final GameState game;
     private final NetworkController networkController;
     private final Stage stage;
+    private Thread gameThread;
+    private boolean gameRunning;
     private LoginView loginView;
     private GameView gameView;
     private final SoundManager soundManager;
@@ -102,17 +104,11 @@ public class MainController {
         try {
             task.get(); // wait for task to complete
             gameView = new GameView(this);
-            new Thread(() -> gameView.run()).start();
+            gameThread = new Thread(() -> gameLoop());
+            gameThread.start();
         } catch (InterruptedException | ExecutionException e) {
             log.log(Level.FINE, "Login stopped: " + e.getMessage(), e);
         }
-    }
-
-    public void onGameClosed() {
-        log.fine("Stopping game...");
-        soundManager.dispose();
-        networkController.stopNetwork();
-        System.exit(0);
     }
 
     public void onNetworkError(String reason) {
@@ -126,24 +122,47 @@ public class MainController {
     }
 
     public void onGameError(String reason) {
-        gameView.dispose();
-        Platform.runLater(() -> {
-            showLoginScreen();
-            loginView.showError(reason);
-            Platform.setImplicitExit(true);
-        });
+        log.severe("Game error: " + reason);
     }
 
-    public void update(long elapsedMillis) {
-        soundManager.update(elapsedMillis);
+    public void onGameWindowClosed() {
+        log.fine("Stopping game...");
+        gameRunning = false;
     }
 
-    public Stage getStage() {
-        return stage;
+    private void gameLoop() {
+        long lastFrameTime = game.getTimeMillis();
+        long thisFrameTime = game.getTimeMillis();
+        gameRunning = true;
+
+        gameView.createWindow();
+        try {
+            while(gameRunning) {
+                    thisFrameTime = game.getTimeMillis();
+                    update(thisFrameTime - lastFrameTime);
+                    gameView.render();
+                    lastFrameTime = thisFrameTime;
+                    gameView.pause();
+            }
+        } catch(Exception e) {
+            log.log(Level.SEVERE, "Game crashed: " + e.getMessage(), e);
+            onGameError("Game crashed: " + e.getMessage());
+        }
+        gameView.close();
+        soundManager.stop();
+        networkController.stopNetwork();
+        Platform.exit();
     }
 
-    public GameState getGameState() {
-        return game;
+    private void update(long elapsedMillis) {
+        try {
+            gameView.update(elapsedMillis);
+            soundManager.update(elapsedMillis);
+        } catch(Exception e) {
+            log.log(Level.SEVERE, "Exception in game: " + e.getMessage(), e);
+            onGameError("Game has crashed: " + e.getMessage());
+            return;
+        }
     }
 
     public void onRequestMove(Direction dir) {
@@ -155,6 +174,14 @@ public class MainController {
     }
 
     public void onReportFPS(long fps) {
-        // log.finest("FPS: " + fps);
+        log.finest("FPS: " + fps);
+    }
+
+    public Stage getStage() {
+        return stage;
+    }
+
+    public GameState getGameState() {
+        return game;
     }
 }

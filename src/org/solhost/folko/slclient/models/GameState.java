@@ -211,7 +211,7 @@ public class GameState {
         mob.equip(itm);
     }
 
-    private long getTimeMillis() {
+    public long getTimeMillis() {
         return (Sys.getTime() * 1000) / Sys.getTimerResolution();
     }
 }
