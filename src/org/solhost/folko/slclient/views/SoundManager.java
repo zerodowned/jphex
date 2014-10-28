@@ -46,6 +46,12 @@ public class SoundManager {
     }
 
     public void update(long elapsedMillis) {
+        if(sequencer != null) {
+            updateSong();
+        }
+    }
+
+    private void updateSong() {
         // this is implemented exactly like in the client, including unreachable entries
 
         // Strategy: Search nearest location center in the following table.
@@ -53,7 +59,7 @@ public class SoundManager {
         //           The closest location index is then used as index into the songTable.
 
         // @434528h in client
-        int[][] locationTable = {
+        final int[][] locationTable = {
                 // centerx, centery, size
                 {320, 592, 75},
                 {464, 592, 16},
@@ -69,7 +75,7 @@ public class SoundManager {
         };
 
         // @434580h in client
-        int[] songTable = {
+        final int[] songTable = {
                 10, 16, 16, 16, 2, 24, 24, 24, 7, 4, 6, 7, 8, 9, 20, 1
         };
 
@@ -102,7 +108,11 @@ public class SoundManager {
     }
 
     private void playSongNow(int id) {
-        if(sequencer == null || id < 0 || id >= songs.length || songs[id] == null) {
+        if(sequencer == null) {
+            return;
+        }
+        if(id < 0 || id >= songs.length || songs[id] == null) {
+            // TODO: logging a warning would spam the log, think of something else
             return;
         }
         try {
