@@ -28,6 +28,19 @@ public class MoveRequestPacket extends SLPacket {
     private short sequence;
     private boolean running;
 
+    private MoveRequestPacket() {
+    }
+
+    public MoveRequestPacket(Direction dir, short sequence, boolean running) {
+        initWrite(ID, 6);
+        short rawDirection = dir.toByte();
+        if(running) {
+            rawDirection |= 0x80;
+        }
+        addUByte(rawDirection);
+        addUByte(sequence);
+    }
+
     public static MoveRequestPacket read(ByteBuffer buffer, int len) {
         MoveRequestPacket res = new MoveRequestPacket();
         short rawDirection = readUByte(buffer);

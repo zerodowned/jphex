@@ -69,7 +69,7 @@ public class GameView {
     private final int animDelay = 100;
     private long nextAnimFrameIncrease = animDelay;
 
-    private long fpsCounter, lastFPS;
+    private long fpsCounter, lastFPSReport;
 
     public GameView(MainController mainController) {
         this.mainController = mainController;
@@ -120,7 +120,7 @@ public class GameView {
     private void mainLoop() {
         long lastFrameTime = getTimeMillis();
         long thisFrameTime = getTimeMillis();
-        lastFPS = getTimeMillis();
+        lastFPSReport = getTimeMillis();
 
         initGL();
         while(!Display.isCloseRequested()) {
@@ -144,11 +144,11 @@ public class GameView {
     }
 
     private void updateFPS() {
-        // update stats half a second
-        if(getTimeMillis() - lastFPS > 1000) {
+        // update FPS stats each second
+        if(getTimeMillis() - lastFPSReport > 1000) {
             mainController.onReportFPS(fpsCounter);
             fpsCounter = 0;
-            lastFPS += 1000;
+            lastFPSReport += 1000;
         }
         fpsCounter++;
     }
@@ -179,8 +179,6 @@ public class GameView {
         }
     }
 
-    private long lastMove;
-    private final long moveDelay = 50;
     private void update(long elapsedMillis) {
         updateFPS();
 
@@ -189,23 +187,18 @@ public class GameView {
             animFrameCounter++;
             nextAnimFrameIncrease = animDelay;
         }
-
-        lastMove += elapsedMillis;
-        while(lastMove > moveDelay) {
-            lastMove -= moveDelay;
-            if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-                mainController.onRequestMove(Direction.SOUTH_EAST);
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-                mainController.onRequestMove(Direction.NORTH_WEST);
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-                mainController.onRequestMove(Direction.SOUTH_WEST);
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-                mainController.onRequestMove(Direction.NORTH_EAST);
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_RBRACKET)) {
-                onZoom(1.05f);
-            } else if(Keyboard.isKeyDown(Keyboard.KEY_SLASH)) {
-                onZoom(0.95f);
-            }
+        if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+            mainController.onRequestMove(Direction.SOUTH_EAST);
+        } else if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+            mainController.onRequestMove(Direction.NORTH_WEST);
+        } else if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
+            mainController.onRequestMove(Direction.SOUTH_WEST);
+        } else if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
+            mainController.onRequestMove(Direction.NORTH_EAST);
+        } else if(Keyboard.isKeyDown(Keyboard.KEY_RBRACKET)) {
+            onZoom(1.05f);
+        } else if(Keyboard.isKeyDown(Keyboard.KEY_SLASH)) {
+            onZoom(0.95f);
         }
     }
 
@@ -322,7 +315,11 @@ public class GameView {
                 }
 
                 // now draw items and mobiles so that they cover the land
-                Point2D point = new Point2D(x,  y);
+                Point2D point = new Point2D(x, y);
+                if(point.equals(game.getPlayer().getLocation())) {
+                    drawMobile(game.getPlayer());
+                }
+
                 game.forEachObjectAt(point, (obj) -> {
                     if(obj instanceof SLMobile) {
                         drawMobile((SLMobile) obj);
@@ -338,8 +335,6 @@ public class GameView {
                 }
             }
         }
-
-        drawMobile(game.getPlayer());
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
         shader.unbind();
@@ -419,11 +414,27 @@ public class GameView {
         int graphic = mobile.getGraphic();
         Direction facing = mobile.getFacing();
 
+        // first character
         MobileAnimation animation = art.getAnimationEntry(graphic, facing, fighting);
         if(animation == null) {
-            log.warning("No animation for graphic " + graphic + " and facing " + facing + ", fight: " + fighting);
+            log.warning("No animation for mobile " + graphic + " with facing " + facing + ", fight: " + fighting);
             return;
         }
+        drawAnimationFrame(animation, x, y, z);
+
+        // then equipment
+        for(SLItem equipItem : mobile.getEquipment()) {
+            int id = equipItem.getTileInfo().animationID;
+            animation = art.getAnimationEntry(id, facing, fighting);
+            if(animation == null) {
+                log.warning("No animation for equipment " + graphic + " with facing " + facing + ", fight: " + fighting);
+                continue;
+            }
+            drawAnimationFrame(animation, x, y, z);
+        }
+    }
+
+    private void drawAnimationFrame(MobileAnimation animation, int x, int y, int z) {
         int numFrames = animation.frames.size();
         Texture texture = TexturePool.getAnimationFrame(animation.frames.get(animFrameCounter % numFrames));
         texture.setTextureUnit(0);
