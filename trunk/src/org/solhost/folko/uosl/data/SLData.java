@@ -402,4 +402,8 @@ public class SLData {
         }
         return true;
     }
+
+    public String getDataPath() {
+        return dataPath;
+    }
 }

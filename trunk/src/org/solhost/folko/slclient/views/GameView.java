@@ -188,6 +188,8 @@ public class GameView {
             nextAnimFrameIncrease = animDelay;
         }
 
+        mainController.update(elapsedMillis);
+
         // handle asynchrnous input
 
         if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {

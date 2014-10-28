@@ -2,6 +2,7 @@ package org.solhost.folko.slclient.models;
 
 public class Player extends SLMobile {
     private String password;
+    private boolean warMode;
 
     public Player(long serial, int graphic) {
         super(serial, graphic);
@@ -13,5 +14,9 @@ public class Player extends SLMobile {
 
     public String getPassword() {
         return password;
+    }
+
+    public boolean isInWarMode() {
+        return warMode;
     }
 }

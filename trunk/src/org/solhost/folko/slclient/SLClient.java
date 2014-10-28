@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 
 public class SLClient extends Application {
     private static final Logger log = Logger.getLogger("slclient");
+    private MainController mainController;
 
     @Override
     public void start(Stage stage) {
@@ -26,11 +27,19 @@ public class SLClient extends Application {
         loadGameData();
 
         log.fine("Starting main controller");
-        MainController mainController = new MainController(stage);
+        mainController = new MainController(stage);
         mainController.showLoginScreen();
 
         stage.setTitle("Ultima Online: Shattered Legacy");
         stage.show();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        if(mainController != null) {
+            mainController.onGameClosed();
+        }
     }
 
     private void loadGameData() {

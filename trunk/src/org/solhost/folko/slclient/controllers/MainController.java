@@ -9,7 +9,9 @@ import org.solhost.folko.slclient.models.GameState;
 import org.solhost.folko.slclient.models.GameState.State;
 import org.solhost.folko.slclient.views.GameView;
 import org.solhost.folko.slclient.views.LoginView;
+import org.solhost.folko.slclient.views.SoundManager;
 import org.solhost.folko.uosl.types.Direction;
+
 import javafx.application.Platform;
 import javafx.stage.Stage;
 
@@ -20,11 +22,13 @@ public class MainController {
     private final Stage stage;
     private LoginView loginView;
     private GameView gameView;
+    private final SoundManager soundManager;
 
     public MainController(Stage stage) {
         this.stage = stage;
         this.game = new GameState();
         this.networkController = new NetworkController(this);
+        this.soundManager = new SoundManager(game);
 
         game.stateProperty().addListener((g, from, to) -> onGameStateChange(from, to));
     }
@@ -106,6 +110,7 @@ public class MainController {
 
     public void onGameClosed() {
         log.fine("Stopping game...");
+        soundManager.dispose();
         networkController.stopNetwork();
         System.exit(0);
     }
@@ -127,6 +132,10 @@ public class MainController {
             loginView.showError(reason);
             Platform.setImplicitExit(true);
         });
+    }
+
+    public void update(long elapsedMillis) {
+        soundManager.update(elapsedMillis);
     }
 
     public Stage getStage() {
