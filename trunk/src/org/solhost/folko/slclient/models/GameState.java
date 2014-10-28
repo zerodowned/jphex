@@ -186,6 +186,10 @@ public class GameState {
         checkInvisible();
     }
 
+    public synchronized void removeObject(long serial) {
+        objectsInRange.remove(serial);
+    }
+
     public synchronized void equipItem(SendableMobile mobInfo, SendableItem itemInfo) {
         SLObject obj;
         if(mobInfo.getSerial() == player.getSerial()) {
