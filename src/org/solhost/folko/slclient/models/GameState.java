@@ -5,8 +5,13 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import org.lwjgl.Sys;
+import org.solhost.folko.uosl.data.SLData;
+import org.solhost.folko.uosl.network.SendableItem;
+import org.solhost.folko.uosl.network.SendableMobile;
 import org.solhost.folko.uosl.network.SendableObject;
 import org.solhost.folko.uosl.network.packets.LoginPacket;
+import org.solhost.folko.uosl.network.packets.MoveRequestPacket;
 import org.solhost.folko.uosl.types.Direction;
 import org.solhost.folko.uosl.types.Items;
 import org.solhost.folko.uosl.types.Point2D;
@@ -25,8 +30,13 @@ public class GameState {
     private final Player player;
     private final Property<State> state;
     private final ObservableMap<Long, SLObject> objectsInRange;
-    private int updateRange = 15;
     private Connection connection;
+    private int updateRange = 15;
+
+    // Movement
+    private final int MOVE_DELAY = 150;
+    private short nextMoveSequence, lastAckedMoveSequence;
+    private long lastMoveTime;
 
     public GameState() {
         state = new SimpleObjectProperty<GameState.State>(State.DISCONNECTED);
@@ -46,25 +56,25 @@ public class GameState {
         return state;
     }
 
-    public State getState() {
+    public synchronized State getState() {
         return state.getValue();
     }
 
-    public Player getPlayer() {
+    public synchronized Player getPlayer() {
         return player;
     }
 
-    public void onConnect(Connection connection) {
+    public synchronized void onConnect(Connection connection) {
         this.connection = connection;
         state.setValue(State.CONNECTED);
     }
 
-    public void onDisconnect() {
+    public synchronized void onDisconnect() {
         this.connection = null;
         state.setValue(State.DISCONNECTED);
     }
 
-    public void tryLogin() {
+    public synchronized void tryLogin() {
         LoginPacket login = new LoginPacket();
         login.setName(player.getName());
         login.setPassword(player.getPassword());
@@ -74,25 +84,68 @@ public class GameState {
         connection.sendPacket(login);
     }
 
-    public void onLoginSuccess() {
+    public synchronized void onLoginSuccess() {
         state.setValue(State.LOGGED_IN);
     }
 
-    public int getUpdateRange() {
+    public synchronized int getUpdateRange() {
         return updateRange;
     }
 
-    public void setUpdateRange(int updateRange) {
+    public synchronized void setUpdateRange(int updateRange) {
         this.updateRange = updateRange;
         onPlayerLocationChange(player.getLocation(), player.getLocation());
     }
 
-    public void forEachObjectAt(Point2D point, Consumer<SLObject> c) {
+    public synchronized void forEachObjectAt(Point2D point, Consumer<SLObject> c) {
         for(SLObject obj : objectsInRange.values()) {
             if(point.equals(obj.getLocation())) {
                 c.accept(obj);
             }
         }
+    }
+
+    public synchronized void playerMoveRequest(Direction dir) {
+        if(lastMoveTime + MOVE_DELAY > getTimeMillis()) {
+            // too fast
+            return;
+        }
+
+        if(nextMoveSequence - lastAckedMoveSequence > 3) {
+            log.finer("Disallowing move due to missing acks, want seq: " + nextMoveSequence + ", last ack: " + lastAckedMoveSequence);
+            return;
+        }
+
+        if(player.getFacing() != dir) {
+            // only turning
+            MoveRequestPacket packet = new MoveRequestPacket(dir, nextMoveSequence++, false);
+            connection.sendPacket(packet);
+            player.setFacing(dir);
+            lastMoveTime = getTimeMillis();
+        } else {
+            Point3D oldLoc = player.getLocation();
+            Point3D newLoc = SLData.get().getElevatedPoint(oldLoc, dir, (point) -> SLData.get().getStatics().getStaticsAndDynamicsAtLocation(point));
+            if(newLoc != null) {
+                MoveRequestPacket packet = new MoveRequestPacket(dir, nextMoveSequence++, false);
+                connection.sendPacket(packet);
+                player.setLocation(newLoc);
+                lastMoveTime = getTimeMillis();
+            }
+        }
+        if(nextMoveSequence > 255) {
+            nextMoveSequence = 0;
+        }
+    }
+
+    public synchronized void allowMove(short sequence) {
+        lastAckedMoveSequence = sequence;
+    }
+
+    public synchronized void denyMove(short deniedSequence, Point3D location, Direction facing) {
+        nextMoveSequence = 0;
+        lastAckedMoveSequence = 0;
+        player.setLocation(location);
+        player.setFacing(facing);
     }
 
     private synchronized void onPlayerLocationChange(Point3D oldLoc, Point3D newLoc) {
@@ -131,5 +184,30 @@ public class GameState {
             ((SLMobile) updatedObj).setFacing(facing);
         }
         checkInvisible();
+    }
+
+    public synchronized void equipItem(SendableMobile mobInfo, SendableItem itemInfo) {
+        SLObject obj;
+        if(mobInfo.getSerial() == player.getSerial()) {
+            obj = player;
+        } else {
+            obj = objectsInRange.get(mobInfo.getSerial());
+            // if the item is visible or anything is known about it, forget it now
+            objectsInRange.remove(itemInfo.getSerial());
+        }
+
+        if(obj == null || !(obj instanceof SLMobile)) {
+            log.warning("Equip received for unknown serial " + String.format("%08X", obj.getSerial()));
+            return;
+        }
+        SLMobile mob = (SLMobile) obj;
+        SLItem itm = new SLItem(itemInfo.getSerial(), itemInfo.getGraphic());
+        itm.setLayer(itemInfo.getLayer());
+        itm.setHue(itemInfo.getHue());
+        mob.equip(itm);
+    }
+
+    private long getTimeMillis() {
+        return (Sys.getTime() * 1000) / Sys.getTimerResolution();
     }
 }

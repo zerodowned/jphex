@@ -1,5 +1,7 @@
 package org.solhost.folko.slclient.models;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ import org.solhost.folko.uosl.types.Direction;
 public class SLMobile extends SLObject implements SendableMobile {
     private final Property<Direction> facing;
     private final Map<Attribute, LongProperty> attributes;
+    private final Map<Short, SLItem> equipment;
 
     public SLMobile(long serial, int graphic) {
         super(serial, graphic);
@@ -25,6 +28,7 @@ public class SLMobile extends SLObject implements SendableMobile {
         for(Attribute attr : Attribute.values()) {
             attributes.put(attr, new SimpleLongProperty());
         }
+        equipment = new HashMap<>();
     }
 
     @Override
@@ -51,5 +55,13 @@ public class SLMobile extends SLObject implements SendableMobile {
     @Override
     public Direction getFacing() {
         return facing.getValue();
+    }
+
+    public void equip(SLItem itm) {
+        equipment.put(itm.getLayer(), itm);
+    }
+
+    public Collection<SLItem> getEquipment() {
+        return Collections.unmodifiableCollection(equipment.values());
     }
 }

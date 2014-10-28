@@ -9,6 +9,9 @@ import org.solhost.folko.slclient.models.Connection.ConnectionHandler;
 import org.solhost.folko.slclient.models.GameState;
 import org.solhost.folko.slclient.models.Player;
 import org.solhost.folko.uosl.network.SendableMobile;
+import org.solhost.folko.uosl.network.packets.AllowMovePacket;
+import org.solhost.folko.uosl.network.packets.DenyMovePacket;
+import org.solhost.folko.uosl.network.packets.EquipPacket;
 import org.solhost.folko.uosl.network.packets.InitPlayerPacket;
 import org.solhost.folko.uosl.network.packets.LocationPacket;
 import org.solhost.folko.uosl.network.packets.LoginErrorPacket;
@@ -105,6 +108,18 @@ public class NetworkController implements ConnectionHandler {
         game.updateOrInitObject(packet.getObject(), packet.getFacing(), packet.getAmount());
     }
 
+    private void onEquip(EquipPacket packet) {
+        game.equipItem(packet.getMobile(), packet.getItem());
+    }
+
+    private void onAllowMove(AllowMovePacket packet) {
+        game.allowMove(packet.getSequence());
+    }
+
+    private void onDenyMove(DenyMovePacket packet) {
+        game.denyMove(packet.getDeniedSequence(), packet.getLocation(), packet.getFacing());
+    }
+
     @Override
     public void onIncomingPacket(SLPacket packet) {
         log.finest("Incoming packet: " + packet);
@@ -113,6 +128,10 @@ public class NetworkController implements ConnectionHandler {
         case InitPlayerPacket.ID:   onInitPlayer((InitPlayerPacket) packet); break;
         case LocationPacket.ID:     onLocationChange((LocationPacket) packet); break;
         case SendObjectPacket.ID:   onSendObject((SendObjectPacket) packet); break;
+        case EquipPacket.ID:        onEquip((EquipPacket) packet); break;
+        case AllowMovePacket.ID:    onAllowMove((AllowMovePacket) packet); break;
+        case DenyMovePacket.ID:     onDenyMove((DenyMovePacket) packet); break;
+        default:                    log.warning("Unknown packet: " + packet);
         }
     }
 }

@@ -138,9 +138,7 @@ public class MainController {
     }
 
     public void onRequestMove(Direction dir) {
-//        Point3D oldLoc = game.getPlayer().getLocation();
-//        Point3D newLoc = new Point3D(oldLoc.getTranslated(dir), oldLoc.getZ());
-//        game.getPlayer().setLocation(newLoc);
+        game.playerMoveRequest(dir);
     }
 
     public void onUpdateRangeChange(int sceneRadius) {
@@ -148,6 +146,6 @@ public class MainController {
     }
 
     public void onReportFPS(long fps) {
-        log.finest("FPS: " + fps);
+        // log.finest("FPS: " + fps);
     }
 }
