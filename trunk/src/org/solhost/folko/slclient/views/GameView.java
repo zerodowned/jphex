@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
-import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ContextAttribs;
@@ -90,7 +89,7 @@ public class GameView {
         gridOnly = false;
     }
 
-    public void run() {
+    public void createWindow() {
         try {
             PixelFormat pixFormat = new PixelFormat();
             ContextAttribs contextAttribs = new ContextAttribs(3, 2)
@@ -99,53 +98,38 @@ public class GameView {
             Display.setTitle("Ultima Online: Shattered Legacy");
             Display.setResizable(true);
             Display.create(pixFormat, contextAttribs);
+            initGL();
         } catch (LWJGLException e) {
             log.log(Level.SEVERE, "Couldn't create display: " + e.getMessage(), e);
             mainController.onGameError("Couldn't create display: " + e.getMessage());
             return;
         }
 
-        try {
-            mainLoop();
-        } catch(Exception e) {
-            log.log(Level.SEVERE, "Game crashed: " + e.getMessage(), e);
-            mainController.onGameError("Game crashed: " + e.getMessage());
-        }
+        lastFPSReport = game.getTimeMillis();
     }
 
-    private long getTimeMillis() {
-        return (Sys.getTime() * 1000) / Sys.getTimerResolution();
+    public void render() {
+        if(Display.isCloseRequested()) {
+            mainController.onGameWindowClosed();
+            return;
+        }
+
+        if(Display.wasResized()) {
+            onResize();
+        }
+
+        renderGameScene();
+        updateFPS();
+        Display.update();
     }
 
-    private void mainLoop() {
-        long lastFrameTime = getTimeMillis();
-        long thisFrameTime = getTimeMillis();
-        lastFPSReport = getTimeMillis();
-
-        initGL();
-        while(!Display.isCloseRequested()) {
-            handleInput();
-
-            thisFrameTime = getTimeMillis();
-            update(thisFrameTime - lastFrameTime);
-
-            render();
-            lastFrameTime = thisFrameTime;
-
-            Display.update();
-
-            if(Display.wasResized()) {
-                onResize();
-            }
-
-            Display.sync(FPS);
-        }
-        dispose();
+    public void pause() {
+        Display.sync(FPS);
     }
 
     private void updateFPS() {
         // update FPS stats each second
-        if(getTimeMillis() - lastFPSReport > 1000) {
+        if(game.getTimeMillis() - lastFPSReport > 1000) {
             mainController.onReportFPS(fpsCounter);
             fpsCounter = 0;
             lastFPSReport += 1000;
@@ -154,6 +138,21 @@ public class GameView {
     }
 
     private void handleInput() {
+        handleAsyncInput();
+        handleSyncInput();
+    }
+
+    public void update(long elapsedMillis) {
+        nextAnimFrameIncrease -= elapsedMillis;
+        if(nextAnimFrameIncrease < 0) {
+            animFrameCounter++;
+            nextAnimFrameIncrease = animDelay;
+        }
+
+        handleInput();
+    }
+
+    private void handleAsyncInput() {
         while(Keyboard.next()) {
             if(Keyboard.getEventKeyState()) {
                 // pressed
@@ -179,19 +178,7 @@ public class GameView {
         }
     }
 
-    private void update(long elapsedMillis) {
-        updateFPS();
-
-        nextAnimFrameIncrease -= elapsedMillis;
-        if(nextAnimFrameIncrease < 0) {
-            animFrameCounter++;
-            nextAnimFrameIncrease = animDelay;
-        }
-
-        mainController.update(elapsedMillis);
-
-        // handle asynchrnous input
-
+    private void handleSyncInput() {
         if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
             mainController.onRequestMove(Direction.SOUTH_EAST);
         } else if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
@@ -306,7 +293,7 @@ public class GameView {
         return map.getTileElevation(x, y);
     }
 
-    private void render() {
+    private void renderGameScene() {
         int centerX = game.getPlayer().getLocation().getX();
         int centerY = game.getPlayer().getLocation().getY();
         int centerZ = game.getPlayer().getLocation().getZ();
@@ -476,7 +463,7 @@ public class GameView {
         glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, 0);
     }
 
-    public void dispose() {
+    public synchronized void close() {
         if(shader != null) {
             shader.dispose();
             shader = null;
@@ -501,7 +488,6 @@ public class GameView {
         }
 
         Display.destroy();
-        mainController.onGameClosed();
     }
 
     private List<SLStatic> sortStatics(List<SLStatic> in) {

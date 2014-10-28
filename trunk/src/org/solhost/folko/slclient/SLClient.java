@@ -38,7 +38,7 @@ public class SLClient extends Application {
     public void stop() throws Exception {
         super.stop();
         if(mainController != null) {
-            mainController.onGameClosed();
+            mainController.onGameWindowClosed();
         }
     }
 
